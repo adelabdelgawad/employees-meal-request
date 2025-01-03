@@ -6,8 +6,8 @@ from icecream import ic
 # Ensure this imports your read_employees function
 from routers.data import read_employees
 # Ensure this imports your Employee model
-from db.application.models import Employee
-from db.application.database import engine
+from db.models import Employee
+from db.database import engine
 
 
 @pytest_asyncio.fixture

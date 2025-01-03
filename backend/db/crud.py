@@ -2,7 +2,7 @@ import traceback
 import logging
 from typing import List, Optional
 from sqlmodel import Session, select, func, case
-from db.application.models import (
+from db.models import (
     MealRequest,
     MealRequestStatus,
     Account,

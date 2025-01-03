@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from typing import Annotated
 
-from db.application.database import get_application_session
-from db.application.models import (
+from db.database import get_application_session
+from db.models import (
     MealRequest,
     MealRequestLine,
     Employee,
@@ -15,8 +15,8 @@ from db.application.models import (
     Account,
     MealType,
 )
-from db.hris.models import HRISEmployeeAttendanceWithDetails
-from db.hris.database import get_hris_session
+from hmis_db.models import HRISEmployeeAttendanceWithDetails
+from hmis_db.database import get_hris_session
 from src.schema import AuditRecordResponse
 
 router = APIRouter()

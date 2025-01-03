@@ -5,9 +5,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 from typing import Annotated
 
-from db.application.database import get_application_session
-from db.application.models import RolePermission, Role, Account, LogPermission
-from db.hris.database import get_hris_session
+from db.database import get_application_session
+from db.models import RolePermission, Role, Account, LogPermission
+from hmis_db.database import get_hris_session
 from src.schema import (
     RolePermissionResponse,
     UpdateAccountPermissionRequest,

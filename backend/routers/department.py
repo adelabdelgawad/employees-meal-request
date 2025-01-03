@@ -5,8 +5,8 @@ from typing import Annotated, List
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from db.application.database import get_application_session
-from db.application.models import Department, Employee
+from db.database import get_application_session
+from db.models import Department, Employee
 
 # Create API Router
 router = APIRouter()

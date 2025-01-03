@@ -8,14 +8,14 @@ from fastapi import Depends
 from sqlmodel import select, func, Date
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from db.application.models import Employee, SecurityUser, Department, EmployeeShift
-from db.hris.database import get_hris_session
-from db.hris.models import (
+from db.models import Employee, HMISSecurityUser, Department, EmployeeShift
+from hmis_db.database import get_hris_session
+from hmis_db.models import (
     HRISOrganizationUnit,
     HRISEmployee,
     HRISPosition,
     HRISShiftAssignment,
-    HRISSecurityUser,
+    HRISHMISSecurityUser,
     HRISEmployeePosition,
     TMSShift,
 )
@@ -234,14 +234,14 @@ async def _create_or_update_security_users(
     :param hris_session: AsyncSession connected to the HRIS database.
     :param app_session: AsyncSession connected to the local application database.
     """
-    statement = select(HRISSecurityUser).where(
-        HRISSecurityUser.is_deleted == False, HRISSecurityUser.is_locked == False
+    statement = select(HRISHMISSecurityUser).where(
+        HRISHMISSecurityUser.is_deleted == False, HRISHMISSecurityUser.is_locked == False
     )
     hris_sec_users = (await hris_session.execute(statement)).scalars().all()
     for hris_sec_user in hris_sec_users:
         sec_user = (
             await app_session.execute(
-                select(SecurityUser).where(SecurityUser.id == hris_sec_user.id)
+                select(HMISSecurityUser).where(HMISSecurityUser.id == hris_sec_user.id)
             )
         ).scalar_one_or_none()
         if sec_user:
@@ -251,7 +251,7 @@ async def _create_or_update_security_users(
                 hris_sec_user.is_locked,
             )
         else:
-            new_sec_user = SecurityUser(
+            new_sec_user = HMISSecurityUser(
                 id=hris_sec_user.id,
                 username=hris_sec_user.name,
                 is_deleted=hris_sec_user.is_deleted,

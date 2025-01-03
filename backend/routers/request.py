@@ -6,10 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlmodel import Session, select
 from typing import Annotated
 
-from db.application.database import get_application_session
-from db.application.models import MealRequest, MealRequestLine
-from db.hris.models import HRISEmployeeAttendanceWithDetails
-from db.hris.database import get_hris_session
+from db.database import get_application_session
+from db.models import MealRequest, MealRequestLine
+from hmis_db.models import HRISEmployeeAttendanceWithDetails
+from hmis_db.database import get_hris_session
 
 # Create API Router
 router = APIRouter()

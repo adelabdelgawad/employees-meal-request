@@ -8,11 +8,11 @@ from typing import AsyncGenerator
 load_dotenv()
 
 SQL_DSN = (
-    f"DRIVER={os.getenv("HRIS_DB_DRIVER")};"
-    f"SERVER={os.getenv("HRIS_DB_SERVER")};"
-    f"DATABASE={os.getenv("HRIS_DB_NAME")};"
-    f"UID={os.getenv("HRIS_DB_USER")};"
-    f"PWD={os.getenv("HRIS_DB_PASSWORD")}"
+    f"DRIVER={os.getenv("hmis_db_DRIVER")};"
+    f"SERVER={os.getenv("hmis_db_SERVER")};"
+    f"DATABASE={os.getenv("hmis_db_NAME")};"
+    f"UID={os.getenv("hmis_db_USER")};"
+    f"PWD={os.getenv("hmis_db_PASSWORD")}"
 )
 
 

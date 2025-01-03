@@ -12,8 +12,8 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 from sqlmodel import Session
 
-from db.application.database import get_application_session
-from db.application.models import Account
+from db.database import get_application_session
+from db.models import Account
 from src.custom_exceptions import AuthorizationError
 from src.login import Login
 

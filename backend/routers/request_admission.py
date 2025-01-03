@@ -3,9 +3,9 @@ import logging
 from typing import List, Optional, Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
-from db.application.models import MealRequest, MealRequestLine
-from db.application.database import get_application_session
-from db.hris.database import get_hris_session
+from db.models import MealRequest, MealRequestLine
+from db.database import get_application_session
+from hmis_db.database import get_hris_session
 from db.crud import read_meal_requests, read_meal_request_line_for_requests_page
 
 # Create API Router

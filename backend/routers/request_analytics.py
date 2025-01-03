@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select, func
 from typing import List, Annotated
 
-from db.application.database import get_application_session
-from db.application.models import MealRequest, MealRequestLine, Department
+from db.database import get_application_session
+from db.models import MealRequest, MealRequestLine, Department
 
 # Create API Router
 router = APIRouter()

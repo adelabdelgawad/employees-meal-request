@@ -1,5 +1,5 @@
-from db.hris.database import get_hris_session
-from db.hris.crud import read_hris_attendance
+from hmis_db.database import get_hris_session
+from hmis_db.crud import read_hris_attendance
 import asyncio
 from icecream import ic
 

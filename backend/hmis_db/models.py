@@ -297,7 +297,7 @@ class HRISAttendanceEngineResult(LiveBase, table=True):
     )
 
 
-class HRISSecurityUser(LiveBase, table=True):
+class HRISHMISSecurityUser(LiveBase, table=True):
     """
     Maps to 'User' table in the Security schema.
 
@@ -328,10 +328,10 @@ class HRISSecurityUser(LiveBase, table=True):
     )
 
     # Relationships
-    roles: List["HRISSecurityUserRole"] = Relationship(back_populates="user")
+    roles: List["HRISHMISSecurityUserRole"] = Relationship(back_populates="user")
 
 
-class HRISSecurityUserRole(LiveBase, table=True):
+class HRISHMISSecurityUserRole(LiveBase, table=True):
     """
     Maps to 'UserRole' table in the Security schema.
 
@@ -356,4 +356,4 @@ class HRISSecurityUserRole(LiveBase, table=True):
     )
 
     # Relationship
-    user: Optional[HRISSecurityUser] = Relationship(back_populates="roles")
+    user: Optional[HRISHMISSecurityUser] = Relationship(back_populates="roles")

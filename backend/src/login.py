@@ -5,7 +5,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.ldap import authenticate
 from src.custom_exceptions import AuthorizationError, AuthenticationError
-from db.application.models import Account, SecurityUser, RolePermission, Role
+from db.models import Account, HMISSecurityUser, RolePermission, Role
 from src.schema import UserAttributes
 
 logger = logging.getLogger(__name__)
@@ -120,8 +120,8 @@ class Login:
         logger.info(f"Creating local account for domain user: {self.username}")
 
         # Check for a corresponding security user
-        statement = select(SecurityUser).where(
-            SecurityUser.username == self.username)
+        statement = select(HMISSecurityUser).where(
+            HMISSecurityUser.username == self.username)
         results = await self.session.execute(statement)
         hris_security_user = results.scalars().first()
 

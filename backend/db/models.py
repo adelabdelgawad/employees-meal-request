@@ -7,38 +7,6 @@ from sqlmodel import Field, Relationship, SQLModel
 cairo_tz = pytz.timezone("Africa/Cairo")
 
 
-class PagePermission(SQLModel, table=True):
-    """
-    PagePermission table representing the association of Roles with Pages and the creator's Account.
-    """
-    __tablename__ = "page_permission"
-
-    id: Optional[int] = Field(default=None, primary_key=True)
-    role_id: int = Field(foreign_key="role.id", nullable=False)
-    page_id: int = Field(foreign_key="page.id", nullable=False)
-    created_by_id: int = Field(foreign_key="account.id", nullable=False)
-
-    # Relationships
-    role: Optional["Role"] = Relationship(back_populates="page_permissions")
-    page: Optional["Page"] = Relationship(back_populates="page_permissions")
-    created_by: Optional["Account"] = Relationship(
-        back_populates="page_permissions_created"
-    )
-
-
-class Page(SQLModel, table=True):
-    """
-    Page model represents an application page with associated permissions.
-    """
-    __tablename__ = "page"
-
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(nullable=False, max_length=64)
-
-    # Relationships
-    page_permissions: List["PagePermission"] = Relationship(
-        back_populates="page")
-
 
 class Role(SQLModel, table=True):
     """
@@ -50,7 +18,7 @@ class Role(SQLModel, table=True):
     name: str = Field(nullable=False, max_length=64)
 
     # Relationships
-    page_permissions: List["PagePermission"] = Relationship(
+    permission: List["RolePermission"] = Relationship(
         back_populates="role")
     role_permissions: List["RolePermission"] = Relationship(
         back_populates="role")
@@ -58,11 +26,11 @@ class Role(SQLModel, table=True):
         back_populates="role")
 
 
-class SecurityUser(SQLModel, table=True):
+class HMISSecurityUser(SQLModel, table=True):
     """
-    SecurityUser model representing a user account in the HRIS system.
+    HMISSecurityUser model representing a user account in the HRIS system.
     """
-    __tablename__ = "security_user"
+    __tablename__ = "hmis_security_user"
 
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Field(nullable=False, max_length=64)
@@ -70,7 +38,7 @@ class SecurityUser(SQLModel, table=True):
     is_locked: bool = Field(default=False)
 
     # Relationships
-    accounts: List["Account"] = Relationship(back_populates="security_user")
+    accounts: List["Account"] = Relationship(back_populates="hmis_security_user")
 
 
 class Department(SQLModel, table=True):
@@ -147,13 +115,11 @@ class Account(SQLModel, table=True):
     title: Optional[str] = Field(default=None, max_length=64)
     is_domain_user: bool = Field(default=False)
     is_super_admin: bool = Field(default=False)
-    security_user_id: Optional[int] = Field(foreign_key="security_user.id")
+    hmis_security_user_id: Optional[int] = Field(foreign_key="hmis_security_user.id")
 
     # Relationships
-    security_user: Optional["SecurityUser"] = Relationship(
+    hmis_security_user: Optional["HMISSecurityUser"] = Relationship(
         back_populates="accounts")
-    page_permissions_created: List["PagePermission"] = Relationship(
-        back_populates="created_by")
     role_permissions: List["RolePermission"] = Relationship(
         back_populates="account")
     requests: List["MealRequest"] = Relationship(back_populates="requester")

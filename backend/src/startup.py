@@ -10,8 +10,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.concurrency import run_in_threadpool
 from passlib.context import CryptContext
 
-from db.application.database import get_application_session, create_db_and_tables
-from db.application.models import (
+from db.database import get_application_session, create_db_and_tables
+from db.models import (
     Account,
     Page,
     MealRequestStatus,
@@ -20,7 +20,7 @@ from db.application.models import (
     Role,
     PagePermission,
 )
-from db.hris.database import get_hris_session
+from hmis_db.database import get_hris_session
 from src.replicate_hris import schedule_replication, scheduler, replicate
 
 # Load environment variables

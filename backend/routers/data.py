@@ -6,8 +6,8 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from collections import defaultdict
 
-from db.application.database import get_application_session
-from db.application.models import Employee, Department
+from db.database import get_application_session
+from db.models import Employee, Department
 
 # Create API Router
 router = APIRouter()

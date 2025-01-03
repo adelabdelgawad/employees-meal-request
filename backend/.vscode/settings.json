@@ -1,0 +1,32 @@
+{
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/__init__.py": true,
+        "**/*.pyc": true,
+        "**/*.pyo": true,
+        "**/.DS_Store": true,
+        "**/.venv": true,
+        "**/env": true,
+        "**/venv": true,
+        "**/.git": true,
+        "**/.pytest_cache": true,
+        "**/.vscode": true,
+        "**/node_modules": true,
+        "**/Queries": true,
+        "**/*.md": true,
+        "**/requirments.txt": true,
+        "**/.gitignore": true,
+        "**/Lib": true,
+        
+    },
+"[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true
+  },
+    "liveServer.settings.port": 5501,
+    "liveServer.settings.multiRootWorkspaceName": "EmployeeMealRequest",
+    "liveServer.settings.ignoreFiles": [
+  "**/pages/*.html"
+]
+
+}

@@ -5,8 +5,8 @@ from typing import Annotated, List, Optional
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from icecream import ic
-from db.application.database import get_application_session
-from db.application.models import Employee
+from db.database import get_application_session
+from db.models import Employee
 
 # Create API Router
 router = APIRouter()
