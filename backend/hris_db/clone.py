@@ -8,14 +8,14 @@ from fastapi import Depends
 from sqlmodel import select, func, Date
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from db.models import Employee, HMISSecurityUser, Department, EmployeeShift
-from hmis_db.database import get_hris_session
-from hmis_db.models import (
+from db.models import Employee, HRISSecurityUser, Department, EmployeeShift
+from hris_db.database import get_hris_session
+from hris_db.models import (
     HRISOrganizationUnit,
     HRISEmployee,
     HRISPosition,
     HRISShiftAssignment,
-    HRISHMISSecurityUser,
+    HRISHRISSecurityUser,
     HRISEmployeePosition,
     TMSShift,
 )
@@ -60,8 +60,7 @@ async def replicate(hris_session: AsyncSession, app_session: AsyncSession) -> No
         await _create_or_update_shifts(hris_session, app_session)
         logger.info("Data replication completed successfully.")
     except Exception as e:
-        logger.error(
-            "An error occurred during data replication:", exc_info=True)
+        logger.error("An error occurred during data replication:", exc_info=True)
 
 
 def schedule_replication(hris_session: AsyncSession, app_session: AsyncSession):
@@ -200,8 +199,7 @@ async def _create_or_update_shifts(
         for hris_shift in hris_shifts:
             shift = (
                 await app_session.execute(
-                    select(EmployeeShift).where(
-                        EmployeeShift.id == hris_shift.id)
+                    select(EmployeeShift).where(EmployeeShift.id == hris_shift.id)
                 )
             ).scalar_one_or_none()
             if shift:
@@ -221,8 +219,7 @@ async def _create_or_update_shifts(
         await app_session.commit()
 
     except Exception as e:
-        logger.error(
-            f"An error occurred during data replication: {e}")
+        logger.error(f"An error occurred during data replication: {e}")
 
 
 async def _create_or_update_security_users(
@@ -234,16 +231,25 @@ async def _create_or_update_security_users(
     :param hris_session: AsyncSession connected to the HRIS database.
     :param app_session: AsyncSession connected to the local application database.
     """
-    statement = select(HRISHMISSecurityUser).where(
-        HRISHMISSecurityUser.is_deleted == False, HRISHMISSecurityUser.is_locked == False
+    statement = select(HRISHRISSecurityUser).where(
+        HRISHRISSecurityUser.is_deleted == False,
+        HRISHRISSecurityUser.is_locked == False,
     )
     hris_sec_users = (await hris_session.execute(statement)).scalars().all()
     for hris_sec_user in hris_sec_users:
         sec_user = (
             await app_session.execute(
-                select(HMISSecurityUser).where(HMISSecurityUser.id == hris_sec_user.id)
+                select(HRISSecurityUser).where(HRISSecurityUser.id == hris_sec_user.id)
             )
         ).scalar_one_or_none()
+        if not sec_user:
+            sec_user = (
+                await app_session.execute(
+                    select(HRISSecurityUser).where(
+                        HRISSecurityUser.username == hris_sec_user.name
+                    )
+                )
+            ).scalar_one_or_none()
         if sec_user:
             sec_user.username, sec_user.is_deleted, sec_user.is_locked = (
                 hris_sec_user.name,
@@ -251,7 +257,7 @@ async def _create_or_update_security_users(
                 hris_sec_user.is_locked,
             )
         else:
-            new_sec_user = HMISSecurityUser(
+            new_sec_user = HRISSecurityUser(
                 id=hris_sec_user.id,
                 username=hris_sec_user.name,
                 is_deleted=hris_sec_user.is_deleted,

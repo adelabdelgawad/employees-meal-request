@@ -8,8 +8,8 @@ from typing import Annotated
 
 from db.database import get_application_session
 from db.models import MealRequest, MealRequestLine
-from hmis_db.models import HRISEmployeeAttendanceWithDetails
-from hmis_db.database import get_hris_session
+from hris_db.models import HRISEmployeeAttendanceWithDetails
+from hris_db.database import get_hris_session
 
 # Create API Router
 router = APIRouter()

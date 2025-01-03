@@ -5,7 +5,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.ldap import authenticate
 from src.custom_exceptions import AuthorizationError, AuthenticationError
-from db.models import Account, HMISSecurityUser, RolePermission, Role
+from db.models import Account, HRISSecurityUser, RolePermission, Role
 from src.schema import UserAttributes
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,9 @@ class Login:
     Supports both local and domain (LDAP) authentication.
     """
 
-    def __init__(self, session: AsyncSession, username: str, password: Optional[str] = None) -> None:
+    def __init__(
+        self, session: AsyncSession, username: str, password: Optional[str] = None
+    ) -> None:
         """
         Initializes the Login class.
 
@@ -46,25 +48,28 @@ class Login:
             # Authenticate the user
             if not await self._authenticate_domain_user():
                 raise AuthenticationError(
-                    f"Authentication failed for user: {self.username}")
+                    f"Authentication failed for user: {self.username}"
+                )
 
             # Fetch user roles
             self.roles = await self._get_user_roles()
             self.is_authenticated = True
-            
+
             logger.info(
-                f"User '{self.username}' authenticated successfully with roles: {self.roles}")
+                f"User '{self.username}' authenticated successfully with roles: {self.roles}"
+            )
 
         except AuthorizationError as auth_err:
-            logger.error(
-                f"Authorization error for user '{self.username}': {auth_err}")
+            logger.error(f"Authorization error for user '{self.username}': {auth_err}")
             raise
         except Exception as e:
             logger.error(
-                f"Unexpected error during authentication for user '{self.username}': {e}")
+                f"Unexpected error during authentication for user '{self.username}': {e}"
+            )
             logger.debug(traceback.format_exc())
             raise AuthenticationError(
-                f"Unexpected error during authentication for {self.username}.")
+                f"Unexpected error during authentication for {self.username}."
+            )
 
     async def _authenticate_domain_user(self) -> bool:
         """
@@ -74,22 +79,24 @@ class Login:
             bool: True if authentication is successful, False otherwise.
         """
         try:
-            logger.info(
-                f"Attempting domain authentication for user: {self.username}")
+            logger.info(f"Attempting domain authentication for user: {self.username}")
             domain_user = await authenticate(self.username, self.password)
 
             if not domain_user:
-                logger.warning(
-                    f"LDAP authentication failed for user: {self.username}")
+                logger.warning(f"LDAP authentication failed for user: {self.username}")
                 return False
 
             # Check or create a local account for the domain user
-            self.account = await self._get_local_account() or await self._create_local_account(domain_user)
+            self.account = (
+                await self._get_local_account()
+                or await self._create_local_account(domain_user)
+            )
             return True
 
         except Exception as e:
             logger.error(
-                f"Error in domain authentication for user '{self.username}': {e}")
+                f"Error in domain authentication for user '{self.username}': {e}"
+            )
             logger.debug(traceback.format_exc())
             return False
 
@@ -120,16 +127,15 @@ class Login:
         logger.info(f"Creating local account for domain user: {self.username}")
 
         # Check for a corresponding security user
-        statement = select(HMISSecurityUser).where(
-            HMISSecurityUser.username == self.username)
+        statement = select(HRISSecurityUser).where(
+            HRISSecurityUser.username == self.username
+        )
         results = await self.session.execute(statement)
         hris_security_user = results.scalars().first()
 
         if not hris_security_user:
-            logger.warning(
-                f"No security user found for domain user: {self.username}")
-            raise AuthorizationError(
-                "User lacks necessary security permissions.")
+            logger.warning(f"No security user found for domain user: {self.username}")
+            raise AuthorizationError("User lacks necessary security permissions.")
 
         # Create the new account
         new_account = Account(
@@ -161,8 +167,7 @@ class Login:
             List[str]: A list of role names assigned to the user.
         """
         if not self.account:
-            raise ValueError(
-                "Account is not set. Authenticate the user first.")
+            raise ValueError("Account is not set. Authenticate the user first.")
 
         statement = (
             select(Role.name)

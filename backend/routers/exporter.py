@@ -15,8 +15,8 @@ from db.models import (
     Account,
     MealType,
 )
-from hmis_db.models import HRISEmployeeAttendanceWithDetails
-from hmis_db.database import get_hris_session
+from hris_db.models import HRISEmployeeAttendanceWithDetails
+from hris_db.database import get_hris_session
 from src.schema import AuditRecordResponse
 
 router = APIRouter()

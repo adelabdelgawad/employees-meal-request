@@ -1,26 +1,20 @@
 "use client";
 
-import Department from "@/components/pages/request/new-request/Department";
-import Employee from "@/components/pages/request/new-request/Employee";
-import { useState } from "react";
+import { RequestProvider } from "@/context/RequestContext";
+import DepartmentColumn from "@/components/pages/request/new-request/DepartmentColumn";
+import EmployeeColumn from "@/components/pages/request/new-request/EmployeeColumn";
 
 export default function Page() {
-  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
-
   return (
-    <div className="flex items-start gap-2">
-      <div className="flex-1">
-        <Department
-          selectedDepartments={selectedDepartments}
-          setSelectedDepartments={setSelectedDepartments}
-        />
+    <RequestProvider>
+      <div className="flex items-start gap-2">
+        <div className="flex-1">
+          <DepartmentColumn />
+        </div>
+        <div className="flex-1">
+          <EmployeeColumn />
+        </div>
       </div>
-      <div className="flex-1">
-        <Employee selectedDepartments={selectedDepartments} />
-      </div>
-      <div className="flex-1">
-        <Employee selectedDepartments={selectedDepartments} />
-      </div>
-    </div>
+    </RequestProvider>
   );
 }

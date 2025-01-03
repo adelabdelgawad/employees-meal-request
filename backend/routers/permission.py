@@ -6,8 +6,8 @@ from sqlmodel import select
 from typing import Annotated
 
 from db.database import get_application_session
-from db.models import RolePermission, Role, Account, LogPermission
-from hmis_db.database import get_hris_session
+from db.models import RolePermission, Role, Account, LogRolePermission
+from hris_db.database import get_hris_session
 from src.schema import (
     RolePermissionResponse,
     UpdateAccountPermissionRequest,
@@ -26,7 +26,7 @@ active_directory = LDAPAuthenticator()
 
 @router.get("/permissions", response_model=List[RolePermissionResponse])
 async def read_permissions_endpoint(
-    session: SessionDep
+    session: SessionDep,
 ) -> List[RolePermissionResponse]:
     """
     Retrieve all account permissions grouped by username.
@@ -37,8 +37,9 @@ async def read_permissions_endpoint(
     try:
         # Perform the query
         result = await session.execute(
-            select(RolePermission, Account.username)
-            .join(Account, RolePermission.account_id == Account.id)
+            select(RolePermission, Account.username).join(
+                Account, RolePermission.account_id == Account.id
+            )
         )
         permissions = result.all()
 
@@ -127,7 +128,7 @@ async def remove_role_permission_endpoint(
                 await session.delete(permission)
                 await session.commit()
 
-                log = LogPermission(
+                log = LogRolePermission(
                     account_id=account.id,
                     role_id=role_id,
                     admin_id=body.requester_id,
@@ -141,12 +142,10 @@ async def remove_role_permission_endpoint(
         return {"detail": "Roles removed successfully."}
 
     except HTTPException as http_exc:
-        logger.exception(
-            f"HTTP Exception during role removal for {body.username}")
+        logger.exception(f"HTTP Exception during role removal for {body.username}")
         raise http_exc
     except Exception:
-        logger.exception(
-            f"Error during role removal for user: {body.username}")
+        logger.exception(f"Error during role removal for user: {body.username}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error occurred while removing roles.",
@@ -184,7 +183,7 @@ async def add_role_permission_endpoint(
             session.add(permission)
             await session.commit()
 
-            log = LogPermission(
+            log = LogRolePermission(
                 account_id=account.id,
                 role_id=role_id,
                 admin_id=body.requester_id,
@@ -198,12 +197,10 @@ async def add_role_permission_endpoint(
         return {"detail": "Roles added successfully."}
 
     except HTTPException as http_exc:
-        logger.exception(
-            f"HTTP Exception during role addition for {body.username}")
+        logger.exception(f"HTTP Exception during role addition for {body.username}")
         raise http_exc
     except Exception:
-        logger.exception(
-            f"Error during role addition for user: {body.username}")
+        logger.exception(f"Error during role addition for user: {body.username}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error occurred while adding roles.",
@@ -222,8 +219,7 @@ async def create_user_endpoint(body: UserCreateRequest, session: SessionDep):
     :raises HTTPException: If user creation fails.
     """
     try:
-        logger.info(
-            f"Creating user: {body.username} with roles {body.role_ids}")
+        logger.info(f"Creating user: {body.username} with roles {body.role_ids}")
 
         new_account = Account(username=body.username, is_domain_user=True)
         session.add(new_account)
@@ -237,12 +233,11 @@ async def create_user_endpoint(body: UserCreateRequest, session: SessionDep):
             )
 
         for role_id in body.role_ids:
-            permission = RolePermission(
-                role_id=role_id, account_id=new_account.id)
+            permission = RolePermission(role_id=role_id, account_id=new_account.id)
             session.add(permission)
             await session.commit()
 
-            log = LogPermission(
+            log = LogRolePermission(
                 account_id=new_account.id,
                 role_id=role_id,
                 admin_id=body.requester_id,
@@ -256,12 +251,10 @@ async def create_user_endpoint(body: UserCreateRequest, session: SessionDep):
         return {"detail": "User created successfully."}
 
     except HTTPException as http_exc:
-        logger.exception(
-            f"HTTP Exception during user creation for {body.username}")
+        logger.exception(f"HTTP Exception during user creation for {body.username}")
         raise http_exc
     except Exception:
-        logger.exception(
-            f"Unexpected error during user creation for {body.username}.")
+        logger.exception(f"Unexpected error during user creation for {body.username}.")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error occurred while creating the user.",
