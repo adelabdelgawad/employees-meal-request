@@ -1,9 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { fetchDepartments } from "@/api/department";
-import { fetchEmployees } from "@/api/employee";
+
 import { DepartmentType, EmployeeType, MealType } from "@/lib/definitions";
+import { fetchDepartments, fetchEmployees } from "@/lib/dataFetch";
 
 interface RequestContextType {
   departments: DepartmentType[];
@@ -13,6 +13,8 @@ interface RequestContextType {
   setSelectedDepartments: React.Dispatch<React.SetStateAction<string[]>>;
   selectedEmployees: EmployeeType[];
   setSelectedEmployees: React.Dispatch<React.SetStateAction<EmployeeType[]>>;
+  submittedEmployees: any[];
+  setSubmittedEmployees: React.Dispatch<React.SetStateAction<any[]>>;
   loading: boolean;
   error: string | null;
 }
@@ -27,6 +29,7 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
   const [selectedEmployees, setSelectedEmployees] = useState<EmployeeType[]>(
     []
   );
+  const [submittedEmployees, setSubmittedEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,8 +44,9 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
         setEmployees(fetchedEmployees);
 
         setMealTypes([
-          { id: 1, name: "Lunch" },
-          { id: 2, name: "Dinner" },
+          { id: 1, name: "Breakfast" },
+          { id: 2, name: "Lunch" },
+          { id: 3, name: "Dinner" },
         ]);
       } catch (err: any) {
         setError(err.message || "An error occurred while fetching data.");
@@ -64,6 +68,8 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
         setSelectedDepartments,
         selectedEmployees,
         setSelectedEmployees,
+        submittedEmployees,
+        setSubmittedEmployees,
         loading,
         error,
       }}

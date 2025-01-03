@@ -1,4 +1,6 @@
-import { FC, useState } from "react";
+"use client";
+
+import { FC, useState, useEffect } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -10,7 +12,9 @@ import { Button } from "@/components/ui/button";
 import MealTypeOption from "./MealTypeOption";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useRequest } from "@/context/RequestContext";
 import { EmployeeType, MealType } from "@/lib/definitions";
+import { useAlerts } from "@/components/alert/useAlerts";
 
 interface EmployeeSelectionDialogProps {
   selectedEmployees: EmployeeType[];
@@ -27,6 +31,8 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
     {}
   );
   const [selectedMealTypes, setSelectedMealTypes] = useState<MealType[]>([]);
+  const { submittedEmployees, setSubmittedEmployees } = useRequest();
+  const { addAlert } = useAlerts();
 
   // Handle notes input change
   const handleNoteChange = (employeeId: number, note: string) => {
@@ -55,14 +61,35 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
       }))
     );
 
-    console.log("Submitted Data:", finalData);
+    // Check for duplicates
+    const duplicates = finalData.filter((entry) =>
+      submittedEmployees.some(
+        (submitted) =>
+          submitted.id === entry.id && submitted.meal_id === entry.meal_id
+      )
+    );
+
+    if (duplicates.length > 0) {
+      addAlert("Duplicate records detected!", "warning");
+    }
+
+    // Filter out duplicates before adding new entries
+    const newEntries = finalData.filter(
+      (entry) =>
+        !submittedEmployees.some(
+          (submitted) =>
+            submitted.id === entry.id && submitted.meal_id === entry.meal_id
+        )
+    );
+
+    setSubmittedEmployees([...submittedEmployees, ...newEntries]);
   };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button className="w-full p-2 mt-2 bg-green-600 text-white hover:bg-green-700">
-          Submit Requested
+          Add Selected Employees
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -78,11 +105,8 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
 
         {/* Selected Employees List with Scroller */}
         {selectedEmployees.length > 0 ? (
-          <ScrollArea
-            className="mt-4 border border-gray-200 rounded-lg overflow-y-auto"
-            style={{ maxHeight: "400px" }}
-          >
-            <div className="space-y-2 p-2">
+          <ScrollArea className="mt-4 border rounded-lg p-2 bg-gray-50 max-h-[400px] scrollbar-custom">
+            <div className="space-y-2">
               {selectedEmployees.map((employee) => (
                 <div
                   key={employee.id}

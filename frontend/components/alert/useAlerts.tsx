@@ -1,29 +1,51 @@
-// useAlerts.tsx
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
-export interface Alert {
-    id: string;
-    message: string;
-    type: "success" | "warning" | "error"; // Alert types
+interface Alert {
+  id: string;
+  message: string;
+  type: "success" | "warning" | "error";
 }
 
-export default function useAlerts() {
-    const [alerts, setAlerts] = useState<Alert[]>([]);
+interface AlertsContextType {
+  alerts: Alert[];
+  addAlert: (message: string, type: "success" | "warning" | "error") => void;
+  removeAlert: (id: string) => void;
+}
 
-    const addAlert = (message: string, type: "success" | "warning" | "error" = "success") => {
-        const id = uuidv4();
-        setAlerts((prevAlerts) => [...prevAlerts, { id, message, type }]);
+const AlertsContext = createContext<AlertsContextType | undefined>(undefined);
 
-        // Automatically remove the alert after 3 seconds
-        setTimeout(() => {
-            removeAlert(id);
-        }, 3000);
-    };
+export function AlertsProvider({ children }: { children: React.ReactNode }) {
+  const [alerts, setAlerts] = useState<Alert[]>([]); // ✅ Ensure alerts is an empty array initially
 
-    const removeAlert = (id: string) => {
-        setAlerts((prevAlerts) => prevAlerts.filter((alert) => alert.id !== id));
-    };
+  const addAlert = (
+    message: string,
+    type: "success" | "warning" | "error" = "success"
+  ) => {
+    const id = uuidv4();
+    setAlerts((prevAlerts) => [...prevAlerts, { id, message, type }]);
 
-    return { alerts, addAlert, removeAlert };
+    // Automatically remove the alert after 3 seconds
+    setTimeout(() => {
+      setAlerts((prevAlerts) => prevAlerts.filter((alert) => alert.id !== id));
+    }, 3000);
+  };
+
+  const removeAlert = (id: string) => {
+    setAlerts((prevAlerts) => prevAlerts.filter((alert) => alert.id !== id));
+  };
+
+  return (
+    <AlertsContext.Provider value={{ alerts, addAlert, removeAlert }}>
+      {children}
+    </AlertsContext.Provider>
+  );
+}
+
+export function useAlerts() {
+  const context = useContext(AlertsContext);
+  if (!context) {
+    throw new Error("useAlerts must be used within an AlertsProvider");
+  }
+  return context;
 }

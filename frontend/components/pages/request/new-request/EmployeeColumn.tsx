@@ -85,7 +85,7 @@ export default function EmployeeColumn() {
           />
 
           {/* Employee List */}
-          <ScrollArea className="overflow-y-auto border rounded-lg p-2 bg-gray-50 h-[calc(100vh-300px)]">
+          <ScrollArea className="overflow-y-auto border rounded-lg bg-gray-50 h-[calc(98vh-300px)]">
             {filteredEmployees.length === 0 ? (
               <p className="text-gray-500 text-center">No employees found.</p>
             ) : (

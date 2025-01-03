@@ -1,30 +1,30 @@
 "use client";
 
-import Alert from "./Alert";
+import { useAlerts } from "./useAlerts";
 
-interface Alert {
-    id: string; // Unique identifier for each alert
-    message: string;
-    type: "success" | "warning" | "error";
-}
+export default function AlertStack() {
+  const { alerts } = useAlerts();
 
-interface AlertStackProps {
-    alerts: Alert[]; // Array of alerts to display
-    onRemove: (id: string) => void; // Callback to remove an alert
-}
+  if (!alerts || alerts.length === 0) {
+    return null; // ✅ Return null if there are no alerts
+  }
 
-export default function AlertStack({ alerts, onRemove }: AlertStackProps) {
-    return (
-        <div className="fixed top-10 right-4 flex flex-col space-y-2 z-50">
-            {alerts.map((alert) => (
-                <Alert
-                    key={alert.id}
-                    id={alert.id}
-                    message={alert.message}
-                    type={alert.type}
-                    onRemove={onRemove}
-                />
-            ))}
+  return (
+    <div className="fixed bottom-4 right-4 space-y-2">
+      {alerts.map((alert) => (
+        <div
+          key={alert.id}
+          className={`p-4 rounded shadow-lg ${
+            alert.type === "success"
+              ? "bg-green-500 text-white"
+              : alert.type === "warning"
+              ? "bg-yellow-500 text-black"
+              : "bg-red-500 text-white"
+          }`}
+        >
+          {alert.message}
         </div>
-    );
+      ))}
+    </div>
+  );
 }

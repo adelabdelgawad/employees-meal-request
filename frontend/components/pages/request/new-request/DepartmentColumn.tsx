@@ -1,16 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRequest } from "@/context/RequestContext";
-import Filter from "./Filter";
+import FilterComponent from "./Filter";
 import SelectionActions from "./SelectionActions";
 
 export default function DepartmentColumn() {
   const { departments, selectedDepartments, setSelectedDepartments } =
     useRequest();
   const [filteredDepartments, setFilteredDepartments] = useState(departments);
+
+  // Filter departments
+  useEffect(() => {
+    setFilteredDepartments(departments);
+  }, [departments]);
 
   // Toggle department selection
   const toggleDepartment = (deptId: string) => {
@@ -23,8 +28,9 @@ export default function DepartmentColumn() {
 
   // Add all departments to the selection
   const addAllDepartments = () => {
-    const allIds = filteredDepartments.map((dept) => dept.id.toString());
-    setSelectedDepartments(allIds);
+    setSelectedDepartments(
+      filteredDepartments.map((dept) => dept.id.toString())
+    );
   };
 
   // Remove all selected departments
@@ -40,7 +46,7 @@ export default function DepartmentColumn() {
         </CardHeader>
         <CardContent>
           {/* Filter Component */}
-          <Filter
+          <FilterComponent
             items={departments}
             filterBy={(dept, searchTerm) =>
               dept.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -60,7 +66,7 @@ export default function DepartmentColumn() {
           />
 
           {/* Department List */}
-          <ScrollArea className="overflow-y-auto border rounded-lg p-2 bg-gray-50 h-[calc(100vh-300px)]">
+          <ScrollArea className="overflow-y-auto border rounded-lg bg-gray-50 h-[calc(102vh-300px)]">
             {filteredDepartments.length === 0 ? (
               <p className="text-gray-500 text-center">No departments found.</p>
             ) : (
@@ -74,7 +80,11 @@ export default function DepartmentColumn() {
                   }`}
                   onClick={() => toggleDepartment(dept.id.toString())}
                 >
-                  <span className="text-sm text-gray-700">{dept.name}</span>
+                  <div className="flex justify-between items-center">
+                    <div className="flex-1">
+                      <div className="text-sm font-semibold">{dept.name}</div>
+                    </div>
+                  </div>
                 </label>
               ))
             )}

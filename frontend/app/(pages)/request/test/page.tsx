@@ -1,19 +1,26 @@
-// app/(pages)/request/new-request/DepartmentFetcher.tsx
+"use client";
 
-import { DepartmentType } from "@/lib/definitions";
+import { useRequest } from "@/context/RequestContext";
 
-export default async function DepartmentFetcher() {
-  // Fetch data from your API
-  const res = await fetch("http://localhost:8000/departments", {
-    cache: "no-store", // Ensures fresh data
-  });
+export default function ExampleComponent() {
+  const { departments, employees, mealTypes } = useRequest();
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch departments");
-  }
+  return (
+    <div>
+      <h2>Departments</h2>
+      {departments.map((dept) => (
+        <p key={dept.id}>{dept.name}</p>
+      ))}
 
-  const departments: DepartmentType[] = await res.json();
+      <h2>Employees</h2>
+      {employees.map((emp) => (
+        <p key={emp.id}>{emp.name}</p>
+      ))}
 
-  // Pass data to the client component
-  return <DepartmentList departments={departments} />;
+      <h2>Meal Types</h2>
+      {mealTypes.map((meal) => (
+        <p key={meal.id}>{meal.name}</p>
+      ))}
+    </div>
+  );
 }
