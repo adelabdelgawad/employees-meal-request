@@ -1,25 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRequest } from "@/context/RequestContext";
+import EmployeeSelectionDialog from "./EmployeeSelectionDialog";
+import FilterComponent from "./Filter";
 import SelectionActions from "./SelectionActions";
-import { EmployeeType } from "@/lib/definitions";
 
 export default function EmployeeColumn() {
   const {
     employees,
     selectedEmployees,
     setSelectedEmployees,
+    mealTypes,
     selectedDepartments,
   } = useRequest();
-  const [filteredEmployees, setFilteredEmployees] = useState<EmployeeType[]>(
-    []
-  );
-  const [search, setSearch] = useState("");
+  const [filteredEmployees, setFilteredEmployees] = useState(employees);
 
   // Filter employees based on selected departments
   useEffect(() => {
@@ -34,37 +32,27 @@ export default function EmployeeColumn() {
     }
   }, [employees, selectedDepartments]);
 
-  // Search functionality
-  useEffect(() => {
-    if (!search) {
-      setFilteredEmployees(
-        employees.filter(
-          (emp) =>
-            selectedDepartments.length === 0 ||
-            selectedDepartments.includes(emp.department_id.toString())
-        )
-      );
-    } else {
-      setFilteredEmployees(
-        employees.filter(
-          (emp) =>
-            (selectedDepartments.length === 0 ||
-              selectedDepartments.includes(emp.department_id.toString())) &&
-            (emp.name.toLowerCase().includes(search.toLowerCase()) ||
-              emp.code.toString().includes(search))
-        )
-      );
-    }
-  }, [search, employees, selectedDepartments]);
+  // Toggle employee selection
+  const toggleEmployee = (empId: string) => {
+    const selectedEmployee = employees.find(
+      (emp) => emp.id.toString() === empId
+    );
+    if (!selectedEmployee) return;
 
-  // Add all employees to selected
-  const selectAll = () => {
-    const allIds = filteredEmployees.map((emp) => emp.id.toString());
-    setSelectedEmployees(allIds);
+    setSelectedEmployees((prev) =>
+      prev.some((emp) => emp.id === selectedEmployee.id)
+        ? prev.filter((emp) => emp.id !== selectedEmployee.id)
+        : [...prev, selectedEmployee]
+    );
+  };
+
+  // Add all employees to the selection
+  const addAllEmployees = () => {
+    setSelectedEmployees(filteredEmployees);
   };
 
   // Remove all selected employees
-  const removeAll = () => {
+  const removeAllEmployees = () => {
     setSelectedEmployees([]);
   };
 
@@ -75,26 +63,29 @@ export default function EmployeeColumn() {
           <CardTitle>Employee List</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Search Input */}
-          <Input
-            type="text"
+          {/* Filter Component */}
+          <FilterComponent
+            items={employees}
+            filterBy={(emp, searchTerm) =>
+              emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              emp.code.toString().includes(searchTerm)
+            }
+            onFilter={setFilteredEmployees}
             placeholder="Search Employees by Name or Code..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="mb-4"
           />
 
           {/* Selection Actions */}
-          <SelectionActions onAddAll={selectAll} onRemoveAll={removeAll} />
+          <SelectionActions
+            onAddAll={addAllEmployees}
+            onRemoveAll={removeAllEmployees}
+            disableAddAll={
+              filteredEmployees.length === selectedEmployees.length
+            }
+            disableRemoveAll={selectedEmployees.length === 0}
+          />
 
           {/* Employee List */}
-          <ScrollArea
-            className="overflow-y-auto border rounded-lg p-2 bg-gray-50"
-            style={{
-              height: "100%",
-              maxHeight: "calc(100vh - 200px)",
-            }}
-          >
+          <ScrollArea className="overflow-y-auto border rounded-lg p-2 bg-gray-50 h-[calc(100vh-300px)]">
             {filteredEmployees.length === 0 ? (
               <p className="text-gray-500 text-center">No employees found.</p>
             ) : (
@@ -102,17 +93,11 @@ export default function EmployeeColumn() {
                 <label
                   key={emp.id}
                   className={`block border rounded-lg p-4 cursor-pointer ${
-                    selectedEmployees.includes(emp.id.toString())
+                    selectedEmployees.some((e) => e.id === emp.id)
                       ? "bg-blue-50 border-blue-500"
                       : "bg-white border-gray-300"
                   }`}
-                  onClick={() =>
-                    setSelectedEmployees((prev) =>
-                      prev.includes(emp.id.toString())
-                        ? prev.filter((id) => id !== emp.id.toString())
-                        : [...prev, emp.id.toString()]
-                    )
-                  }
+                  onClick={() => toggleEmployee(emp.id.toString())}
                 >
                   <div className="flex justify-between items-center">
                     <div className="flex-1">
@@ -129,6 +114,15 @@ export default function EmployeeColumn() {
               ))
             )}
           </ScrollArea>
+
+          {/* Employee Dialog */}
+          <EmployeeSelectionDialog
+            selectedEmployees={selectedEmployees}
+            mealTypes={mealTypes}
+            onSelectMealType={(selectedMealTypes) => {
+              console.log("Meal Types Selected:", selectedMealTypes);
+            }}
+          />
         </CardContent>
       </Card>
     </div>

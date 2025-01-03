@@ -9,15 +9,16 @@ import {
 import { Button } from "@/components/ui/button";
 import MealTypeOption from "./MealTypeOption";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmployeeType, MealType } from "@/lib/definitions";
 
-interface EmployeeDialogProps {
+interface EmployeeSelectionDialogProps {
   selectedEmployees: EmployeeType[];
   mealTypes: MealType[];
   onSelectMealType: (selectedMealTypes: MealType[]) => void;
 }
 
-const EmployeesSelectionDialog: FC<EmployeeDialogProps> = ({
+const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
   selectedEmployees,
   mealTypes,
   onSelectMealType,
@@ -75,27 +76,47 @@ const EmployeesSelectionDialog: FC<EmployeeDialogProps> = ({
           onSelectMealType={handleMealTypeChange}
         />
 
-        {/* Selected Employees List */}
+        {/* Selected Employees List with Scroller */}
         {selectedEmployees.length > 0 ? (
-          <div className="space-y-4 mt-4">
-            {selectedEmployees.map((employee) => (
-              <div
-                key={employee.id}
-                className="flex justify-between items-center p-3 border border-gray-300 rounded"
-              >
-                <div>{employee.name}</div>
-                <Input
-                  type="text"
-                  placeholder="Notes"
-                  value={employeeNotes[employee.id] || ""}
-                  onChange={(e) =>
-                    handleNoteChange(employee.id, e.target.value)
-                  }
-                  className="w-1/2"
-                />
-              </div>
-            ))}
-          </div>
+          <ScrollArea
+            className="mt-4 border border-gray-200 rounded-lg overflow-y-auto"
+            style={{ maxHeight: "400px" }}
+          >
+            <div className="space-y-2 p-2">
+              {selectedEmployees.map((employee) => (
+                <div
+                  key={employee.id}
+                  className="p-4 border border-gray-300 rounded-lg shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white hover:shadow-md"
+                >
+                  {/* Employee Info */}
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-800">
+                        {employee.name}
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        Title: {employee.title}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Code: {employee.code}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Notes Input */}
+                  <Input
+                    type="text"
+                    placeholder="Notes"
+                    value={employeeNotes[employee.id] || ""}
+                    onChange={(e) =>
+                      handleNoteChange(employee.id, e.target.value)
+                    }
+                    className="mt-4 sm:mt-0 sm:w-1/2 w-full"
+                  />
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
         ) : (
           <p className="text-center text-gray-500">
             No employees selected. Please select employees to proceed.
