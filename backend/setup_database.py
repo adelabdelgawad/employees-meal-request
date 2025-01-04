@@ -1,39 +1,31 @@
 """
 setup_database.py
 
-An async-compatible database setup and seed script for a SQLModel + Alembic project.
+An async-compatible database setup and seed script for a SQLModel project.
 
 Steps:
 1. Create the database if it doesn't exist (synchronous).
-2. Run Alembic migrations (synchronous).
+2. Create tables if they don't exist (synchronous).
 3. Seed default values (async).
 """
 
 import asyncio
 import os
 from typing import Optional
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.engine import URL
-from alembic.config import Config
-from alembic import command
-
-from sqlmodel import select
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel import select, SQLModel
 from dotenv import load_dotenv
 
-# Import your models (make sure they are all in one place or properly imported)
-from db.models import (
-    Role,
-    Account,
-    MealType,
-    EmailRole,
-)
+# Import models from your project
+from db.models import Role, Account, MealType, EmailRole, MealRequestStatus
 
 
 # ------------------------------------------------------------------------------
-# Load environment variables
+#  Load environment variables
 # ------------------------------------------------------------------------------
 load_dotenv()
 
@@ -41,18 +33,17 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_SERVER = os.getenv("DB_SERVER", "localhost")
 DB_NAME = os.getenv("DB_NAME", "mealrequestdb")
+if not DB_USER or not DB_PASSWORD or not DB_SERVER or not DB_NAME:
+    raise ValueError(
+        "Missing required environment variables for the database connection."
+    )
 
 # ------------------------------------------------------------------------------
-# Database URLs
+#  Database URLs
 # ------------------------------------------------------------------------------
-# 1) Async URL (used by AsyncEngine in SQLModel):
-ASYNC_DATABASE_URL = (
-    f"mysql+asyncmy://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
-)
-
-# 2) Synchronous base URL (used to create DB if it doesn't exist and run Alembic):
+ASYNC_DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
+SYNC_DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
 BASE_SYNC_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}"
-SYNC_DATABASE_URL = f"{BASE_SYNC_URL}/{DB_NAME}?charset=utf8mb4"
 
 
 # ------------------------------------------------------------------------------
@@ -60,10 +51,14 @@ SYNC_DATABASE_URL = f"{BASE_SYNC_URL}/{DB_NAME}?charset=utf8mb4"
 # ------------------------------------------------------------------------------
 def create_database_if_not_exists() -> None:
     """
-    Check and create the database if it does not exist.
-    Uses a synchronous connection so that we can run Alembic migrations after.
+    Creates the database if it does not already exist.
+    Uses a synchronous connection to ensure compatibility with SQLModel table creation.
+
+    Raises:
+        SystemExit: If there is an error connecting to the database server.
     """
     print("Checking if database exists...")
+
     try:
         engine = create_engine(BASE_SYNC_URL, echo=False, future=True)
         with engine.connect() as connection:
@@ -91,17 +86,18 @@ def create_database_if_not_exists() -> None:
 # ------------------------------------------------------------------------------
 # 2. Create Tables If Not Exists (Synchronous)
 # ------------------------------------------------------------------------------
-def create_tables() -> None:
+async def create_tables(async_engine: AsyncEngine) -> None:
     """
-    Create all tables in the database if they don't exist.
-    Uses the SQLModel metadata to generate the schema.
-    """
-    from db.models import SQLModel  # Import all models
+    Creates all tables in the database if they don't already exist.
+    Uses SQLModel's metadata to generate the schema.
 
-    print("Creating tables...")
+    Raises:
+        SystemExit: If there is an error creating tables in the database.
+    """
     try:
-        engine = create_engine(SYNC_DATABASE_URL, echo=True, future=True)
-        SQLModel.metadata.create_all(engine)
+        print("Creating tables...")
+        async with async_engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
         print("Tables created successfully.")
     except OperationalError as e:
         print(f"Error creating tables: {e}")
@@ -109,83 +105,108 @@ def create_tables() -> None:
 
 
 # ------------------------------------------------------------------------------
-# 3. Seed Default Values (Async)
+# 3. Seed Default Values (Asynchronous)
 # ------------------------------------------------------------------------------
-async def seed_default_values() -> None:
+async def seed_default_values(engine: AsyncEngine) -> None:
     """
-    Insert default values into the database using an async session.
-    Includes:
-      - Roles: Admin, User, Waiter, Chef, Manager, Cashier, Stockcontroller
-      - EmailRoles: Request, Confirmation
-      - MealTypes: Lunch, Dinner
-      - A default admin user (username='admin', password='securepassword123', role='Admin')
+    Inserts default values into the database using an async session.
+
+    Args:
+        engine (AsyncEngine): The asynchronous engine to use.
     """
-    print("Seeding default values (async) ...")
+    print("Seeding default values...")
 
-    # Create an async engine
-    engine = create_async_engine(ASYNC_DATABASE_URL, echo=False, future=True)
-
-    # Open async session
     async with AsyncSession(engine) as session:
-        # -------------------------------------------
-        # Create Roles
-        # -------------------------------------------
-        existing_roles = (await session.exec(select(Role))).all()
-        if not existing_roles:
-            roles_to_insert = [
-                Role(name="Admin"),
-                Role(name="User"),
-                Role(name="Waiter"),
-                Role(name="Chef"),
-                Role(name="Manager"),
-                Role(name="Cashier"),
-                Role(name="Stockcontroller"),
-            ]
-            session.add_all(roles_to_insert)
-            print("Default roles added.")
+        try:
+            await seed_roles(session)
+            await seed_email_roles(session)
+            await seed_meal_types(session)
+            await seed_admin_user(session)
+            await seed_meal_request_status(session)
+            await session.commit()
+            print("Default values seeding complete.")
+        except Exception as e:
+            print(f"Error seeding default values: {e}")
+            await session.rollback()
 
-        # -------------------------------------------
-        # Create Email Roles
-        # -------------------------------------------
-        existing_email_roles = (await session.exec(select(EmailRole))).all()
-        if not existing_email_roles:
-            email_roles_to_insert = [
-                EmailRole(name="Request"),
-                EmailRole(name="Confirmation"),
-            ]
-            session.add_all(email_roles_to_insert)
-            print("Default email roles added.")
 
-        # -------------------------------------------
-        # Create Meal Types
-        # -------------------------------------------
-        existing_meal_types = (await session.exec(select(MealType))).all()
-        if not existing_meal_types:
-            meal_types_to_insert = [
-                MealType(name="Lunch"),
-                MealType(name="Dinner"),
-            ]
-            session.add_all(meal_types_to_insert)
-            print("Default meal types added.")
+# ------------------------------------------------------------------------------
+# 3.1 Helper: Seed Roles
+# ------------------------------------------------------------------------------
+async def seed_roles(session: AsyncSession) -> None:
+    existing_roles = (await session.exec(select(Role))).all()
+    if not existing_roles:
+        roles = [
+            Role(name="Admin"),
+            Role(name="User"),
+            Role(name="Waiter"),
+            Role(name="Chef"),
+            Role(name="Manager"),
+            Role(name="Cashier"),
+            Role(name="Stockcontroller"),
+        ]
+        session.add_all(roles)
+        print("Default roles added.")
 
-        # -------------------------------------------
-        # Create Admin User
-        # -------------------------------------------
-        # For demonstration, we'll only create 'admin' if not present
-        admin_user = (
-            await session.exec(select(Account).where(Account.username == "admin"))
-        ).first()
-        if not admin_user:
-            # You can store hashed passwords in a real scenario
-            admin_user = Account(
-                username="admin",
-                password="securepassword123",  # ideally hashed
-            )
-            session.add(admin_user)
-            print("Default admin account added.")
 
-        await session.commit()
-    print("Default values seeding complete.")
+# ------------------------------------------------------------------------------
+# 3.2 Helper: Seed Email Roles
+# ------------------------------------------------------------------------------
+async def seed_email_roles(session: AsyncSession) -> None:
+    existing_email_roles = (await session.exec(select(EmailRole))).all()
+    if not existing_email_roles:
+        email_roles = [
+            EmailRole(name="Request"),
+            EmailRole(name="Confirmation"),
+        ]
+        session.add_all(email_roles)
+        print("Default email roles added.")
+
+
+# ------------------------------------------------------------------------------
+# 3.3 Helper: Seed Meal Types
+# ------------------------------------------------------------------------------
+async def seed_meal_types(session: AsyncSession) -> None:
+    existing_meal_types = (await session.exec(select(MealType))).all()
+    if not existing_meal_types:
+        meal_types = [
+            MealType(name="Lunch"),
+            MealType(name="Dinner"),
+        ]
+        session.add_all(meal_types)
+        print("Default meal types added.")
+
+
+# ------------------------------------------------------------------------------
+# 3.4 Helper: Seed Admin User
+# ------------------------------------------------------------------------------
+async def seed_admin_user(session: AsyncSession) -> None:
+    admin_user = (
+        await session.exec(select(Account).where(Account.username == "admin"))
+    ).first()
+    if not admin_user:
+        # Ideally, use a hashed password in production
+        admin_user = Account(
+            username="admin",
+            password="securepassword123",
+        )
+        session.add(admin_user)
+        print("Default admin account added.")
+
+
+async def seed_meal_request_status(session: AsyncSession) -> None:
+    existing_meal_request_status = await session.exec(
+        select(MealRequestStatus)
+    )
+    if not existing_meal_request_status.all():
+        request_status = [
+            MealRequestStatus(name="Pending"),
+            MealRequestStatus(name="Hold"),
+            MealRequestStatus(name="Approved"),
+            MealRequestStatus(name="Rejected"),
+        ]
+        session.add_all(request_status)
+        print("Default meal request statuses added.")
 
 
 # ------------------------------------------------------------------------------
@@ -193,14 +214,27 @@ async def seed_default_values() -> None:
 # ------------------------------------------------------------------------------
 async def main_async() -> None:
     """
-    Main async entry to orchestrate the entire DB setup.
+    Orchestrates the entire database setup process:
+    - Create database (if doesn't exist)
+    - Create tables (if don't exist)
+    - Seed default values
     """
-    create_database_if_not_exists()  # Step 1: Create the database (synchronous)
-    create_tables()  # Step 2
-    await seed_default_values()  # Step 3
+    create_database_if_not_exists()
+
+    async_engine = create_async_engine(
+        ASYNC_DATABASE_URL, echo=False, future=True
+    )
+
+    try:
+        await create_tables(async_engine)
+        await seed_default_values(async_engine)
+    finally:
+        await async_engine.dispose()
 
 
 if __name__ == "__main__":
     print("Starting database setup...")
     asyncio.run(main_async())
-    print("Database setup and default values insertion completed successfully.")
+    print(
+        "Database setup and default values insertion completed successfully."
+    )

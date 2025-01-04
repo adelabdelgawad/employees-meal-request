@@ -39,58 +39,62 @@ export default function DepartmentColumn() {
   };
 
   return (
-    <div>
-      <Card className="w-full">
-        <CardHeader>
+      <Card className="flex flex-col overflow-hidden">
+        <CardHeader className="p-4">
           <CardTitle>Department List</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-1 flex-col overflow-hidden">
           {/* Filter Component */}
-          <FilterComponent
-            items={departments}
-            filterBy={(dept, searchTerm) =>
-              dept.name.toLowerCase().includes(searchTerm.toLowerCase())
-            }
-            onFilter={setFilteredDepartments}
-            placeholder="Search Departments..."
-          />
+          <div className="mb-4">
+            <FilterComponent
+              items={departments}
+              filterBy={(dept, searchTerm) =>
+                dept.name.toLowerCase().includes(searchTerm.toLowerCase())
+              }
+              onFilter={setFilteredDepartments}
+              placeholder="Search Departments..."
+            />
+          </div>
 
           {/* Selection Actions */}
-          <SelectionActions
-            onAddAll={addAllDepartments}
-            onRemoveAll={removeAllDepartments}
-            disableAddAll={
-              filteredDepartments.length === selectedDepartments.length
-            }
-            disableRemoveAll={selectedDepartments.length === 0}
-          />
+          <div className="mb-4">
+            <SelectionActions
+              onAddAll={addAllDepartments}
+              onRemoveAll={removeAllDepartments}
+              disableAddAll={
+                filteredDepartments.length === selectedDepartments.length
+              }
+              disableRemoveAll={selectedDepartments.length === 0}
+            />
+          </div>
 
           {/* Department List */}
-          <ScrollArea className="overflow-y-auto border rounded-lg bg-gray-50 h-[calc(102vh-300px)]">
-            {filteredDepartments.length === 0 ? (
-              <p className="text-gray-500 text-center">No departments found.</p>
-            ) : (
-              filteredDepartments.map((dept) => (
-                <label
-                  key={dept.id}
-                  className={`block border rounded-lg p-4 cursor-pointer ${
-                    selectedDepartments.includes(dept.id.toString())
-                      ? "bg-blue-50 border-blue-500"
-                      : "bg-white border-gray-300"
-                  }`}
-                  onClick={() => toggleDepartment(dept.id.toString())}
-                >
-                  <div className="flex justify-between items-center">
-                    <div className="flex-1">
-                      <div className="text-sm font-semibold">{dept.name}</div>
+          <ScrollArea className="flex-1 overflow-auto border rounded-lg bg-gray-50">
+            <div className="space-y-1">
+              {filteredDepartments.length === 0 ? (
+                <p className="text-gray-500 text-center">No departments found.</p>
+              ) : (
+                filteredDepartments.map((dept) => (
+                  <label
+                    key={dept.id}
+                    className={`block border rounded-lg p-4 cursor-pointer ${
+                      selectedDepartments.includes(dept.id.toString())
+                        ? "bg-blue-50 border-blue-500"
+                        : "bg-white border-gray-300"
+                    }`}
+                    onClick={() => toggleDepartment(dept.id.toString())}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold">{dept.name}</div>
+                      </div>
                     </div>
-                  </div>
-                </label>
-              ))
-            )}
+                  </label>
+                ))
+              )}
+            </div>
           </ScrollArea>
         </CardContent>
       </Card>
-    </div>
   );
 }

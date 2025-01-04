@@ -1,5 +1,5 @@
 import * as React from "react";
-
+import Link from "next/link";
 import {
   Sidebar,
   SidebarContent,
@@ -13,86 +13,101 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
-// This is sample data.
+// Mock the current logged-in role (Replace this with your auth logic)
+const currentRole = "admin";
+
 const data = {
   navMain: [
     {
       title: "Request",
       url: "#",
-      role: "admin, requester, approver, admin",
+      role: "admin, requester, approver",
+      headerTitle: "Request Section",
       items: [
         {
           title: "New Request",
-          url: "request/new-request",
+          url: "/request/new-request",
           role: "admin, requester",
+          headerTitle: "Create a New Request",
           isActive: false,
         },
         {
           title: "Request List",
-          url: "request/request-list",
+          url: "/request/request-list",
           role: "admin, approver",
+          headerTitle: "View Request List",
           isActive: false,
         },
         {
           title: "History",
-          url: "request/history",
+          url: "/request/history",
           role: "admin, requester",
+          headerTitle: "Request History",
           isActive: false,
         },
       ],
     },
     {
       title: "Data Management",
-      url: "data-management",
-      role: "admin, admin",
+      url: "/data-management",
+      role: "admin",
+      headerTitle: "Data Management",
       items: [
         {
           title: "Allergies",
-          url: "data-management/allergies",
-          role: "admin, admin",
+          url: "/data-management/allergies",
+          role: "admin",
+          headerTitle: "Manage Allergies",
           isActive: false,
         },
         {
           title: "Meals",
-          url: "data-management/meals",
-          role: "admin, admin",
+          url: "/data-management/meals",
+          role: "admin",
+          headerTitle: "Manage Meals",
           isActive: true,
         },
         {
           title: "Meal Plans",
-          url: "data-management/meal-plans",
-          role: "admin, admin",
+          url: "/data-management/meal-plans",
+          role: "admin",
+          headerTitle: "Manage Meal Plans",
           isActive: false,
         },
         {
-          title: "Nutration",
-          url: "data-management/nutrations",
-          role: "admin, admin",
+          title: "Nutrition",
+          url: "/data-management/nutrition",
+          role: "admin",
+          headerTitle: "Manage Nutrition",
           isActive: false,
         },
       ],
     },
     {
       title: "Security",
-      url: "security",
+      url: "/security",
       role: "admin, moderator",
+      headerTitle: "Security Management",
       items: [
         {
           title: "Permission",
-          url: "security/permissions",
+          url: "/security/permissions",
           role: "admin, moderator",
+          headerTitle: "Manage Permissions",
           isActive: false,
         },
         {
           title: "Users",
-          url: "security/users",
+          url: "/security/users",
           role: "admin, moderator",
+          headerTitle: "Manage Users",
           isActive: false,
         },
         {
           title: "Roles",
-          url: "security/roles",
+          url: "/security/roles",
           role: "admin, moderator",
+          headerTitle: "Manage Roles",
           isActive: false,
         },
       ],
@@ -100,39 +115,44 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const version = process.env.VERSION ? process.env.VERSION : "BETA-VERSION";
-  const appName = process.env.APP_NAME ? process.env.APP_NAME : "APPLICATION";
+export function AppSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
+  // Helper function to check if the current role is allowed
+  const isRoleAllowed = (roles: string) => {
+    return roles.split(", ").includes(currentRole);
+  };
 
   return (
     <Sidebar {...props}>
-      <SidebarHeader>
-        <div className="flex flex-col items-center justify-center h-20">
-          <div className="text-xl font-semibold text-gray-800">{appName}</div>
-          <div className="text-sm font-medium text-gray-600">
-            Version: <span className="text-gray-900">{version}</span>
-          </div>
-        </div>
-      </SidebarHeader>
       <SidebarContent className="p-1">
-        {/* We create a SidebarGroup for each parent. */}
-        {data.navMain.map((item) => (
-          <SidebarGroup key={item.title}>
-            <SidebarGroupLabel>{item.title}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {item.items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={item.isActive}>
-                      <a href={item.url}>{item.title}</a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        {data.navMain
+          .filter((item) => isRoleAllowed(item.role))
+          .map((item) => (
+            <SidebarGroup key={item.title}>
+              <SidebarGroupLabel>{item.title}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {item.items
+                    .filter((subItem) => isRoleAllowed(subItem.role))
+                    .map((subItem) => (
+                      <SidebarMenuItem key={subItem.title}>
+                        <Link href={subItem.url} passHref>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={subItem.isActive}
+                          >
+                            <span>{subItem.title}</span>
+                          </SidebarMenuButton>
+                        </Link>
+                      </SidebarMenuItem>
+                    ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
       </SidebarContent>
+
       <SidebarRail />
     </Sidebar>
   );

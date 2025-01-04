@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 import { DepartmentType, EmployeeType, MealType } from "@/lib/definitions";
-import { fetchDepartments, fetchEmployees } from "@/lib/dataFetch";
+import { fetchDepartments, fetchEmployees, fetchMealTypes } from "@/lib/dataFetch";
 
 interface RequestContextType {
   departments: DepartmentType[];
@@ -43,11 +43,9 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
         const fetchedEmployees = await fetchEmployees();
         setEmployees(fetchedEmployees);
 
-        setMealTypes([
-          { id: 1, name: "Breakfast" },
-          { id: 2, name: "Lunch" },
-          { id: 3, name: "Dinner" },
-        ]);
+        const fetchedMealTypes = await fetchMealTypes();
+        setMealTypes(fetchedMealTypes)
+
       } catch (err: any) {
         setError(err.message || "An error occurred while fetching data.");
       } finally {

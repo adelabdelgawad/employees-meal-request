@@ -4,11 +4,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRequest } from "@/context/RequestContext";
 import { useAlerts } from "@/components/alert/useAlerts";
+import { useRouter } from "next/navigation";
+import { debounce } from "@/lib/utils";
 
 export default function SubmitRequestButton() {
   const { submittedEmployees } = useRequest();
   const { addAlert } = useAlerts();
   const [loading, setLoading] = useState(false);
+
+  // ✅ Call useRouter at the top level
+  const router = useRouter();
 
   const handleRequestSubmission = async () => {
     if (submittedEmployees.length === 0) {
@@ -33,6 +38,10 @@ export default function SubmitRequestButton() {
 
       const result = await response.json();
       addAlert(result.message, "success");
+
+      // ✅ Redirect to confirmation page with multiple IDs
+      const requestIds = result.created_meal_request_ids.join(",");
+      router.push(`/request-success?requestIds=${requestIds}`);
     } catch (error: any) {
       addAlert(error.message || "An error occurred", "error");
     } finally {
@@ -40,16 +49,20 @@ export default function SubmitRequestButton() {
     }
   };
 
+  const debouncedHandleRequestSubmission = debounce(
+    handleRequestSubmission,
+    300
+  );
+  
   return (
     <Button
-      onClick={handleRequestSubmission}
+      onClick={debouncedHandleRequestSubmission}
       disabled={submittedEmployees.length === 0 || loading}
       className={`w-full ${
-        submittedEmployees.length === 0
+        submittedEmployees.length === 0 || loading
           ? "bg-gray-300 text-gray-500 cursor-not-allowed"
           : "bg-green-700 text-white hover:bg-green-800"
       }`}
-      style={{ height: "80px" }} // Increased button height
     >
       {loading ? "Submitting..." : "Submit Request"}
     </Button>

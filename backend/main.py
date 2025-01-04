@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import employee, department
+from routers import data, request
 from dotenv import load_dotenv
 from src.startup import lifespan
 import logging
@@ -25,7 +25,7 @@ app = FastAPI(lifespan=lifespan)
 # Configure CORS middleware
 # Middleware for CORS and debugging
 origins = [
-    "http://localhost:3000",  # Frontend URL
+    "http://localhost:3001",  # Frontend URL
 ]
 
 app.add_middleware(
@@ -39,5 +39,5 @@ app.add_middleware(
 app.add_middleware(TokenRenewalMiddleware)
 
 # Include additional routers
-app.include_router(department.router, tags=["Data"])
-app.include_router(employee.router, tags=["Data"])
+app.include_router(data.router, tags=["Data"])
+app.include_router(request.router, tags=["Request"])

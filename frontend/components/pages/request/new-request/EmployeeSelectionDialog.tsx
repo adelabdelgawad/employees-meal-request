@@ -27,6 +27,7 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
   mealTypes,
   onSelectMealType,
 }) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [employeeNotes, setEmployeeNotes] = useState<Record<number, string>>(
     {}
   );
@@ -50,6 +51,14 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
 
   // Handle form submission
   const handleSubmit = () => {
+    if (selectedMealTypes.length === 0) {
+      addAlert(
+        "Please select at least one meal type before submitting.",
+        "warning"
+      );
+      return;
+    }
+
     const finalData = selectedEmployees.flatMap((employee) =>
       selectedMealTypes.map((mealType) => ({
         id: employee.id,
@@ -61,16 +70,23 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
       }))
     );
 
-    // Check for duplicates
-    const duplicates = finalData.filter((entry) =>
+    // Check for duplicates and generate detailed error messages
+    const duplicateEntries = finalData.filter((entry) =>
       submittedEmployees.some(
         (submitted) =>
           submitted.id === entry.id && submitted.meal_id === entry.meal_id
       )
     );
 
-    if (duplicates.length > 0) {
-      addAlert("Duplicate records detected!", "warning");
+    if (duplicateEntries.length > 0) {
+      // Display detailed error message for each duplicate entry
+      duplicateEntries.forEach((entry) => {
+        addAlert(
+          `${entry.name} already has Meal Type "${entry.meal_name}" submitted.`,
+          "warning"
+        );
+        console.log(entry);
+      });
     }
 
     // Filter out duplicates before adding new entries
@@ -83,12 +99,18 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
     );
 
     setSubmittedEmployees([...submittedEmployees, ...newEntries]);
+
+    // Hide the dialog after submission
+    setIsDialogOpen(false);
   };
 
   return (
-    <Dialog>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full p-2 mt-2 bg-green-600 text-white hover:bg-green-700">
+        <Button
+          className="w-full p-2 mt-2 bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-300 disabled:text-gray-500"
+          disabled={selectedEmployees.length === 0}
+        >
           Add Selected Employees
         </Button>
       </DialogTrigger>
@@ -100,17 +122,18 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
         {/* Meal Type Selection */}
         <MealTypeOption
           mealTypes={mealTypes}
+          selectedMealTypes={selectedMealTypes}
           onSelectMealType={handleMealTypeChange}
         />
 
         {/* Selected Employees List with Scroller */}
         {selectedEmployees.length > 0 ? (
-          <ScrollArea className="mt-4 border rounded-lg p-2 bg-gray-50 max-h-[400px] scrollbar-custom">
+          <ScrollArea className="mt-1 border rounded-lg p-1 bg-gray-50 max-h-[500px] scrollbar-custom">
             <div className="space-y-2">
               {selectedEmployees.map((employee) => (
                 <div
                   key={employee.id}
-                  className="p-4 border border-gray-300 rounded-lg shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white hover:shadow-md"
+                  className="p-2 border border-gray-300 rounded-lg shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white hover:shadow-md"
                 >
                   {/* Employee Info */}
                   <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
@@ -150,7 +173,8 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
         {/* Confirm Button */}
         <Button
           onClick={handleSubmit}
-          className="mt-4 w-full bg-blue-600 text-white"
+          className="mt-4 w-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
+          disabled={selectedMealTypes.length === 0}
         >
           Confirm
         </Button>

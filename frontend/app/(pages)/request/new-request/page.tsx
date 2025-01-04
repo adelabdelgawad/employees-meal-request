@@ -5,22 +5,27 @@ import SubmitRequestButton from "@/components/pages/request/new-request/SubmitRe
 
 export default function Page() {
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Main content (columns) */}
-      <div className="flex flex-1 gap-4 overflow-hidden">
-        <div className="flex-1 h-full overflow-hidden">
+    <div className="flex flex-col h-screen bg-gray-100">
+      {/* Main Content */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 overflow-hidden">
+        {/* Department Column */}
+        <div className="flex flex-col h-full overflow-hidden bg-white rounded-lg shadow">
           <DepartmentColumn />
         </div>
-        <div className="flex-1 h-full overflow-hidden">
+
+        {/* Employee Column */}
+        <div className="flex flex-col h-full overflow-hidden bg-white rounded-lg shadow">
           <EmployeeColumn />
         </div>
-        <div className="flex-1 h-full overflow-hidden">
+
+        {/* Selected Employees Column */}
+        <div className="flex flex-col h-full overflow-hidden bg-white rounded-lg shadow">
           <SelectedEmployeesColumn />
         </div>
       </div>
 
       {/* Submit Button */}
-      <div className="h-[80px]  bg-white">
+      <div className="bg-white border-t shadow-md ">
         <SubmitRequestButton />
       </div>
     </div>

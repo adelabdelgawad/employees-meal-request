@@ -1,22 +1,17 @@
-import { useState } from "react";
 import { Label } from "@/components/ui/label"; // Adjust the import path based on your project
-
-interface MealType {
-  id: number;
-  name: string;
-}
+import { MealType } from "@/lib/definitions";
 
 interface MealTypeProps {
   mealTypes: MealType[];
+  selectedMealTypes: MealType[];
   onSelectMealType: (selectedMealTypes: MealType[]) => void;
 }
 
 export default function MealTypeOption({
   mealTypes,
+  selectedMealTypes,
   onSelectMealType,
 }: MealTypeProps) {
-  const [selectedMealTypes, setSelectedMealTypes] = useState<MealType[]>([]);
-
   const handleSelectionChange = (id: number) => {
     let updatedSelectedMealTypes = [...selectedMealTypes];
 
@@ -31,17 +26,16 @@ export default function MealTypeOption({
       }
     }
 
-    setSelectedMealTypes(updatedSelectedMealTypes);
     onSelectMealType(updatedSelectedMealTypes);
   };
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-2">
+    <div className="flex flex-wrap gap-4">
       {mealTypes.map((mealType) => (
         <div
           key={mealType.id}
           onClick={() => handleSelectionChange(mealType.id)}
-          className={`p-4 border rounded flex items-center justify-center text-center cursor-pointer ${
+          className={`p-4 border rounded flex flex-grow items-center justify-center text-center cursor-pointer ${
             selectedMealTypes.some(
               (selectedMealType) => selectedMealType.id === mealType.id
             )

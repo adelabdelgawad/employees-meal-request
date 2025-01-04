@@ -5,6 +5,7 @@ export async function fetchDepartments() {
   });
 
   if (!res.ok) {
+    console.log(res);
     throw new Error("Failed to fetch departments");
   }
 
@@ -22,3 +23,16 @@ export async function fetchEmployees() {
 
   return res.json();
 }
+
+export async function fetchMealTypes() {
+  const res = await fetch("http://localhost:8000/meal-types", {
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch employees");
+  }
+
+  return res.json();
+}
+
