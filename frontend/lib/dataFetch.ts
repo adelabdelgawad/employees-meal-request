@@ -36,3 +36,14 @@ export async function fetchMealTypes() {
   return res.json();
 }
 
+export async function fetchRequests() {
+  const res = await fetch("http://localhost:8000/requests", {
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch employees");
+  }
+
+  return res.json();
+}

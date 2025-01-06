@@ -32,10 +32,10 @@ const data = {
           isActive: false,
         },
         {
-          title: "Request List",
-          url: "/request/request-list",
+          title: "Requests",
+          url: "/request/requests",
           role: "admin, approver",
-          headerTitle: "View Request List",
+          headerTitle: "View Requests",
           isActive: false,
         },
         {
