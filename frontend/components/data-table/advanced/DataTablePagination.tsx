@@ -1,19 +1,11 @@
-import { type Table } from "@tanstack/react-table";
+import { Table } from "@tanstack/react-table";
 import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DoubleArrowLeftIcon,
+  DoubleArrowRightIcon,
+} from "@radix-ui/react-icons";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
@@ -37,21 +29,25 @@ export default function DataTablePagination<TData>({
         {/* Rows Per Page Selector */}
         <div className="flex items-center space-x-2">
           <p className="whitespace-nowrap text-sm font-medium">Rows per page</p>
-          <Select
-            value={`${table.getState().pagination.pageSize}`}
-            onValueChange={(value) => table.setPageSize(Number(value))}
-          >
-            <SelectTrigger className="h-8 w-[4.5rem]">
-              <SelectValue placeholder={table.getState().pagination.pageSize} />
-            </SelectTrigger>
-            <SelectContent side="top">
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger className="h-8 w-[4.5rem] bg-gray-100 border border-gray-300 rounded px-2 flex items-center justify-between text-sm">
+              {table.getState().pagination.pageSize}
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content
+              className="bg-white border border-gray-300 rounded shadow-md"
+              side="top"
+            >
               {pageSizeOptions.map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
+                <DropdownMenu.Item
+                  key={pageSize}
+                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                  onSelect={() => table.setPageSize(pageSize)}
+                >
                   {pageSize}
-                </SelectItem>
+                </DropdownMenu.Item>
               ))}
-            </SelectContent>
-          </Select>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
         </div>
 
         {/* Current Page Info */}
@@ -62,45 +58,38 @@ export default function DataTablePagination<TData>({
 
         {/* Page Navigation Buttons */}
         <div className="flex items-center space-x-2">
-          <Button
+          <button
             aria-label="Go to first page"
-            variant="outline"
-            className="hidden size-8 p-0 lg:flex"
+            className="p-2 border border-gray-300 rounded disabled:opacity-50"
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
           >
-            <ChevronsLeft className="size-4" aria-hidden="true" />
-          </Button>
-          <Button
+            <DoubleArrowLeftIcon />
+          </button>
+          <button
             aria-label="Go to previous page"
-            variant="outline"
-            size="icon"
-            className="size-8"
+            className="p-2 border border-gray-300 rounded disabled:opacity-50"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            <ChevronLeft className="size-4" aria-hidden="true" />
-          </Button>
-          <Button
+            <ChevronLeftIcon />
+          </button>
+          <button
             aria-label="Go to next page"
-            variant="outline"
-            size="icon"
-            className="size-8"
+            className="p-2 border border-gray-300 rounded disabled:opacity-50"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            <ChevronRight className="size-4" aria-hidden="true" />
-          </Button>
-          <Button
+            <ChevronRightIcon />
+          </button>
+          <button
             aria-label="Go to last page"
-            variant="outline"
-            size="icon"
-            className="hidden size-8 lg:flex"
+            className="p-2 border border-gray-300 rounded disabled:opacity-50"
             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
             disabled={!table.getCanNextPage()}
           >
-            <ChevronsRight className="size-4" aria-hidden="true" />
-          </Button>
+            <DoubleArrowRightIcon />
+          </button>
         </div>
       </div>
     </div>

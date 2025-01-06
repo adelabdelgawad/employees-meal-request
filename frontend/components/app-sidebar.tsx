@@ -1,159 +1,100 @@
-import * as React from "react";
-import Link from "next/link";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-} from "@/components/ui/sidebar";
+"use client";
 
-// Mock the current logged-in role (Replace this with your auth logic)
+import * as NavigationMenu from "@radix-ui/react-navigation-menu";
+import Link from "next/link";
+
 const currentRole = "admin";
 
 const data = {
   navMain: [
     {
       title: "Request",
-      url: "#",
       role: "admin, requester, approver",
-      headerTitle: "Request Section",
       items: [
         {
           title: "New Request",
           url: "/request/new-request",
           role: "admin, requester",
-          headerTitle: "Create a New Request",
-          isActive: false,
         },
         {
           title: "Requests",
           url: "/request/requests",
           role: "admin, approver",
-          headerTitle: "View Requests",
-          isActive: false,
         },
-        {
-          title: "History",
-          url: "/request/history",
-          role: "admin, requester",
-          headerTitle: "Request History",
-          isActive: false,
-        },
+        { title: "History", url: "/request/history", role: "admin, requester" },
       ],
     },
     {
       title: "Data Management",
-      url: "/data-management",
       role: "admin",
-      headerTitle: "Data Management",
       items: [
         {
           title: "Allergies",
           url: "/data-management/allergies",
           role: "admin",
-          headerTitle: "Manage Allergies",
-          isActive: false,
         },
-        {
-          title: "Meals",
-          url: "/data-management/meals",
-          role: "admin",
-          headerTitle: "Manage Meals",
-          isActive: true,
-        },
+        { title: "Meals", url: "/data-management/meals", role: "admin" },
         {
           title: "Meal Plans",
           url: "/data-management/meal-plans",
           role: "admin",
-          headerTitle: "Manage Meal Plans",
-          isActive: false,
         },
         {
           title: "Nutrition",
           url: "/data-management/nutrition",
           role: "admin",
-          headerTitle: "Manage Nutrition",
-          isActive: false,
         },
       ],
     },
     {
       title: "Security",
-      url: "/security",
       role: "admin, moderator",
-      headerTitle: "Security Management",
       items: [
         {
           title: "Permission",
           url: "/security/permissions",
           role: "admin, moderator",
-          headerTitle: "Manage Permissions",
-          isActive: false,
         },
-        {
-          title: "Users",
-          url: "/security/users",
-          role: "admin, moderator",
-          headerTitle: "Manage Users",
-          isActive: false,
-        },
-        {
-          title: "Roles",
-          url: "/security/roles",
-          role: "admin, moderator",
-          headerTitle: "Manage Roles",
-          isActive: false,
-        },
+        { title: "Users", url: "/security/users", role: "admin, moderator" },
+        { title: "Roles", url: "/security/roles", role: "admin, moderator" },
       ],
     },
   ],
 };
 
-export function AppSidebar({
-  ...props
-}: React.ComponentProps<typeof Sidebar>) {
-  // Helper function to check if the current role is allowed
+export function AppSidebar() {
   const isRoleAllowed = (roles: string) => {
     return roles.split(", ").includes(currentRole);
   };
 
   return (
-    <Sidebar {...props}>
-      <SidebarContent className="p-1">
+    <NavigationMenu.Root className="bg-gray-900 text-white w-64 h-full p-4">
+      <NavigationMenu.List>
         {data.navMain
           .filter((item) => isRoleAllowed(item.role))
           .map((item) => (
-            <SidebarGroup key={item.title}>
-              <SidebarGroupLabel>{item.title}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
+            <NavigationMenu.Item key={item.title} className="mb-4">
+              <NavigationMenu.Trigger className="font-bold text-lg mb-2">
+                {item.title}
+              </NavigationMenu.Trigger>
+              <NavigationMenu.Content className="pl-4">
+                <ul>
                   {item.items
                     .filter((subItem) => isRoleAllowed(subItem.role))
                     .map((subItem) => (
-                      <SidebarMenuItem key={subItem.title}>
-                        <Link href={subItem.url} passHref>
-                          <SidebarMenuButton
-                            asChild
-                            isActive={subItem.isActive}
-                          >
-                            <span>{subItem.title}</span>
-                          </SidebarMenuButton>
+                      <li key={subItem.title}>
+                        <Link href={subItem.url}>
+                          <a className="block p-2 hover:bg-gray-700 rounded">
+                            {subItem.title}
+                          </a>
                         </Link>
-                      </SidebarMenuItem>
+                      </li>
                     ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+                </ul>
+              </NavigationMenu.Content>
+            </NavigationMenu.Item>
           ))}
-      </SidebarContent>
-
-      <SidebarRail />
-    </Sidebar>
+      </NavigationMenu.List>
+    </NavigationMenu.Root>
   );
 }

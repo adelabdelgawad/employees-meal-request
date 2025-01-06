@@ -1,22 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Plus, X } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { PlusIcon, Cross2Icon } from "@radix-ui/react-icons";
+import * as Popover from "@radix-ui/react-popover";
+import * as Checkbox from "@radix-ui/react-checkbox";
+
 import { useDataTable } from "../../../app/(pages)/request/requests/DataTableContext";
 import { Column, Table } from "@tanstack/react-table";
 
@@ -75,15 +63,10 @@ export default function FilterBy<TData>({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="justify-between border-dotted"
-        >
-          <Plus className="mr-2 h-4 w-4" />
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger asChild>
+        <button className="flex items-center justify-between w-full px-4 py-2 border border-dotted rounded-md text-sm bg-white hover:bg-gray-100 focus:outline-none">
+          <PlusIcon className="mr-2 h-4 w-4" />
           {selectedValues.length > 0 ? (
             <>
               {`${column.columnDef?.header} | ${selectedValues.length} selected`}
@@ -91,42 +74,52 @@ export default function FilterBy<TData>({
                 onClick={handleReset}
                 className="ml-2 flex items-center gap-1 text-red-500 cursor-pointer"
               >
-                <X className="h-4 w-4" /> Reset
+                <Cross2Icon className="h-4 w-4" /> Reset
               </span>
             </>
           ) : (
             `Filter by ${column.columnDef?.header ?? "Value"}`
           )}
-        </Button>
-      </PopoverTrigger>
+        </button>
+      </Popover.Trigger>
 
-      <PopoverContent className="w-[200px] p-0">
-        <Command>
-          <CommandInput
+      <Popover.Portal>
+        <Popover.Content
+          className="w-[200px] p-4 bg-white border rounded-md shadow-md"
+          sideOffset={5}
+        >
+          <input
+            type="text"
             placeholder={`Search ${column.columnDef?.header ?? "Value"}...`}
+            className="w-full px-3 py-2 mb-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) =>
+              setSelectedValues(
+                uniqueValues
+                  .map((item) => item.value)
+                  .filter((value) =>
+                    value.toLowerCase().includes(e.target.value.toLowerCase())
+                  )
+              )
+            }
           />
-          <CommandList>
-            <CommandEmpty>No values found.</CommandEmpty>
-            <CommandGroup>
-              {uniqueValues.map(({ value, count }) => (
-                <CommandItem
-                  key={value}
-                  value={value}
-                  className="flex items-center"
+          <div className="flex flex-col gap-2">
+            {uniqueValues.map(({ value, count }) => (
+              <div key={value} className="flex items-center gap-2">
+                <Checkbox.Root
+                  className="w-5 h-5 border rounded-md bg-gray-100 flex items-center justify-center"
+                  checked={selectedValues.includes(value)}
+                  onCheckedChange={() => handleCheckboxChange(value)}
                 >
-                  <Checkbox
-                    checked={selectedValues.includes(value)}
-                    onCheckedChange={() => handleCheckboxChange(value)}
-                  />
-                  <span className="ml-2">
-                    {value} ({count})
-                  </span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+                  <Checkbox.Indicator className="text-blue-500">
+                    ✔
+                  </Checkbox.Indicator>
+                </Checkbox.Root>
+                <span>{`${value} (${count})`}</span>
+              </div>
+            ))}
+          </div>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }

@@ -1,6 +1,7 @@
 import { CustomColumnDef } from "@/components/data-table/advanced/_types";
 import { RequestRecord } from "@/lib/definitions";
-import { Checkbox } from "@/components/ui/checkbox";
+import * as Checkbox from "@radix-ui/react-checkbox";
+import { CheckIcon } from "@radix-ui/react-icons";
 
 export function getColumns(
   setColumnFilters: React.Dispatch<React.SetStateAction<any>>
@@ -10,11 +11,18 @@ export function getColumns(
       id: "id",
       header: " ",
       cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label={`Select row ${row.id}`}
-        />
+        <div className="flex items-center justify-center">
+          <Checkbox.Root
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label={`Select row ${row.id}`}
+            className="w-5 h-5 bg-gray-200 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <Checkbox.Indicator>
+              <CheckIcon className="text-blue-500" />
+            </Checkbox.Indicator>
+          </Checkbox.Root>
+        </div>
       ),
       meta: { isVisible: true },
     },
@@ -48,7 +56,7 @@ export function getColumns(
     },
     {
       accessorKey: "mealType",
-      header: "MealType",
+      header: "Meal Type",
       meta: { enableFiltering: true, isVisible: true },
     },
     {
@@ -57,9 +65,9 @@ export function getColumns(
       meta: { isVisible: true },
     },
     {
-      accessorKey: "accetpted",
+      accessorKey: "accepted",
       header: "Acceptance",
-      meta: {isVisible: true },
+      meta: { isVisible: true },
     },
     {
       accessorKey: "requestStatus",

@@ -26,7 +26,7 @@ declare module "@tanstack/react-table" {
 
 export function DataTable() {
   const {
-    data,
+    data = [], // Ensure data is always an array
     sorting,
     setSorting,
     globalFilter,
@@ -38,7 +38,7 @@ export function DataTable() {
 
   // Create the table instance
   const table = useReactTable({
-    data,
+    data: data.length > 0 ? data : [], // Fallback to an empty array
     columns: getColumns(setColumnFilters),
     state: {
       sorting,
@@ -88,41 +88,51 @@ export function DataTable() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <table className="w-full border border-gray-200 rounded-lg">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-4 py-2 border-b bg-gray-100 text-center"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-gray-100">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-2 border-b text-center">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <DataTablePagination table={table} />
-      </div>
+      {data.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <table className="w-full border border-gray-200 rounded-lg">
+            <thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="px-4 py-2 border-b bg-gray-100 text-center"
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <tr key={row.id} className="hover:bg-gray-100">
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className="px-4 py-2 border-b text-center"
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <DataTablePagination table={table} />
+        </div>
+      ) : (
+        <div className="text-center py-4">No data available.</div>
+      )}
     </div>
   );
 }

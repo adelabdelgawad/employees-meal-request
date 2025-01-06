@@ -1,20 +1,12 @@
 "use client";
 
 import { AppSidebar } from "@/components/app-sidebar";
-import {
-  SidebarInset,
-  SidebarProvider,
 
-} from "@/components/ui/sidebar";
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
+    <div className="flex h-screen">
       <AppSidebar />
-      <SidebarInset>
-        <div className="flex flex-col h-screen overflow-hidden">
-          <main className="flex-1 overflow-auto">{children}</main>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+      <main className="flex-1 overflow-auto p-4">{children}</main>
+    </div>
   );
 }
