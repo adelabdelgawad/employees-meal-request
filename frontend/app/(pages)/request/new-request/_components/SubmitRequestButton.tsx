@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { useRequest } from "@/context/RequestContext";
 import { useAlerts } from "@/components/alert/useAlerts";
 import { useRouter } from "next/navigation";
@@ -49,22 +48,23 @@ export default function SubmitRequestButton() {
     }
   };
 
+  // ✅ Debounced submission handler
   const debouncedHandleRequestSubmission = debounce(
     handleRequestSubmission,
     300
   );
-  
+
   return (
-    <Button
+    <button
       onClick={debouncedHandleRequestSubmission}
       disabled={submittedEmployees.length === 0 || loading}
-      className={`w-full ${
+      className={`w-full py-2 px-4 rounded-md text-sm font-medium ${
         submittedEmployees.length === 0 || loading
           ? "bg-gray-300 text-gray-500 cursor-not-allowed"
           : "bg-green-700 text-white hover:bg-green-800"
       }`}
     >
       {loading ? "Submitting..." : "Submit Request"}
-    </Button>
+    </button>
   );
 }

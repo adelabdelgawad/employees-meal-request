@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState, useEffect, useMemo } from "react";
+import * as ScrollArea from "@radix-ui/react-scroll-area";
+import * as Checkbox from "@radix-ui/react-checkbox";
+import { CheckIcon } from "@radix-ui/react-icons";
 import { useRequest } from "@/context/RequestContext";
 import FilterComponent from "./Filter";
 import SelectionActions from "./SelectionActions";
@@ -10,15 +11,24 @@ import SelectionActions from "./SelectionActions";
 export default function DepartmentColumn() {
   const { departments, selectedDepartments, setSelectedDepartments } =
     useRequest();
+
   const [filteredDepartments, setFilteredDepartments] = useState(departments);
+
+  // Memoize filteredDepartments to avoid recalculation on each render
+  const filteredList = useMemo(
+    () => filteredDepartments,
+    [filteredDepartments]
+  );
 
   // Filter departments
   useEffect(() => {
-    setFilteredDepartments(departments);
+    if (filteredDepartments !== departments) {
+      setFilteredDepartments(departments);
+    }
   }, [departments]);
 
   // Toggle department selection
-  const toggleDepartment = (deptId: string) => {
+  const toggleDepartment = (deptId: string | number) => {
     setSelectedDepartments((prev) =>
       prev.includes(deptId)
         ? prev.filter((id) => id !== deptId)
@@ -28,9 +38,7 @@ export default function DepartmentColumn() {
 
   // Add all departments to the selection
   const addAllDepartments = () => {
-    setSelectedDepartments(
-      filteredDepartments.map((dept) => dept.id.toString())
-    );
+    setSelectedDepartments(filteredList.map((dept) => dept.id));
   };
 
   // Remove all selected departments
@@ -39,62 +47,64 @@ export default function DepartmentColumn() {
   };
 
   return (
-      <Card className="flex flex-col overflow-hidden">
-        <CardHeader className="p-4">
-          <CardTitle>Department List</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-1 flex-col overflow-hidden">
-          {/* Filter Component */}
-          <div className="mb-4">
-            <FilterComponent
-              items={departments}
-              filterBy={(dept, searchTerm) =>
-                dept.name.toLowerCase().includes(searchTerm.toLowerCase())
-              }
-              onFilter={setFilteredDepartments}
-              placeholder="Search Departments..."
-            />
-          </div>
+    <div className="border rounded-lg shadow-md p-4">
+      <h2 className="text-lg font-semibold mb-4">Department List</h2>
 
-          {/* Selection Actions */}
-          <div className="mb-4">
-            <SelectionActions
-              onAddAll={addAllDepartments}
-              onRemoveAll={removeAllDepartments}
-              disableAddAll={
-                filteredDepartments.length === selectedDepartments.length
-              }
-              disableRemoveAll={selectedDepartments.length === 0}
-            />
-          </div>
+      {/* Filter Component */}
+      <div className="mb-4">
+        <FilterComponent
+          items={departments}
+          filterBy={(dept, searchTerm) =>
+            dept.name.toLowerCase().includes(searchTerm.toLowerCase())
+          }
+          onFilter={setFilteredDepartments}
+          placeholder="Search Departments..."
+        />
+      </div>
 
-          {/* Department List */}
-          <ScrollArea className="flex-1 overflow-auto border rounded-lg bg-gray-50">
-            <div className="space-y-1">
-              {filteredDepartments.length === 0 ? (
-                <p className="text-gray-500 text-center">No departments found.</p>
-              ) : (
-                filteredDepartments.map((dept) => (
-                  <label
-                    key={dept.id}
-                    className={`block border rounded-lg p-4 cursor-pointer ${
-                      selectedDepartments.includes(dept.id.toString())
-                        ? "bg-blue-50 border-blue-500"
-                        : "bg-white border-gray-300"
-                    }`}
-                    onClick={() => toggleDepartment(dept.id.toString())}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div className="flex-1">
-                        <div className="text-sm font-semibold">{dept.name}</div>
-                      </div>
-                    </div>
-                  </label>
-                ))
-              )}
-            </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
+      {/* Selection Actions */}
+      <div className="mb-4">
+        <SelectionActions
+          onAddAll={addAllDepartments}
+          onRemoveAll={removeAllDepartments}
+          disableAddAll={filteredList.length === selectedDepartments.length}
+          disableRemoveAll={selectedDepartments.length === 0}
+        />
+      </div>
+
+      {/* Department List */}
+      <ScrollArea.Root className="border rounded-lg max-h-[300px] overflow-hidden">
+        <ScrollArea.Viewport className="p-2">
+          {filteredList.length === 0 ? (
+            <p className="text-gray-500 text-center">No departments found.</p>
+          ) : (
+            filteredList.map((dept) => (
+              <div
+                key={dept.id}
+                className={`border rounded-lg p-3 flex items-center justify-between ${
+                  selectedDepartments.includes(dept.id)
+                    ? "bg-blue-50 border-blue-500"
+                    : "bg-white border-gray-300"
+                }`}
+              >
+                <span className="text-sm font-medium">{dept.name}</span>
+                <Checkbox.Root
+                  checked={selectedDepartments.includes(dept.id)}
+                  onCheckedChange={() => toggleDepartment(dept.id)}
+                  className="w-5 h-5 border rounded flex items-center justify-center"
+                >
+                  <Checkbox.Indicator>
+                    <CheckIcon className="w-4 h-4 text-blue-500" />
+                  </Checkbox.Indicator>
+                </Checkbox.Root>
+              </div>
+            ))
+          )}
+        </ScrollArea.Viewport>
+        <ScrollArea.Scrollbar orientation="vertical" className="bg-gray-200">
+          <ScrollArea.Thumb className="bg-gray-400 rounded" />
+        </ScrollArea.Scrollbar>
+      </ScrollArea.Root>
+    </div>
   );
 }

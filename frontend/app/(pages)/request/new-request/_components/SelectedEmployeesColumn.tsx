@@ -1,5 +1,9 @@
 "use client";
 
+import { useRequest } from "@/context/RequestContext";
+import * as ScrollArea from "@radix-ui/react-scroll-area";
+import * as Accordion from "@radix-ui/react-accordion";
+
 interface Entry {
   id: number;
   name: string;
@@ -7,16 +11,6 @@ interface Entry {
   meal_name: string;
   notes: string;
 }
-
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
-import { useRequest } from "@/context/RequestContext";
 
 export default function SelectedEmployeesColumn() {
   const { submittedEmployees, setSubmittedEmployees } = useRequest();
@@ -49,19 +43,21 @@ export default function SelectedEmployeesColumn() {
 
       {/* Employee List */}
       {Object.keys(employeesByMealType).length > 0 ? (
-        <ScrollArea className="flex-1 overflow-auto border rounded-lg bg-gray-50">
-          {Object.keys(employeesByMealType).length > 0 ? (
-            <Accordion
+        <ScrollArea.Root className="flex-1 overflow-auto border rounded-lg bg-gray-50">
+          <ScrollArea.Viewport className="p-4">
+            <Accordion.Root
               type="multiple"
               defaultValue={Object.keys(employeesByMealType)}
             >
               {Object.entries(employeesByMealType).map(
                 ([mealName, employees]) => (
-                  <AccordionItem key={mealName} value={mealName}>
-                    <AccordionTrigger className="text-lg font-semibold text-gray-800 bg-gray-100 hover:bg-gray-200 p-3 rounded-md">
-                      {mealName}
-                    </AccordionTrigger>
-                    <AccordionContent>
+                  <Accordion.Item key={mealName} value={mealName}>
+                    <Accordion.Header>
+                      <Accordion.Trigger className="text-lg font-semibold text-gray-800 bg-gray-100 hover:bg-gray-200 p-3 rounded-md w-full text-left">
+                        {mealName}
+                      </Accordion.Trigger>
+                    </Accordion.Header>
+                    <Accordion.Content className="p-3 bg-white border rounded-md">
                       <div className="space-y-1">
                         {employees.map((entry) => (
                           <div
@@ -81,29 +77,27 @@ export default function SelectedEmployeesColumn() {
                                 </p>
                               </div>
                             </div>
-                            <Button
-                              variant="outline"
-                              className="text-red-600 hover:bg-red-50"
+                            <button
                               onClick={() =>
                                 removeEmployee(entry.id, entry.meal_id)
                               }
+                              className="text-red-600 border border-red-600 rounded-md px-3 py-1 hover:bg-red-50"
                             >
                               Remove
-                            </Button>
+                            </button>
                           </div>
                         ))}
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
+                    </Accordion.Content>
+                  </Accordion.Item>
                 )
               )}
-            </Accordion>
-          ) : (
-            <div className="p-4 text-center text-gray-500 flex-1 flex items-center justify-center">
-              No employees have been submitted yet.
-            </div>
-          )}
-        </ScrollArea>
+            </Accordion.Root>
+          </ScrollArea.Viewport>
+          <ScrollArea.Scrollbar orientation="vertical" className="bg-gray-200">
+            <ScrollArea.Thumb className="bg-gray-400 rounded" />
+          </ScrollArea.Scrollbar>
+        </ScrollArea.Root>
       ) : (
         <div className="p-4 text-center text-gray-500 flex-1 flex items-center justify-center">
           No employees have been submitted yet.
