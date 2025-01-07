@@ -18,13 +18,11 @@ export interface MealType {
 
 export interface RequestRecord {
   id: number;
-  requester: string;
-  title: string;
-  requestTime: string;
-  closedTime: string;
-  notes: string;
-  mealType: string;
-  requests: number;
-  accetpted: number;
-  requestStatus: string;
+  status: string;
+  requester?: string;
+  requester_title?: string;
+  meal_type: string;
+  request_time: string;
+  closed_time?: string;
+  notes?: string;
 }

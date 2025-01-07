@@ -41,8 +41,12 @@ if not DB_USER or not DB_PASSWORD or not DB_SERVER or not DB_NAME:
 # ------------------------------------------------------------------------------
 #  Database URLs
 # ------------------------------------------------------------------------------
-ASYNC_DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
-SYNC_DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
+ASYNC_DATABASE_URL = (
+    f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
+)
+SYNC_DATABASE_URL = (
+    f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
+)
 BASE_SYNC_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}"
 
 
@@ -189,15 +193,15 @@ async def seed_admin_user(session: AsyncSession) -> None:
         admin_user = Account(
             username="admin",
             password="securepassword123",
+            full_name="Administrator",
+            title="Built-in Administrator",
         )
         session.add(admin_user)
         print("Default admin account added.")
 
 
 async def seed_meal_request_status(session: AsyncSession) -> None:
-    existing_meal_request_status = await session.exec(
-        select(MealRequestStatus)
-    )
+    existing_meal_request_status = await session.exec(select(MealRequestStatus))
     if not existing_meal_request_status.all():
         request_status = [
             MealRequestStatus(name="Pending"),
@@ -221,9 +225,7 @@ async def main_async() -> None:
     """
     create_database_if_not_exists()
 
-    async_engine = create_async_engine(
-        ASYNC_DATABASE_URL, echo=False, future=True
-    )
+    async_engine = create_async_engine(ASYNC_DATABASE_URL, echo=False, future=True)
 
     try:
         await create_tables(async_engine)
@@ -235,6 +237,4 @@ async def main_async() -> None:
 if __name__ == "__main__":
     print("Starting database setup...")
     asyncio.run(main_async())
-    print(
-        "Database setup and default values insertion completed successfully."
-    )
+    print("Database setup and default values insertion completed successfully.")

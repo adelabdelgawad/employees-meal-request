@@ -1,4 +1,4 @@
-import { CustomColumnDef } from "@/components/data-table/advanced/_types";
+import { CustomColumnDef } from "@/app/(pages)/request/requests/_types";
 import { RequestRecord } from "@/lib/definitions";
 import * as Checkbox from "@radix-ui/react-checkbox";
 import { CheckIcon } from "@radix-ui/react-icons";
@@ -32,21 +32,39 @@ export function getColumns(
       meta: { enableInputFiltering: true, isVisible: true },
     },
     {
-      accessorKey: "title",
+      accessorKey: "requester_title",
       header: "Title",
-      cell: ({ row }) => row.getValue("title"),
       meta: {
         isVisible: true,
       },
     },
     {
-      accessorKey: "requestTime",
+      accessorKey: "meal_type",
+      header: "Meal",
+
+      meta: { isVisible: true, enableFiltering: true },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      meta: { isVisible: true, enableFiltering: true },
+    },
+    {
+      accessorKey: "request_time",
       header: "Request Time",
+      cell: ({ getValue }) => {
+        const value = getValue<string>();
+        return new Date(value).toLocaleString(); // Formats the date
+      },
       meta: { isVisible: true },
     },
     {
-      accessorKey: "closedTime",
+      accessorKey: "closed_time",
       header: "Closed Time",
+      cell: ({ getValue }) => {
+        const value = getValue<string>();
+        return value ? new Date(value).toLocaleString() : ""; // Formats the date
+      },
       meta: { isVisible: true },
     },
     {
@@ -54,41 +72,5 @@ export function getColumns(
       header: "Notes",
       meta: { isVisible: true },
     },
-    {
-      accessorKey: "mealType",
-      header: "Meal Type",
-      meta: { enableFiltering: true, isVisible: true },
-    },
-    {
-      accessorKey: "requests",
-      header: "Total Employees",
-      meta: { isVisible: true },
-    },
-    {
-      accessorKey: "accepted",
-      header: "Acceptance",
-      meta: { isVisible: true },
-    },
-    {
-      accessorKey: "requestStatus",
-      header: "Status",
-      meta: { enableFiltering: true, isVisible: true },
-    },
   ];
 }
-
-// Sample data array of RequestRecord objects
-export const data: RequestRecord[] = [
-  {
-    id: 1,
-    requester: "Adel Farrag Ahmed",
-    title: "Request for Dinner",
-    requestTime: "requestTime",
-    closedTime: "closedTime",
-    notes: "",
-    mealType: "Dinner",
-    requests: 5,
-    accetpted: 1,
-    requestStatus: "Approved",
-  },
-];

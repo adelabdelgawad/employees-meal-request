@@ -3,7 +3,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 import { DepartmentType, EmployeeType, MealType } from "@/lib/definitions";
-import { fetchDepartments, fetchEmployees, fetchMealTypes } from "@/lib/dataFetch";
+import {
+  getDepartments,
+  getEmployees,
+  getMealTypes,
+} from "@/app/_lib/data-fetcher";
 
 interface RequestContextType {
   departments: DepartmentType[];
@@ -37,15 +41,14 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const fetchedDepartments = await fetchDepartments();
+        const fetchedDepartments = await getDepartments();
         setDepartments(fetchedDepartments);
 
-        const fetchedEmployees = await fetchEmployees();
+        const fetchedEmployees = await getEmployees();
         setEmployees(fetchedEmployees);
 
-        const fetchedMealTypes = await fetchMealTypes();
-        setMealTypes(fetchedMealTypes)
-
+        const fetchedMealTypes = await getMealTypes();
+        setMealTypes(fetchedMealTypes);
       } catch (err: any) {
         setError(err.message || "An error occurred while fetching data.");
       } finally {

@@ -107,6 +107,7 @@ class Account(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Field(nullable=False, unique=True, max_length=64)
+    full_name: Optional[str] = Field(max_length=128, default=None)
     password: Optional[str] = Field(default=None, max_length=64)
     title: Optional[str] = Field(default=None, max_length=64)
     is_domain_user: bool = Field(default=False)
@@ -117,9 +118,19 @@ class Account(SQLModel, table=True):
         back_populates="accounts"
     )
     role_permissions: List["RolePermission"] = Relationship(back_populates="account")
-    requests: List["MealRequest"] = Relationship(back_populates="requester")
     meal_request_line_logs: List["LogMealRequestLine"] = Relationship(
         back_populates="account"
+    )
+    # Relationship: One Account can have many Requests they initiated
+    requests: List["MealRequest"] = Relationship(
+        back_populates="requester",
+        sa_relationship_kwargs={"foreign_keys": "[MealRequest.requester_id]"},
+    )
+
+    # Relationship: One Account can audit many Requests
+    audits: List["MealRequest"] = Relationship(
+        back_populates="auditor",
+        sa_relationship_kwargs={"foreign_keys": "[MealRequest.auditor_id]"},
     )
 
 
@@ -159,19 +170,34 @@ class MealRequest(SQLModel, table=True):
     __tablename__ = "meal_request"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    status_id: int = Field(foreign_key="meal_request_status.id", nullable=False)
+    status_id: int = Field(
+        foreign_key="meal_request_status.id", nullable=False, default=1
+    )
     requester_id: int = Field(foreign_key="account.id", nullable=False)
     meal_type_id: int = Field(foreign_key="meal_type.id", nullable=False)
-    request_time: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
+    request_time: Optional[datetime] = Field(default=None)
+    created_time: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
     closed_time: Optional[datetime] = Field(default=None)
     notes: Optional[str] = Field(default=None, max_length=256)
+    auditor_id: Optional[int] = Field(foreign_key="account.id", default=None)
 
     # Relationships
     status: Optional["MealRequestStatus"] = Relationship(back_populates="meal_requests")
     meal_type: Optional["MealType"] = Relationship(back_populates="meal_requests")
-    requester: Optional["Account"] = Relationship(back_populates="requests")
     meal_request_lines: List["MealRequestLine"] = Relationship(
         back_populates="meal_request"
+    )
+
+    # Relationship back to the Account who requested
+    requester: "Account" = Relationship(
+        back_populates="requests",
+        sa_relationship_kwargs={"foreign_keys": "[MealRequest.requester_id]"},
+    )
+
+    # Relationship back to the Account who audits
+    auditor: "Account" = Relationship(
+        back_populates="audits",
+        sa_relationship_kwargs={"foreign_keys": "[MealRequest.auditor_id]"},
     )
 
 

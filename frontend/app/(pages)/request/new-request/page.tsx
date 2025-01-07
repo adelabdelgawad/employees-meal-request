@@ -1,7 +1,7 @@
-import DepartmentColumn from "@/app/(pages)/request/new-request/_components/DepartmentColumn";
-import EmployeeColumn from "@/app/(pages)/request/new-request/_components/EmployeeColumn";
-import SelectedEmployeesColumn from "@/app/(pages)/request/new-request/_components/SelectedEmployeesColumn";
-import SubmitRequestButton from "@/app/(pages)/request/new-request/_components/SubmitRequestButton";
+import SubmitRequestButton from "./_components/SubmitRequestButton";
+import DepartmentColumn from "./_columns/DepartmentColumn";
+import EmployeeColumn from "./_columns/EmployeeColumn";
+import SelectedEmployeesColumn from "./_columns/SelectedEmployeesColumn";
 
 export default function Page() {
   return (
