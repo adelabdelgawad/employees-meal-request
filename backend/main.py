@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import data, request
+from routers import data, request, request_lines
 from dotenv import load_dotenv
 from src.startup import lifespan
 import logging
@@ -41,3 +41,4 @@ app.add_middleware(TokenRenewalMiddleware)
 # Include additional routers
 app.include_router(data.router, tags=["Data"])
 app.include_router(request.router, tags=["Request"])
+app.include_router(request_lines.router, tags=["Request"])

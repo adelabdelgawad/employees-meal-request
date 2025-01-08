@@ -1,0 +1,65 @@
+import traceback
+import logging
+from typing import List, Annotated
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlmodel import Session, select
+from typing import Annotated
+from db.models import MealRequestLineRead
+
+from db.database import get_application_session
+from db.models import MealRequestLine
+from hris_db.database import get_hris_session
+
+
+from icecream import ic
+
+# Create API Router
+router = APIRouter()
+logger = logging.getLogger(__name__)
+
+SessionDep = Annotated[Session, Depends(get_application_session)]
+HRISSessionDep = Annotated[Session, Depends(get_hris_session)]
+
+
+@router.get(
+    "/request-lines",
+    response_model=List[MealRequestLineRead],
+    status_code=status.HTTP_200_OK,
+)
+async def get_meal_request_line(maria_session: SessionDep, request_id: int):
+    """
+    Retrieves meal request lines based on a request ID.
+
+    Args:
+        maria_session (Session): Database session for the application.
+        request_id (Optional[int]): ID of the meal request to filter lines.
+
+    Returns:
+        List[MealRequestLine]: A list of meal request lines.
+    """
+    logger.info(f"Attempting to read meal request lines for request_id: {request_id}")
+    try:
+        statement = select(MealRequestLine).where(
+            MealRequestLine.meal_request_id == request_id
+        )
+        lines = await maria_session.execute(statement)
+        if not lines:
+            logger.info("No meal request lines found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No meal request lines found.",
+            )
+        return lines
+
+    except HTTPException as http_exc:
+        logger.error(f"HTTP error: {http_exc.detail}")
+        logger.debug(f"Traceback: {traceback.format_exc()}")
+        raise http_exc
+
+    except Exception as err:
+        logger.error(f"Unexpected error while reading meal request lines: {err}")
+        logger.debug(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error while reading meal request lines.",
+        )

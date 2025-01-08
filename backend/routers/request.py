@@ -187,7 +187,6 @@ async def get_meal_requests(
     """
     Fetch all meal requests from the database and return them as a list of RequestResponse objects.
     """
-    ic(from_date, to_date)
     try:
         # Define the query with joins to related tables
         statement = (
@@ -243,44 +242,4 @@ async def get_meal_requests(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while reading meal requests.",
-        )
-
-
-async def get_meal_request_line(
-    maria_session: SessionDep,
-    request_id: Optional[int] = None,
-):
-    """
-    Retrieves meal request lines based on a request ID.
-
-    Args:
-        maria_session (Session): Database session for the application.
-        request_id (Optional[int]): ID of the meal request to filter lines.
-
-    Returns:
-        List[MealRequestLine]: A list of meal request lines.
-    """
-    logger.info(f"Attempting to read meal request lines for request_id: {request_id}")
-    try:
-        lines = read_meal_request_line_for_requests_page(maria_session, request_id)
-        if not lines:
-            logger.info("No meal request lines found")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No meal request lines found.",
-            )
-        logger.info(f"Found {len(lines)} meal request lines")
-        return lines
-
-    except HTTPException as http_exc:
-        logger.error(f"HTTP error: {http_exc.detail}")
-        logger.debug(f"Traceback: {traceback.format_exc()}")
-        raise http_exc
-
-    except Exception as err:
-        logger.error(f"Unexpected error while reading meal request lines: {err}")
-        logger.debug(f"Traceback: {traceback.format_exc()}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error while reading meal request lines.",
         )
