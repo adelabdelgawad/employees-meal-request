@@ -25,12 +25,12 @@ const data = {
       ],
     },
     {
-      title: "Data Management",
+      title: "Report",
       role: "admin",
       items: [
         {
-          title: "Allergies",
-          url: "/data-management/allergies",
+          title: "Requests",
+          url: "/report/requests",
           role: "admin",
         },
         { title: "Meals", url: "/data-management/meals", role: "admin" },

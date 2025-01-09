@@ -1,10 +1,10 @@
 import React, { useState, useTransition } from "react";
-import ViewAction from "./ViewAction";
+import ViewAction from "../ViewAction";
 import { CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { updateRequestStatus } from "@/pages/api/actions";
-import { useDataTable } from "@/app/(pages)/request/requests/RequestTableContext";
+import { useDataTable } from "@/app/(pages)/request/requests/_components/_data-table/DataTableContext";
 import { useAlerts } from "@/components/alert/useAlerts";
-import ConfirmationModal from "./ConfirmationModal";
+import ConfirmationModal from "./ConfirmationDialog";
 
 interface ActionsProps {
   rowId: number;
@@ -18,7 +18,9 @@ export const ActionButtons: React.FC<ActionsProps> = ({
   const { addAlert } = useAlerts();
   const [isPending, startTransition] = useTransition();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [actionType, setActionType] = useState<"accept" | "reject" | null>(null);
+  const [actionType, setActionType] = useState<"accept" | "reject" | null>(
+    null
+  );
 
   const { mutate } = useDataTable();
 
@@ -106,7 +108,9 @@ export const ActionButtons: React.FC<ActionsProps> = ({
         onConfirm={handleConfirm}
         onCancel={() => setShowConfirmModal(false)}
         title="Are you sure?"
-        message={`Do you want to ${actionType === "accept" ? "accept" : "reject"} this request?`}
+        message={`Do you want to ${
+          actionType === "accept" ? "accept" : "reject"
+        } this request?`}
       />
     </div>
   );

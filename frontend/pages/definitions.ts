@@ -16,18 +16,6 @@ export interface MealType {
   name: string;
 }
 
-export interface RequestRecord {
-  id: number;
-  status_name: string;
-  status_id: number;
-  requester?: string;
-  requester_title?: string;
-  meal_type: string;
-  request_time: string;
-  closed_time?: string;
-  notes?: string;
-}
-
 import { ColumnDef } from "@tanstack/react-table";
 
 export interface Column {

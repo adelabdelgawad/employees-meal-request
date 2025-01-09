@@ -46,21 +46,10 @@ export async function getMealTypes() {
   return res.json();
 }
 
-export async function getRequests(from?: Date, to?: Date, requestId?: number) {
-  // Build query parameters
-  const params = new URLSearchParams();
-
-  if (from) params.append("from_date", from.toISOString());
-  if (to) params.append("to_date", to.toISOString());
-  if (requestId) params.append("request_id", requestId.toString());
-
-  // Fetch requests with date range filter
-  const res = await fetch(
-    `http://localhost:8000/requests?${params.toString()}`,
-    {
-      cache: "no-store",
-    }
-  );
+export async function getRequests() {
+  const res = await fetch(`http://localhost:8000/requests`, {
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     throw new Error(`Failed to fetch requests: ${res.statusText}`);

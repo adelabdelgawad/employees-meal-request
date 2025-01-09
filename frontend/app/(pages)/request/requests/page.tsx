@@ -1,16 +1,18 @@
 "use client";
 
 import React from "react";
-import { DataTable } from "./DataTable";
-import { DataTableProvider } from "@/app/(pages)/request/requests/RequestTableContext";
+import { DataTable } from "./_components/_data-table/DataTable";
+import { DataTableProvider } from "@/app/(pages)/request/requests/_components/_data-table/DataTableContext";
+import { AlertsProvider } from "@/components/alert/useAlerts";
+import AlertStack from "@/components/alert/AlertStack";
 
 export default function Page() {
   return (
-    <DataTableProvider>
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Data Table</h1>
+    <AlertsProvider>
+      <DataTableProvider>
         <DataTable />
-      </div>
-    </DataTableProvider>
+        <AlertStack />
+      </DataTableProvider>
+    </AlertsProvider>
   );
 }

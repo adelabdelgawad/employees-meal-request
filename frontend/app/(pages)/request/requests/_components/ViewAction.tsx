@@ -13,7 +13,7 @@ import { EyeOpenIcon } from "@radix-ui/react-icons";
 import DialogTable from "./_request-lines/DialogTable";
 import { updateRequestLines } from "@/pages/api";
 import { useAlerts } from "@/components/alert/useAlerts";
-import ConfirmationModal from "./ConfirmationModal";
+import ConfirmationModal from "./_data-table/ConfirmationDialog";
 // Import the ConfirmationModal
 
 interface ViewActionProps {
@@ -26,7 +26,9 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
   const [data, setData] = useState<any[]>([]);
   const [originalData, setOriginalData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [changedStatus, setChangedStatus] = useState<{ id: number; is_accepted: boolean }[]>([]);
+  const [changedStatus, setChangedStatus] = useState<
+    { id: number; is_accepted: boolean }[]
+  >([]);
   const { addAlert } = useAlerts();
 
   // For "Are you sure?" modal
@@ -36,9 +38,12 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8000/request-lines?request_id=${id}`, {
-        cache: "no-store",
-      });
+      const res = await fetch(
+        `http://localhost:8000/request-lines?request_id=${id}`,
+        {
+          cache: "no-store",
+        }
+      );
 
       if (!res.ok) {
         throw new Error("Failed to fetch requests");
@@ -117,7 +122,9 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
         <DialogContent className="max-h-[75vh] max-w-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>View Row Details</DialogTitle>
-            <DialogDescription>You are viewing details for row ID: {id}.</DialogDescription>
+            <DialogDescription>
+              You are viewing details for row ID: {id}.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="flex-grow overflow-y-auto border-t border-b border-gray-300 my-2">
@@ -126,21 +133,34 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
               disableStatus={disableStatus}
               onSwitchChange={(lineId, checked) => {
                 setData((prevData) =>
-                  prevData.map((line) => (line.id === lineId ? { ...line, is_accepted: checked } : line))
+                  prevData.map((line) =>
+                    line.id === lineId
+                      ? { ...line, is_accepted: checked }
+                      : line
+                  )
                 );
 
-                const originalLine = originalData.find((line) => line.id === lineId);
+                const originalLine = originalData.find(
+                  (line) => line.id === lineId
+                );
                 if (!originalLine) return;
 
                 setChangedStatus((prevChanged) => {
                   if (originalLine.is_accepted !== checked) {
-                    const existingChange = prevChanged.find((item) => item.id === lineId);
+                    const existingChange = prevChanged.find(
+                      (item) => item.id === lineId
+                    );
                     if (existingChange) {
                       return prevChanged.map((item) =>
-                        item.id === lineId ? { id: lineId, is_accepted: checked } : item
+                        item.id === lineId
+                          ? { id: lineId, is_accepted: checked }
+                          : item
                       );
                     } else {
-                      return [...prevChanged, { id: lineId, is_accepted: checked }];
+                      return [
+                        ...prevChanged,
+                        { id: lineId, is_accepted: checked },
+                      ];
                     }
                   } else {
                     return prevChanged.filter((item) => item.id !== lineId);

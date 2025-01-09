@@ -25,12 +25,18 @@ const Dashboard = async () => {
   const requestData = await fetchRequests();
 
   // Calculate totals
-  const totalDinnerRequests = requestData.reduce((sum, d) => sum + d.dinnerRequests, 0);
-  const totalLunchRequests = requestData.reduce((sum, d) => sum + d.lunchRequests, 0);
+  const totalDinnerRequests = requestData.reduce(
+    (sum, d) => sum + d.dinnerRequests,
+    0
+  );
+  const totalLunchRequests = requestData.reduce(
+    (sum, d) => sum + d.lunchRequests,
+    0
+  );
   const totalRequests = totalDinnerRequests + totalLunchRequests;
 
   return (
-    <div className="flex flex-col p-2 gap-5 bg-gray-100 min-h-screen">
+    <div className="flex flex-col p-2 gap-5 bg-gray-300 min-h-screen">
       {/* Stats Section */}
       <div className="grid grid-cols-3 gap-4">
         <StatCard title="Total Requests" value={totalRequests} />
@@ -49,7 +55,9 @@ const Dashboard = async () => {
 
         {/* Table Section */}
         <div className="flex-1 bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-bold mb-4">Top 10 Requester Departments</h3>
+          <h3 className="text-lg font-bold mb-4">
+            Top 10 Requester Departments
+          </h3>
           <Suspense fallback={<div>Loading Table...</div>}>
             <DepartmentTable data={requestData} />
           </Suspense>
@@ -57,7 +65,7 @@ const Dashboard = async () => {
       </div>
 
       <div className="flex-1 bg-white p-6 rounded-lg shadow">
-      <DepartmentTable data={requestData} />
+        <DepartmentTable data={requestData} />
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-interface ConfirmationModalProps {
+interface ConfirmationDialogProps {
   isOpen: boolean;
   title?: string;
   message?: string;
@@ -19,7 +19,7 @@ interface ConfirmationModalProps {
   onCancel: () => void;
 }
 
-const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
+const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   isOpen,
   title = "Are you sure?",
   message = "This action cannot be undone.",
@@ -48,4 +48,4 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   );
 };
 
-export default ConfirmationModal;
+export default ConfirmationDialog;

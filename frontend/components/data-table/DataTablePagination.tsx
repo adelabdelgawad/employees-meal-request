@@ -18,15 +18,11 @@ export default function DataTablePagination<TData>({
 }: DataTablePaginationProps<TData>) {
   return (
     <div className="flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto p-1 sm:flex-row sm:gap-8">
-      {/* Selected Rows Info */}
       <div className="flex-1 whitespace-nowrap text-sm text-muted-foreground">
-        {table.getFilteredSelectedRowModel().rows.length} of{" "}
-        {table.getFilteredRowModel().rows.length} row(s) selected.
+        {table.getRowModel().rows.length} row(s)
       </div>
 
-      {/* Pagination Controls */}
       <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
-        {/* Rows Per Page Selector */}
         <div className="flex items-center space-x-2">
           <p className="whitespace-nowrap text-sm font-medium">Rows per page</p>
           <DropdownMenu.Root>
@@ -41,7 +37,10 @@ export default function DataTablePagination<TData>({
                 <DropdownMenu.Item
                   key={pageSize}
                   className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                  onSelect={() => table.setPageSize(pageSize)}
+                  onSelect={() => {
+                    table.setPageSize(pageSize);
+                    table.setPageIndex(0);
+                  }}
                 >
                   {pageSize}
                 </DropdownMenu.Item>
@@ -50,13 +49,11 @@ export default function DataTablePagination<TData>({
           </DropdownMenu.Root>
         </div>
 
-        {/* Current Page Info */}
         <div className="flex items-center justify-center text-sm font-medium">
           Page {table.getState().pagination.pageIndex + 1} of{" "}
           {table.getPageCount()}
         </div>
 
-        {/* Page Navigation Buttons */}
         <div className="flex items-center space-x-2">
           <button
             aria-label="Go to first page"
