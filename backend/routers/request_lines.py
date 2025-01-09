@@ -3,13 +3,11 @@ import logging
 from typing import List, Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
-from typing import Annotated
-from db.models import MealRequestLineRead
 
 from db.database import get_application_session
-from db.models import MealRequestLine
+from db.models import MealRequestLine, Employee, EmployeeShift
+from src.http_schema import RequestLineRespose
 from hris_db.database import get_hris_session
-
 
 from icecream import ic
 
@@ -23,10 +21,12 @@ HRISSessionDep = Annotated[Session, Depends(get_hris_session)]
 
 @router.get(
     "/request-lines",
-    response_model=List[MealRequestLineRead],
+    response_model=List[RequestLineRespose],
     status_code=status.HTTP_200_OK,
 )
-async def get_meal_request_line(maria_session: SessionDep, request_id: int):
+async def get_meal_request_line(
+    maria_session: SessionDep, request_id: int
+) -> List[RequestLineRespose]:
     """
     Retrieves meal request lines based on a request ID.
 
@@ -39,10 +39,22 @@ async def get_meal_request_line(maria_session: SessionDep, request_id: int):
     """
     logger.info(f"Attempting to read meal request lines for request_id: {request_id}")
     try:
-        statement = select(MealRequestLine).where(
-            MealRequestLine.meal_request_id == request_id
-        )
-        lines = await maria_session.execute(statement)
+        statement = select(
+            MealRequestLine.id,
+            Employee.name,
+            Employee.title,
+            Employee.code,
+            MealRequestLine.attendance,
+            MealRequestLine.is_accepted,
+            MealRequestLine.shift_id,
+        ).join(MealRequestLine.employee)
+
+        statement = statement.where(MealRequestLine.meal_request_id == request_id)
+
+        # Execute the query
+        result = await maria_session.execute(statement)
+        lines = result.all()
+
         if not lines:
             logger.info("No meal request lines found")
             raise HTTPException(

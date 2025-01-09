@@ -4,7 +4,7 @@ from typing import List, Optional, Annotated
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Query
 from sqlmodel import Session, select
-from typing import Annotated
+from typing import Annotated, Dict
 from collections import defaultdict
 
 from db.database import get_application_session
@@ -242,4 +242,57 @@ async def get_meal_requests(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while reading meal requests.",
+        )
+
+
+@router.put("/update-request-status", response_model=Dict[str, str])
+async def update_meal_order_status_endpoint(
+    request_id: int,
+    status_id: int,
+    maria_session: SessionDep,
+) -> Dict[str, str]:
+    """
+    Update the status of a meal request by ID.
+
+    Args:
+        request_id (int): The ID of the meal request to update.
+        status_id (int): The new status ID to assign to the meal request.
+        maria_session (AsyncSession): Async SQLModel session.
+
+    Returns:
+        dict: A success message with the HTTP status code.
+    """
+    try:
+        logger.info(f"Updating meal order {request_id} with status {status_id}")
+
+        # Fetch the meal request
+        statement = select(MealRequest).where(MealRequest.id == request_id)
+        result = await maria_session.execute(statement)
+        meal_request = result.scalar_one_or_none()
+
+        if not meal_request:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Meal request with ID {request_id} not found.",
+            )
+
+        # Update the status
+        meal_request.status_id = status_id
+        maria_session.add(meal_request)
+        await maria_session.commit()
+        await maria_session.refresh(meal_request)
+
+        logger.info("Successfully updated meal request.")
+        return {"status": "success", "message": "Request updated successfully"}
+
+    except HTTPException as http_exc:
+        logger.error(f"HTTP error: {http_exc.detail}")
+        raise http_exc
+
+    except Exception as err:
+        logger.error(f"Unexpected error while updating meal request: {err}")
+        logger.debug(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error while updating meal request.",
         )

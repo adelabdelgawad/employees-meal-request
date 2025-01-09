@@ -36,3 +36,15 @@ class RequestResponse(BaseModel):
     notes: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RequestLineRespose(BaseModel):
+    id: int
+    name: str
+    title: str
+    code: int
+    attendance: datetime | None = None
+    shift: int | None = None
+    is_accepted: bool
+
+    model_config = ConfigDict(from_attributes=True)

@@ -3,6 +3,10 @@
 import { useRequest } from "@/context/RequestContext";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import * as Accordion from "@radix-ui/react-accordion";
+import { Rubik } from "next/font/google";
+
+// Apply Rubik font
+const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
 interface Entry {
   id: number;
@@ -65,7 +69,9 @@ export default function SelectedEmployeesColumn() {
                             className="p-2 border border-gray-300 rounded-lg shadow-sm flex justify-between items-center bg-white hover:shadow-md"
                           >
                             <div>
-                              <h4 className="text-sm font-semibold text-gray-800">
+                              <h4
+                                className={`text-sm font-semibold text-gray-800 ${rubik.className}`}
+                              >
                                 {entry.name}
                               </h4>
                               <div className="flex space-x-2">

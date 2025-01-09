@@ -27,6 +27,7 @@ async def read_departments_with_employees(session: SessionDep):
         statement = select(Department).where(
             Department.id.in_(select(Employee.department_id).distinct())
         )
+
         result = await session.execute(statement)
         departments = result.scalars().all()
         return departments

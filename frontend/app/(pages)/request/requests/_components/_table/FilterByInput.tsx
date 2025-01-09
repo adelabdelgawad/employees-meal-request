@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Column, Table } from "@tanstack/react-table";
-import { useDataTable } from "../RequestTableContext";
+import { useDataTable } from "../../RequestTableContext";
 
 /**
  * Props for the FilterByInput component.

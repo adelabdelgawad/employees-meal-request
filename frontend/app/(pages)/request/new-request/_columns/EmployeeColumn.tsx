@@ -8,6 +8,10 @@ import { useRequest } from "@/context/RequestContext";
 import EmployeeSelectionDialog from "../_components/EmployeeSelectionDialog";
 import FilterComponent from "../_components/Filter";
 import SelectionActions from "../_components/SelectionActions";
+import { Rubik } from "next/font/google";
+
+// Apply Rubik font
+const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
 export default function EmployeeColumn() {
   const {
@@ -120,7 +124,9 @@ export default function EmployeeColumn() {
                   onClick={() => toggleEmployee(emp.id.toString())}
                 >
                   <div>
-                    <div className="text-sm font-semibold">{emp.name}</div>
+                    <div className={`text-s font-semibold ${rubik.className}`}>
+                      {emp.name}
+                    </div>
                     <div className="text-xs text-gray-500">{emp.title}</div>
                     <span className="text-xs text-gray-500 font-bold">
                       Code: {emp.code}

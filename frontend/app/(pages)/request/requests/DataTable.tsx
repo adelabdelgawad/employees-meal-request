@@ -10,14 +10,14 @@ import {
   getFilteredRowModel,
 } from "@tanstack/react-table";
 import { useDataTable } from "@/app/(pages)/request/requests/RequestTableContext";
-import DataTablePagination from "@/app/(pages)/request/requests/_components/DataTablePagination";
-import FilterBy from "@/app/(pages)/request/requests/_components/FilterBy";
-import Export from "@/app/(pages)/request/requests/_components/Export";
-import FilterByInput from "@/app/(pages)/request/requests/_components/FilterByInput";
-import { DateRangePicker } from "@/app/(pages)/request/requests/_components/DateRangePicker";
+import DataTablePagination from "@/app/(pages)/request/requests/_components/_table/DataTablePagination";
+import FilterBy from "@/app/(pages)/request/requests/_components/_table/FilterBy";
+import Export from "@/app/(pages)/request/requests/_components/_table/Export";
+import FilterByInput from "@/app/(pages)/request/requests/_components/_table/FilterByInput";
+import { DateRangePicker } from "@/app/(pages)/request/requests/_components/_table/DateRangePicker";
 
 import { getColumns } from "./_data";
-import { Actions } from "./_actions/Actions";
+import { Actions } from "./_components/_actions/Actions";
 
 declare module "@tanstack/react-table" {
   interface ColumnMeta<TData, TValue> {
@@ -159,7 +159,7 @@ export function DataTable() {
                   <td className="py-2 border-b justify-center">
                     <Actions
                       rowId={row.original.id}
-                      requestStatusId={row.original.status}
+                      requestStatusName={row.original.status}
                     />
                   </td>
                 </tr>
