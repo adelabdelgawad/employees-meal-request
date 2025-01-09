@@ -1,7 +1,6 @@
 "use server";
 
 export async function updateRequestStatus(requestId: number, statusId: number) {
-  console.log(requestId);
   try {
     const response = await fetch(
       `http://localhost:8000/update-request-status?request_id=${requestId}&status_id=${statusId}`,

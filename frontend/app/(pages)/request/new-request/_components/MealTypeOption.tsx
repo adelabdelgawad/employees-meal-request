@@ -1,5 +1,5 @@
 import { Label } from "@/components/ui/label"; // Adjust the import path based on your project
-import { MealType } from "@/lib/definitions";
+import { MealType } from "@/pages/definitions";
 
 interface MealTypeProps {
   mealTypes: MealType[];

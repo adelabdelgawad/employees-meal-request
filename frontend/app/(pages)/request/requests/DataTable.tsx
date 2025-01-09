@@ -17,7 +17,7 @@ import FilterByInput from "@/app/(pages)/request/requests/_components/_table/Fil
 import { DateRangePicker } from "@/app/(pages)/request/requests/_components/_table/DateRangePicker";
 
 import { getColumns } from "./_data";
-import { Actions } from "./_components/_actions/Actions";
+import { ActionButtons } from "./_components/ActionButtons";
 
 declare module "@tanstack/react-table" {
   interface ColumnMeta<TData, TValue> {
@@ -58,7 +58,7 @@ export function DataTable() {
 
   const table = useReactTable({
     data: data.length > 0 ? data : [],
-    columns: getColumns(setColumnFilters),
+    columns: getColumns(),
     state: {
       columnFilters,
       rowSelection,
@@ -157,7 +157,7 @@ export function DataTable() {
                     </td>
                   ))}
                   <td className="py-2 border-b justify-center">
-                    <Actions
+                    <ActionButtons
                       rowId={row.original.id}
                       requestStatusId={row.original.status_id}
                     />

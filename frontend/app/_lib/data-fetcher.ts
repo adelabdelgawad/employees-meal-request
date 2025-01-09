@@ -4,7 +4,6 @@ export async function getReqeusts() {
   });
 
   if (!res.ok) {
-    console.log(res);
     throw new Error("Failed to fetch requests");
   }
 
@@ -17,7 +16,6 @@ export async function getDepartments() {
   });
 
   if (!res.ok) {
-    console.log(res);
     throw new Error("Failed to fetch departments");
   }
 

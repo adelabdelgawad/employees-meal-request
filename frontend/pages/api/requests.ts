@@ -17,9 +17,6 @@ export default async function handler(
       return res.status(400).json({ message: "No requests provided" });
     }
 
-    // Log the requests for debugging
-    console.log("Received requests:", requests);
-
     // Send requests to the FastAPI backend
     const fastApiResponse = await fetch(
       "http://localhost:8000/submit-request",
@@ -41,7 +38,6 @@ export default async function handler(
 
     // Parse FastAPI response
     const result = await fastApiResponse.json();
-    console.log("FastAPI Response:", result);
 
     // ✅ Return the created meal request IDs directly from the result
     return res.status(200).json({

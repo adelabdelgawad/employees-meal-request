@@ -5,6 +5,12 @@ type Repo = {
   stargazers_count: number;
 };
 
+export interface ChangedStatus {
+  id: number;
+  is_accepted: boolean;
+}
+
+
 export const getServerSideProps = async () => {
   // Fetch data from external API
   const res = await fetch("https://api.github.com/repos/vercel/next.js");
@@ -20,7 +26,6 @@ export async function getDepartments() {
   });
 
   if (!res.ok) {
-    console.log(res);
     throw new Error("Failed to fetch departments");
   }
 
@@ -61,4 +66,26 @@ export async function getRequests() {
   }
 
   return res.json();
+}
+
+
+export async function updateRequestLines(changedStatuses: ChangedStatus[]): Promise<string> {
+  if (changedStatuses.length === 0) {
+    throw new Error("No changes to update.");
+  }
+
+  const response = await fetch("http://localhost:8000/update-request-lines", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(changedStatuses),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to save changes.");
+  }
+
+  const result = await response.json();
+  return result.message;
 }

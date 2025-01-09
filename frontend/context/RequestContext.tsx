@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-import { DepartmentType, EmployeeType, MealType } from "@/lib/definitions";
+import { DepartmentType, EmployeeType, MealType } from "@/pages/definitions";
 import {
   getDepartments,
   getEmployees,

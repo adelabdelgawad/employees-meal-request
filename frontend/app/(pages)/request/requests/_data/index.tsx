@@ -1,10 +1,9 @@
-import { CustomColumnDef } from "@/app/(pages)/request/requests/_types";
-import { RequestRecord } from "@/lib/definitions";
+import { CustomColumnDef, RequestRecord } from "@/pages/definitions";
 import * as Checkbox from "@radix-ui/react-checkbox";
 import { CheckIcon } from "@radix-ui/react-icons";
 
 export function getColumns(
-  setColumnFilters: React.Dispatch<React.SetStateAction<any>>
+  
 ): CustomColumnDef<RequestRecord>[] {
   return [
     {

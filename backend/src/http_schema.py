@@ -27,7 +27,8 @@ class RequestBody(BaseModel):
 # ✅ RequestResponse Model
 class RequestResponse(BaseModel):
     id: int
-    status: str
+    status_name: str
+    status_id: int
     requester: Optional[str] = None
     requester_title: Optional[str] = None
     meal_type: str
@@ -45,6 +46,13 @@ class RequestLineRespose(BaseModel):
     code: int
     attendance: datetime | None = None
     shift: int | None = None
+    is_accepted: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ChangedStatusRequest(BaseModel):
+    id: int
     is_accepted: bool
 
     model_config = ConfigDict(from_attributes=True)

@@ -6,7 +6,7 @@ from sqlmodel import Session, select
 
 from db.database import get_application_session
 from db.models import MealRequestLine, Employee, EmployeeShift
-from src.http_schema import RequestLineRespose
+from src.http_schema import RequestLineRespose, ChangedStatusRequest
 from hris_db.database import get_hris_session
 
 from icecream import ic
@@ -37,7 +37,9 @@ async def get_meal_request_line(
     Returns:
         List[MealRequestLine]: A list of meal request lines.
     """
-    logger.info(f"Attempting to read meal request lines for request_id: {request_id}")
+    logger.info(
+        f"Attempting to read meal request lines for request_id: {request_id}"
+    )
     try:
         statement = select(
             MealRequestLine.id,
@@ -49,7 +51,9 @@ async def get_meal_request_line(
             MealRequestLine.shift_id,
         ).join(MealRequestLine.employee)
 
-        statement = statement.where(MealRequestLine.meal_request_id == request_id)
+        statement = statement.where(
+            MealRequestLine.meal_request_id == request_id
+        )
 
         # Execute the query
         result = await maria_session.execute(statement)
@@ -69,9 +73,41 @@ async def get_meal_request_line(
         raise http_exc
 
     except Exception as err:
-        logger.error(f"Unexpected error while reading meal request lines: {err}")
+        logger.error(
+            f"Unexpected error while reading meal request lines: {err}"
+        )
         logger.debug(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while reading meal request lines.",
         )
+
+
+# API endpoint to handle changed statuses
+@router.put("/update-request-lines")
+async def update_request_lines(
+    maria_session: SessionDep, changes: List[ChangedStatusRequest]
+):
+    if not changes:
+        raise HTTPException(status_code=400, detail="No changes provided")
+
+    # Process each change
+    for change in changes:
+        # Fetch the MealRequestLine record by ID
+        record = await maria_session.get(MealRequestLine, change.id)
+        if not record:
+            raise HTTPException(
+                status_code=404,
+                detail=f"MealRequestLine with ID {change.id} not found",
+            )
+
+        # Update the is_accepted field
+        record.is_accepted = change.is_accepted
+
+        # Add the record to the session
+        maria_session.add(record)
+
+    # Commit the changes to the database
+    await maria_session.commit()
+
+    return {"message": "Changes saved successfully"}

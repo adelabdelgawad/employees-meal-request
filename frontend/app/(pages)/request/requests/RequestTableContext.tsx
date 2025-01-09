@@ -1,23 +1,11 @@
-"use client";
-
 import React, {
   createContext,
   useContext,
   useEffect,
   useState,
 } from "react";
-import {
-  useReactTable,
-  SortingState,
-  ColumnFiltersState,
-  RowSelectionState,
-  getCoreRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
-  getFilteredRowModel,
-  Table,
-} from "@tanstack/react-table";
-import { RequestRecord } from "@/lib/definitions";
+import { useReactTable, getCoreRowModel, getSortedRowModel, getPaginationRowModel, getFilteredRowModel, Table, ColumnFiltersState, RowSelectionState } from "@tanstack/react-table";
+import { RequestRecord } from "@/pages/definitions";
 import { getColumns } from "@/app/(pages)/request/requests/_data";
 import { getRequests } from "@/app/_lib/data-fetcher";
 
@@ -30,6 +18,7 @@ interface DataTableContextProps {
   setColumnFilters: React.Dispatch<React.SetStateAction<ColumnFiltersState>>;
   rowSelection: RowSelectionState;
   setRowSelection: React.Dispatch<React.SetStateAction<RowSelectionState>>;
+  mutate: () => Promise<void>;
 }
 
 const DataTableContext = createContext<DataTableContextProps | undefined>(
@@ -41,22 +30,28 @@ export const DataTableProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const columns = getColumns(setColumnFilters);
+  const columns = getColumns();
   const [data, setData] = useState<RequestRecord[]>([]);
   const [from, setFrom] = useState<Date | undefined>(undefined);
   const [to, setTo] = useState<Date | undefined>(undefined);
 
-  // ✅ Refetch data when date range changes or on first page load
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const requests = await getRequests(from, to);
-        setData(requests);
-      } catch (error) {
-        console.error("Failed to fetch requests:", error);
-      }
-    };
+  // Fetch data function
+  const fetchData = async () => {
+    try {
+      const requests = await getRequests(from, to);
+      setData(requests);
+    } catch (error) {
+      console.error("Failed to fetch requests:", error);
+    }
+  };
 
+  // ✅ Add mutate function
+  const mutate = async () => {
+    await fetchData();
+  };
+
+  // Fetch data on mount and when date range changes
+  useEffect(() => {
     fetchData();
   }, [from, to]);
 
@@ -76,14 +71,6 @@ export const DataTableProvider: React.FC<{ children: React.ReactNode }> = ({
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  const toggleColumnVisibility = (id: string) => {
-    table.getAllColumns().forEach((col) => {
-      if (col.id === id) {
-        col.toggleVisibility();
-      }
-    });
-  };
-
   return (
     <DataTableContext.Provider
       value={{
@@ -95,6 +82,7 @@ export const DataTableProvider: React.FC<{ children: React.ReactNode }> = ({
         setColumnFilters,
         rowSelection,
         setRowSelection,
+        mutate, // ✅ Expose mutate function
       }}
     >
       {children}

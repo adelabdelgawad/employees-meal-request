@@ -3,7 +3,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 // Mock function to simulate database insertion
 const saveRequestsToDatabase = async (requests: any[]) => {
   // Replace this with your actual database logic
-  console.log("Saving requests to database:", requests);
   return { success: true, message: "Requests saved successfully." };
 };
 

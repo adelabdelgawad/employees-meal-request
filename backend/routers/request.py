@@ -2,19 +2,35 @@ import traceback
 import logging
 from typing import List, Optional, Annotated
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Query
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+    BackgroundTasks,
+    Query,
+)
 from sqlmodel import Session, select
 from typing import Annotated, Dict
 from collections import defaultdict
 
 from db.database import get_application_session
-from db.models import MealRequest, MealRequestLine, Account, MealType, MealRequestStatus
+from db.models import (
+    MealRequest,
+    MealRequestLine,
+    Account,
+    MealType,
+    MealRequestStatus,
+)
 from hris_db.models import HRISEmployeeAttendanceWithDetails
 from hris_db.database import get_hris_session
 from src.http_schema import RequestBody, RequestResponse
-from db.crud import read_meal_requests, read_meal_request_line_for_requests_page
+import pytz
 
 from icecream import ic
+
+# Default timezone
+cairo_tz = pytz.timezone("Africa/Cairo")
 
 # Create API Router
 router = APIRouter()
@@ -60,7 +76,11 @@ async def process_meal_requests_for_employees(
 
         for line in request_lines:
             attendance = next(
-                (a.date_in for a in attendances if a.employee_code == line.employee_id),
+                (
+                    a.date_in
+                    for a in attendances
+                    if a.employee_code == line.employee_id
+                ),
                 None,
             )
 
@@ -73,7 +93,9 @@ async def process_meal_requests_for_employees(
             maria_session.add(meal_request_line)
             created_request_lines.append(meal_request_line)
 
-            logger.info(f"Created meal request line for employee ID {line.employee_id}")
+            logger.info(
+                f"Created meal request line for employee ID {line.employee_id}"
+            )
 
         await maria_session.commit()
         return created_request_lines
@@ -170,6 +192,9 @@ async def create_meal_request_endpoint(
         )
 
 
+from sqlalchemy import and_
+
+
 @router.get(
     "/requests",
     response_model=List[RequestResponse],
@@ -183,16 +208,14 @@ async def get_meal_requests(
     to_date: Optional[datetime] = Query(
         None, description="End date in ISO format (YYYY-MM-DDTHH:MM:SSZ)"
     ),
+    request_id: Optional[int] = None,
 ):
-    """
-    Fetch all meal requests from the database and return them as a list of RequestResponse objects.
-    """
     try:
-        # Define the query with joins to related tables
         statement = (
             select(
                 MealRequest.id,
-                MealRequestStatus.name.label("status"),
+                MealRequestStatus.name.label("status_name"),
+                MealRequestStatus.id.label("status_id"),
                 Account.full_name.label("requester"),
                 Account.title.label("requester_title"),
                 MealType.name.label("meal_type"),
@@ -206,35 +229,26 @@ async def get_meal_requests(
             .join(MealType, MealRequest.meal_type_id == MealType.id)
         )
 
+        # Apply filters if provided
+        if request_id is not None:
+            statement = statement.where(MealRequest.id == request_id)
+
+        if from_date and to_date:
+            statement = statement.where(
+                and_(
+                    MealRequest.created_time >= from_date,
+                    MealRequest.created_time <= to_date,
+                )
+            )
+        elif from_date:
+            statement = statement.where(MealRequest.created_time >= from_date)
+        elif to_date:
+            statement = statement.where(MealRequest.created_time <= to_date)
+
         # Execute the query
         result = await maria_session.execute(statement)
         meal_requests = result.all()
-
-        if not meal_requests:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No meal requests found.",
-            )
-
-        # Map the result to your Pydantic model
-        return [
-            RequestResponse(
-                id=row.id,
-                status=row.status,
-                requester=row.requester,
-                requester_title=row.requester_title,
-                meal_type=row.meal_type,
-                request_time=row.request_time,
-                closed_time=row.closed_time,
-                notes=row.notes,
-            )
-            for row in meal_requests
-        ]
-
-    except HTTPException as http_exc:
-        logger.error(f"HTTP error: {http_exc.detail}")
-        logger.debug(f"Traceback: {traceback.format_exc()}")
-        raise http_exc
+        return [request for request in meal_requests]
 
     except Exception as err:
         logger.error(f"Unexpected error while reading meal requests: {err}")
@@ -263,7 +277,9 @@ async def update_meal_order_status_endpoint(
         dict: A success message with the HTTP status code.
     """
     try:
-        logger.info(f"Updating meal order {request_id} with status {status_id}")
+        logger.info(
+            f"Updating meal order {request_id} with status {status_id}"
+        )
 
         # Fetch the meal request
         statement = select(MealRequest).where(MealRequest.id == request_id)
@@ -278,6 +294,7 @@ async def update_meal_order_status_endpoint(
 
         # Update the status
         meal_request.status_id = status_id
+        meal_request.closed_time = datetime.now(cairo_tz)
         maria_session.add(meal_request)
         await maria_session.commit()
         await maria_session.refresh(meal_request)

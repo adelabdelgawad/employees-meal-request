@@ -13,7 +13,7 @@ import * as ScrollArea from "@radix-ui/react-scroll-area";
 import { Input } from "@/components/ui/input";
 import MealTypeOption from "./MealTypeOption";
 import { useRequest } from "@/context/RequestContext";
-import { EmployeeType, MealType } from "@/lib/definitions";
+import { EmployeeType, MealType } from "@/pages/definitions";
 import { useAlerts } from "@/components/alert/useAlerts";
 
 interface EmployeeSelectionDialogProps {
