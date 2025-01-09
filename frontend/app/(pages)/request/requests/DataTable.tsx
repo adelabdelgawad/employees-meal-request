@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   useReactTable,
   flexRender,
@@ -159,7 +159,7 @@ export function DataTable() {
                   <td className="py-2 border-b justify-center">
                     <Actions
                       rowId={row.original.id}
-                      requestStatusName={row.original.status}
+                      requestStatusId={row.original.status_id}
                     />
                   </td>
                 </tr>

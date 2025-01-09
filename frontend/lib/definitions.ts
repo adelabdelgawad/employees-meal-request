@@ -18,7 +18,8 @@ export interface MealType {
 
 export interface RequestRecord {
   id: number;
-  status: string;
+  status_name: string;
+  status_id: number;
   requester?: string;
   requester_title?: string;
   meal_type: string;

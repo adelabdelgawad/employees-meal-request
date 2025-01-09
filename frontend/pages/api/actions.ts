@@ -24,3 +24,5 @@ export async function updateRequestStatus(requestId: number, statusId: number) {
     throw error;
   }
 }
+
+

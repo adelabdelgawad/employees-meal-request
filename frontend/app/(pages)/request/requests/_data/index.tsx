@@ -45,7 +45,7 @@ export function getColumns(
       meta: { isVisible: true, enableFiltering: true },
     },
     {
-      accessorKey: "status",
+      accessorKey: "status_name",
       header: "Status",
       meta: { isVisible: true, enableFiltering: true },
     },

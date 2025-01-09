@@ -1,12 +1,12 @@
 import React from "react";
 import { Cross2Icon } from "@radix-ui/react-icons";
 import { useState, useTransition } from "react";
-import { updateRequestStatus } from "../../actions";
+import { updateRequestStatus } from "../../../../../../pages/api/actions";
 
 interface RejectActionProps {
   requestId: number;
   disableStatus: boolean;
-  onStatusChange: (newStatusName: string) => void; // Callback to update parent state
+  onStatusChange: (newStatusName: number) => void; // Callback to update parent state
 }
 const RejectAction: React.FC<RejectActionProps> = ({
   requestId,
@@ -25,7 +25,7 @@ const RejectAction: React.FC<RejectActionProps> = ({
         setMessage(result.message);
 
         // Optimistically update the status in the parent component
-        onStatusChange(String(3));
+        onStatusChange(3);
       } catch (error) {
         setMessage("Failed to update request status.");
       }

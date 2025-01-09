@@ -114,78 +114,76 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
           Add Selected Employees
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader className="items-center">
-          <DialogTitle>Selected Employees</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-h-[75vh] flex flex-col">
+  <DialogHeader className="items-center">
+    <DialogTitle>Selected Employees</DialogTitle>
+  </DialogHeader>
 
-        {/* Meal Type Selection */}
-        <MealTypeOption
-          mealTypes={mealTypes}
-          selectedMealTypes={selectedMealTypes}
-          onSelectMealType={handleMealTypeChange}
-        />
+  {/* Meal Type Selection (Always Visible) */}
+  <div className="mb-2">
+    <MealTypeOption
+      mealTypes={mealTypes}
+      selectedMealTypes={selectedMealTypes}
+      onSelectMealType={handleMealTypeChange}
+    />
+  </div>
 
-        {/* Selected Employees List with Scroller */}
-        {selectedEmployees.length > 0 ? (
-          <ScrollArea.Root className="h-full w-full overflow-hidden">
-            <ScrollArea.Viewport className="h-full w-full">
-              {selectedEmployees.map((employee) => (
-                <div
-                  key={employee.id}
-                  className="p-2 border border-gray-300 rounded-lg shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white hover:shadow-md"
-                >
-                  {/* Employee Info */}
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-800">
-                        {employee.name}
-                      </h4>
-                      <p className="text-sm text-gray-500">
-                        Title: {employee.title}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Code: {employee.code}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Notes Input */}
-                  <Input
-                    type="text"
-                    placeholder="Notes"
-                    value={employeeNotes[employee.id] || ""}
-                    onChange={(e) =>
-                      handleNoteChange(employee.id, e.target.value)
-                    }
-                    className="mt-4 sm:mt-0 sm:w-1/2 w-full"
-                  />
-                </div>
-              ))}
-            </ScrollArea.Viewport>
-
-            <ScrollArea.Scrollbar
-              orientation="vertical"
-              className="w-2 bg-gray-200"
+  {/* Selected Employees List with Dynamic Scroller */}
+  <div className="flex-grow overflow-y-auto border-t border-b border-gray-300 my-2">
+    {selectedEmployees.length > 0 ? (
+      <ScrollArea.Root className="h-full w-full overflow-hidden">
+        <ScrollArea.Viewport className="h-full w-full">
+          {selectedEmployees.map((employee) => (
+            <div
+              key={employee.id}
+              className="p-2 border border-gray-300 rounded-lg shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white hover:shadow-md"
             >
-              <ScrollArea.Thumb className="bg-gray-400 rounded" />
-            </ScrollArea.Scrollbar>
-          </ScrollArea.Root>
-        ) : (
-          <p className="text-center text-gray-500">
-            No employees selected. Please select employees to proceed.
-          </p>
-        )}
+              {/* Employee Info */}
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-800">
+                    {employee.name}
+                  </h4>
+                  <p className="text-sm text-gray-500">Title: {employee.title}</p>
+                  <p className="text-sm text-gray-500">Code: {employee.code}</p>
+                </div>
+              </div>
 
-        {/* Confirm Button */}
-        <Button
-          onClick={handleSubmit}
-          className="mt-4 w-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
-          disabled={selectedMealTypes.length === 0}
-        >
-          Confirm
-        </Button>
-      </DialogContent>
+              {/* Notes Input */}
+              <Input
+                type="text"
+                placeholder="Notes"
+                value={employeeNotes[employee.id] || ""}
+                onChange={(e) => handleNoteChange(employee.id, e.target.value)}
+                className="mt-4 sm:mt-0 sm:w-1/2 w-full"
+              />
+            </div>
+          ))}
+        </ScrollArea.Viewport>
+
+        <ScrollArea.Scrollbar orientation="vertical" className="w-2 bg-gray-200">
+          <ScrollArea.Thumb className="bg-gray-400 rounded" />
+        </ScrollArea.Scrollbar>
+      </ScrollArea.Root>
+    ) : (
+      <p className="text-center text-gray-500">
+        No employees selected. Please select employees to proceed.
+      </p>
+    )}
+  </div>
+
+  {/* Confirm Button (Always Visible) */}
+  <div className="mt-2">
+    <Button
+      onClick={handleSubmit}
+      className="w-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
+      disabled={selectedMealTypes.length === 0}
+    >
+      Confirm
+    </Button>
+  </div>
+</DialogContent>
+
     </Dialog>
   );
 };

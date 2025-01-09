@@ -15,7 +15,7 @@ const DialogTable: React.FC<DialogTableProps> = ({
   onSwitchChange,
 }) => {
   return (
-    <table className="w-full border-collapse border border-gray-300">
+    <table className="w-full border-collapse border  border-gray-300">
       <thead>
         <tr className="border border-gray-300 px-2 py-1 text-center">
           <th>Employee</th>

@@ -2,7 +2,6 @@
 
 import React, {
   createContext,
-  use,
   useContext,
   useEffect,
   useState,
@@ -25,8 +24,8 @@ import { getRequests } from "@/app/_lib/data-fetcher";
 interface DataTableContextProps {
   data: RequestRecord[];
   table: Table<RequestRecord>;
-  setFrom: any;
-  setTo: any;
+  setFrom: (date: Date | undefined) => void;
+  setTo: (date: Date | undefined) => void;
   columnFilters: ColumnFiltersState;
   setColumnFilters: React.Dispatch<React.SetStateAction<ColumnFiltersState>>;
   rowSelection: RowSelectionState;
@@ -44,8 +43,8 @@ export const DataTableProvider: React.FC<{ children: React.ReactNode }> = ({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const columns = getColumns(setColumnFilters);
   const [data, setData] = useState<RequestRecord[]>([]);
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [from, setFrom] = useState<Date | undefined>(undefined);
+  const [to, setTo] = useState<Date | undefined>(undefined);
 
   // ✅ Refetch data when date range changes or on first page load
   useEffect(() => {
@@ -65,7 +64,6 @@ export const DataTableProvider: React.FC<{ children: React.ReactNode }> = ({
   const table = useReactTable({
     data,
     columns,
-
     state: {
       columnFilters,
       rowSelection,

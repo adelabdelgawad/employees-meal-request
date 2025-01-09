@@ -89,14 +89,14 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[800px]">
-        <DialogHeader>
+      <DialogContent className="max-h-[75vh] max-w-[80vh] flex flex-col">
+                <DialogHeader>
           <DialogTitle>View Row Details</DialogTitle>
           <DialogDescription>
             You are viewing details for row ID: {id}.
           </DialogDescription>
         </DialogHeader>
-
+        <div className="flex-grow overflow-y-auto border-t border-b border-gray-300 my-2">
         <DialogTable
           data={data}
           originalData={originalData}
@@ -133,6 +133,8 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
             });
           }}
         />
+        </div>
+
 
         <DialogFooter>
           <Button
