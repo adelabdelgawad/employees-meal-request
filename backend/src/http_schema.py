@@ -56,3 +56,12 @@ class ChangedStatusRequest(BaseModel):
     is_accepted: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ReportDashboardResponse(BaseModel):
+    id: int
+    department: str
+    dinner_requests: int
+    lunch_requests: int
+
+    model_config = ConfigDict(from_attributes=True)

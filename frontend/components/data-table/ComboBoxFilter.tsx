@@ -2,8 +2,6 @@
 
 import * as React from "react";
 import { Check, PlusCircle } from "lucide-react";
-import { Column } from "@tanstack/react-table";
-import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,90 +18,91 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
-interface FilterByProps<TData> {
-  column: Column<TData, unknown>;
-  uniqueValues: { value: string; count: number }[];
+interface ComboBoxFilterProps {
+  options: { value: string; count: number }[];
+  placeholder?: string;
+  selectedValues: string[];
+  onChange: (values: string[]) => void;
 }
 
-export default function FilterBy<TData>({
-  column,
-  uniqueValues,
-}: FilterByProps<TData>) {
+const ComboBoxFilter: React.FC<ComboBoxFilterProps> = ({
+  options,
+  placeholder = "Filter by value...",
+  selectedValues,
+  onChange,
+}) => {
   const [open, setOpen] = React.useState(false);
-  const filterValue = column.getFilterValue();
-  const selectedValues = new Set(Array.isArray(filterValue) ? filterValue : []);
+  const selectedSet = new Set(selectedValues);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 border-dashed">
-          <PlusCircle className="mr-2 size-4" />
-          {selectedValues.size > 0 ? (
-            <React.Fragment>
-              {column.columnDef?.header as React.ReactNode}
+          <PlusCircle className="mr-2 h-4 w-4" />
+          {selectedSet.size > 0 ? (
+            <>
+              Filter
               <Badge
                 variant="secondary"
                 className="ml-2 rounded-sm px-1 font-normal"
               >
-                {selectedValues.size}
+                {selectedSet.size}
               </Badge>
-            </React.Fragment>
+            </>
           ) : (
-            `Filter by ${column.columnDef?.header ?? "Value"}`
+            placeholder
           )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[12.5rem] p-0" align="start">
         <Command>
-          <CommandInput
-            placeholder={`Search ${column.columnDef?.header ?? "Value"}...`}
-          />
+          <CommandInput placeholder={`Search ${placeholder}`} />
           <CommandList className="max-h-full">
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup className="max-h-[18.75rem] overflow-y-auto overflow-x-hidden">
-              {uniqueValues.map(({ value, count }) => {
-                const isSelected = selectedValues.has(value);
+              {options.map(({ value, count }) => {
+                const isSelected = selectedSet.has(value);
 
                 return (
                   <CommandItem
                     key={value}
                     onSelect={() => {
                       if (isSelected) {
-                        selectedValues.delete(value);
+                        selectedSet.delete(value);
                       } else {
-                        selectedValues.add(value);
+                        selectedSet.add(value);
                       }
-                      const filterValues = Array.from(selectedValues);
-                      column.setFilterValue(
-                        filterValues.length ? filterValues : undefined
-                      );
+                      onChange(Array.from(selectedSet));
                     }}
                   >
-                    <div
-                      className={cn(
-                        "mr-2 flex size-4 items-center justify-center rounded-sm border border-primary",
-                        isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : "opacity-50 [&_svg]:invisible"
-                      )}
-                    >
-                      <Check className="size-4" aria-hidden="true" />
-                    </div>
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => {
+                        if (isSelected) {
+                          selectedSet.delete(value);
+                        } else {
+                          selectedSet.add(value);
+                        }
+                        onChange(Array.from(selectedSet));
+                      }}
+                      className="mr-2"
+                    />
                     <span>{value}</span>
-                    <span className="ml-auto flex size-4 items-center justify-center font-mono text-xs">
+                    <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
                       {count}
                     </span>
                   </CommandItem>
                 );
               })}
             </CommandGroup>
-            {selectedValues.size > 0 && (
+            {selectedSet.size > 0 && (
               <>
                 <CommandSeparator />
                 <CommandGroup>
                   <CommandItem
-                    onSelect={() => column.setFilterValue(undefined)}
+                    onSelect={() => onChange([])}
                     className="justify-center text-center"
                   >
                     Clear filters
@@ -116,4 +115,6 @@ export default function FilterBy<TData>({
       </PopoverContent>
     </Popover>
   );
-}
+};
+
+export default ComboBoxFilter;

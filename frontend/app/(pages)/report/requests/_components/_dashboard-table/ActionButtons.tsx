@@ -1,10 +1,10 @@
 import React, { useState, useTransition } from "react";
-import ViewAction from "../ViewAction";
 import { CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { updateRequestStatus } from "@/pages/api/actions";
 import { useDataTable } from "@/app/(pages)/request/requests/_components/_data-table/DataTableContext";
 import { useAlerts } from "@/components/alert/useAlerts";
 import ConfirmationModal from "./ConfirmationDialog";
+import ViewAction from "@/app/(pages)/request/requests/_components/ViewAction";
 
 interface ActionsProps {
   recordId: number;

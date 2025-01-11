@@ -10,7 +10,7 @@ from fastapi import (
     BackgroundTasks,
     Query,
 )
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 from typing import Annotated, Dict
 from collections import defaultdict
 
@@ -76,11 +76,7 @@ async def process_meal_requests_for_employees(
 
         for line in request_lines:
             attendance = next(
-                (
-                    a.date_in
-                    for a in attendances
-                    if a.employee_code == line.employee_id
-                ),
+                (a.date_in for a in attendances if a.employee_code == line.employee_id),
                 None,
             )
 
@@ -93,9 +89,7 @@ async def process_meal_requests_for_employees(
             maria_session.add(meal_request_line)
             created_request_lines.append(meal_request_line)
 
-            logger.info(
-                f"Created meal request line for employee ID {line.employee_id}"
-            )
+            logger.info(f"Created meal request line for employee ID {line.employee_id}")
 
         await maria_session.commit()
         return created_request_lines
@@ -192,7 +186,7 @@ async def create_meal_request_endpoint(
         )
 
 
-from sqlalchemy import and_
+from datetime import datetime
 
 
 @router.get(
@@ -202,15 +196,23 @@ from sqlalchemy import and_
 )
 async def get_meal_requests(
     maria_session: SessionDep,
-    from_date: Optional[datetime] = Query(
-        None, description="Start date in ISO format (YYYY-MM-DDTHH:MM:SSZ)"
-    ),
-    to_date: Optional[datetime] = Query(
-        None, description="End date in ISO format (YYYY-MM-DDTHH:MM:SSZ)"
-    ),
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
     request_id: Optional[int] = None,
 ):
     try:
+        # Convert date strings to datetime objects, defaulting time to midnight
+        if start_time:
+            start_time = datetime.strptime(start_time, "%Y-%m-%d").replace(
+                hour=23, minute=59, second=59
+            )
+
+        if end_time:
+            end_time = datetime.strptime(end_time, "%Y-%m-%d").replace(
+                hour=23, minute=59, second=59
+            )
+
+        # Build the statement
         statement = (
             select(
                 MealRequest.id,
@@ -229,30 +231,23 @@ async def get_meal_requests(
             .join(MealType, MealRequest.meal_type_id == MealType.id)
         )
 
-        # Apply filters if provided
-        if request_id is not None:
+        if request_id:
             statement = statement.where(MealRequest.id == request_id)
 
-        if from_date and to_date:
+        if start_time and end_time:
             statement = statement.where(
-                and_(
-                    MealRequest.created_time >= from_date,
-                    MealRequest.created_time <= to_date,
-                )
+                MealRequest.created_time.between(start_time, end_time)
             )
-        elif from_date:
-            statement = statement.where(MealRequest.created_time >= from_date)
-        elif to_date:
-            statement = statement.where(MealRequest.created_time <= to_date)
 
         # Execute the query
         result = await maria_session.execute(statement)
         meal_requests = result.all()
+        print(meal_requests)
+
         return [request for request in meal_requests]
 
     except Exception as err:
         logger.error(f"Unexpected error while reading meal requests: {err}")
-        logger.debug(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while reading meal requests.",
@@ -277,9 +272,7 @@ async def update_meal_order_status_endpoint(
         dict: A success message with the HTTP status code.
     """
     try:
-        logger.info(
-            f"Updating meal order {request_id} with status {status_id}"
-        )
+        logger.info(f"Updating meal order {request_id} with status {status_id}")
 
         # Fetch the meal request
         statement = select(MealRequest).where(MealRequest.id == request_id)

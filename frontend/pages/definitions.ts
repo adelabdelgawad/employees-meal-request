@@ -41,3 +41,22 @@ export type CustomColumnDef<TData> = ColumnDef<TData> & {
     enableDateTimeFilter?: boolean;
   };
 };
+
+export interface RequestRecord {
+  id: number;
+  status_name: string;
+  status_id: number;
+  requester: string;
+  requester_title?: string;
+  meal_type: string;
+  request_time: string;
+  closed_time?: string;
+  notes?: string;
+}
+
+export type DashboardRecord = {
+  id: number;
+  department: string;
+  dinnerRequests: number;
+  lunchRequests: number;
+};

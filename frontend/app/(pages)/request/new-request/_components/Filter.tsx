@@ -1,17 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Row } from "@tanstack/react-table";
 
 interface FilterProps<T> {
-  items: T[];
-  filterBy: (item: T, searchTerm: string) => boolean;
-  onFilter: (filteredItems: T[]) => void;
+  items: Row<T>[]; // Now filtering rows, not raw data
+  filterKey: keyof T;
+  onFilter: (filteredItems: Row<T>[]) => void;
   placeholder?: string;
 }
 
 export default function Filter<T>({
   items,
-  filterBy,
+  filterKey,
   onFilter,
   placeholder = "Search...",
 }: FilterProps<T>) {
@@ -21,9 +22,17 @@ export default function Filter<T>({
     if (!search) {
       onFilter(items);
     } else {
-      onFilter(items.filter((item) => filterBy(item, search)));
+      onFilter(
+        items.filter((row) => {
+          const value = row.original[filterKey];
+          return (
+            typeof value === "string" &&
+            value.toLowerCase().includes(search.toLowerCase())
+          );
+        })
+      );
     }
-  }, [search, items]);
+  }, [search, items, filterKey, onFilter]);
 
   return (
     <div className="mb-4">

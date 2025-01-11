@@ -14,9 +14,7 @@ import { cn } from "@/lib/utils";
 
 export interface DateRangePickerProps {
   setFrom?: (start: Date) => void;
-  setTo?: (end: Date | undefined) => void;
-  initialDateFrom?: Date | string;
-  initialDateTo?: Date | string;
+  setTo?: (end: Date) => void;
   align?: "start" | "center" | "end";
   locale?: string;
   placeholder?: string;
@@ -30,18 +28,9 @@ const formatDate = (date: Date, locale: string = "en-us"): string => {
   });
 };
 
-const getDateAdjustedForTimezone = (dateInput: Date | string): Date => {
-  if (typeof dateInput === "string") {
-    const parts = dateInput.split("-").map((part) => parseInt(part, 10));
-    return new Date(parts[0], parts[1] - 1, parts[2]);
-  } else {
-    return dateInput;
-  }
-};
-
 interface DateRange {
   from: Date;
-  to: Date | undefined;
+  to: Date;
 }
 
 interface Preset {
@@ -64,21 +53,15 @@ const PRESETS: Preset[] = [
 export const DateRangePicker: FC<DateRangePickerProps> = ({
   setFrom,
   setTo,
-  initialDateFrom,
-  initialDateTo,
   align = "end",
   locale = "en-US",
-  placeholder = "Select a date range", // Default placeholder
+  placeholder = "Select a date range",
 }): JSX.Element => {
   const [isOpen, setIsOpen] = useState(false);
 
   const [range, setRange] = useState<DateRange>({
-    from: getDateAdjustedForTimezone(initialDateFrom ?? new Date()),
-    to: initialDateTo
-      ? getDateAdjustedForTimezone(initialDateTo)
-      : initialDateFrom
-      ? getDateAdjustedForTimezone(initialDateFrom)
-      : undefined,
+    from: new Date(),
+    to: undefined,
   });
 
   const [selectedPreset, setSelectedPreset] = useState<string | undefined>(
@@ -217,8 +200,19 @@ export const DateRangePicker: FC<DateRangePickerProps> = ({
             <Calendar
               mode="range"
               selected={range}
-              onSelect={(value: { from?: Date; to?: Date }) => {
-                if (value.from) {
+              onSelect={(value) => {
+                if (!value) return; // Handle undefined value safely
+
+                if (
+                  value.from &&
+                  value.to &&
+                  value.from.getTime() === value.to.getTime()
+                ) {
+                  // Double-click on the same date
+                  setRange({ from: value.from, to: value.from });
+                  setSelectedPreset(undefined); // Clear the preset if manually adjusted
+                } else if (value.from) {
+                  // Regular range selection
                   setRange({ from: value.from, to: value.to });
                   setSelectedPreset(undefined); // Clear the preset if manually adjusted
                 }

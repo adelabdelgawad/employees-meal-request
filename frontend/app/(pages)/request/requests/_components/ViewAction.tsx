@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { EyeOpenIcon } from "@radix-ui/react-icons";
 import DialogTable from "./_request-lines/DialogTable";
-import { updateRequestLines } from "@/pages/api";
+import { updateRequestLines } from "@/lib/data-fetcher";
 import { useAlerts } from "@/components/alert/useAlerts";
 import ConfirmationModal from "./_data-table/ConfirmationDialog";
 // Import the ConfirmationModal

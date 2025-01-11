@@ -1,6 +1,6 @@
 "use client";
 
-import { useRequest } from "@/context/RequestContext";
+import { useRequest } from "@/hooks/RequestContext";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import * as Accordion from "@radix-ui/react-accordion";
 import { Rubik } from "next/font/google";

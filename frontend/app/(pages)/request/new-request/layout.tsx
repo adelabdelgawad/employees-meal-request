@@ -1,20 +1,11 @@
 "use client";
 
-import { RequestProvider } from "@/context/RequestContext";
-import { AlertsProvider } from "@/components/alert/useAlerts";
-import AlertStack from "@/components/alert/AlertStack";
+import { RequestProvider } from "@/hooks/RequestContext";
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <RequestProvider>
-      <AlertsProvider>
-        {children}
-        <AlertStack />
-      </AlertsProvider>
-    </RequestProvider>
-  );
+  return <RequestProvider>{children}</RequestProvider>;
 }

@@ -11,9 +11,15 @@ import {
   Legend,
 } from "chart.js";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
-// Define Props Type
 interface DepartmentChartProps {
   data: {
     department: string;
@@ -39,18 +45,20 @@ const DepartmentChart: React.FC<DepartmentChartProps> = ({ data }) => {
     ],
   };
 
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top",
+      },
+    },
+  };
+
   return (
-    <Bar
-      data={chartData}
-      options={{
-        responsive: true,
-        plugins: {
-          legend: {
-            position: "top",
-          },
-        },
-      }}
-    />
+    <div className="w-full h-96">
+      <Bar data={chartData} options={chartOptions} />
+    </div>
   );
 };
 

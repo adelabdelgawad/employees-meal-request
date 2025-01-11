@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSidebar } from "@/context/SidebarContext";
+import { useSidebar } from "@/hooks/SidebarContext";
 import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";
 
 const currentRole = "admin";
