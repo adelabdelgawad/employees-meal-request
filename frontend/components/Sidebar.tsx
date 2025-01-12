@@ -1,64 +1,63 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useSidebar } from "@/hooks/SidebarContext";
-import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";
+import Link from 'next/link';
+import { useSidebar } from '@/hooks/SidebarContext';
+import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons';
 
-const currentRole = "admin";
+const currentRole = 'admin';
 
 const data = {
   navMain: [
     {
-      title: "Request",
-      role: "admin, requester, approver",
+      title: 'Request',
+      role: 'admin, requester, approver',
       items: [
         {
-          title: "New Request",
-          url: "/request/new-request",
-          role: "admin, requester",
+          title: 'New Request',
+          url: '/request/new-request',
+          role: 'admin, requester',
         },
         {
-          title: "Requests",
-          url: "/request/requests",
-          role: "admin, approver",
+          title: 'Requests',
+          url: '/request/requests',
+          role: 'admin, approver',
         },
       ],
     },
     {
-      title: "Report",
-      role: "admin",
+      title: 'Report',
+      role: 'admin',
       items: [
         {
-          title: "Requests",
-          url: "/report/requests",
-          role: "admin",
+          title: 'Requests Dashboard',
+          url: '/report/requests-dashboard',
+          role: 'admin',
         },
-        { title: "Meals", url: "/data-management/meals", role: "admin" },
         {
-          title: "Meal Plans",
-          url: "/data-management/meal-plans",
-          role: "admin",
+          title: 'Requests  Details',
+          url: '/report/requests-details',
+          role: 'admin',
+        },
+        {
+          title: 'Meal Plans',
+          url: '/data-management/meal-plans',
+          role: 'admin',
         },
       ],
     },
     {
-      title: "Security",
-      role: "admin, moderator",
+      title: 'Settings',
+      role: 'admin, moderator',
       items: [
-        {
-          title: "Permission",
-          url: "/security/permissions",
-          role: "admin, moderator",
-        },
-        { title: "Users", url: "/security/users", role: "admin, moderator" },
-        { title: "Roles", url: "/security/roles", role: "admin, moderator" },
+        { title: 'Users', url: '/setting/users', role: 'admin, moderator' },
+        { title: 'Roles', url: '/security/roles', role: 'admin, moderator' },
       ],
     },
   ],
 };
 
 const isRoleAllowed = (roles: string) =>
-  roles.split(", ").includes(currentRole);
+  roles.split(', ').includes(currentRole);
 
 export const Sidebar = () => {
   const { isSidebarOpen, toggleSidebar } = useSidebar();
@@ -66,7 +65,7 @@ export const Sidebar = () => {
   return (
     <aside
       className={`bg-gray-900 text-white h-full p-4 fixed top-0 left-0 transform ${
-        isSidebarOpen ? "w-64" : "w-16"
+        isSidebarOpen ? 'w-64' : 'w-16'
       } transition-all duration-300`}
     >
       {/* Toggle Button */}
@@ -89,7 +88,7 @@ export const Sidebar = () => {
             <li key={item.title}>
               <h2
                 className={`font-bold text-lg mb-2 ${
-                  isSidebarOpen ? "block" : "hidden"
+                  isSidebarOpen ? 'block' : 'hidden'
                 }`}
               >
                 {item.title}
@@ -105,7 +104,7 @@ export const Sidebar = () => {
                       >
                         <span
                           className={`${
-                            isSidebarOpen ? "block" : "hidden"
+                            isSidebarOpen ? 'block' : 'hidden'
                           } ml-2`}
                         >
                           {subItem.title}

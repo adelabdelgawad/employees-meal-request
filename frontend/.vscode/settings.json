@@ -1,0 +1,87 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "typescript.validate.enable": true,
+  "javascript.validate.enable": false,
+  "css.validate": false,
+  "scss.validate": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "json"
+  ],
+  "eslint.options": {
+    "overrideConfigFile": ".eslintrc.json"
+  },
+  "files.autoSave": "onFocusChange",
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "prettier.requireConfig": true,
+  "nextjs.defaultPagesDirectory": "pages",
+  "nextjs.defaultSrcDirectory": "src",
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "files.associations": {
+    "*.tsx": "typescriptreact",
+    "*.ts": "typescript"
+  },
+  "css.lint.unknownAtRules": "ignore",
+  "editor.suggestSelection": "first",
+  "explorer.confirmDragAndDrop": false,
+  "explorer.confirmDelete": false,
+  "workbench.editor.untitled.hint": "hidden",
+
+  // Hide unnecessary files and folders from the explorer
+  "files.exclude": {
+    "**/.next": true,
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/dist": true,
+    "**/out": true,
+    "**/.env": true,
+    "**/.env.*": true,
+    "**/yarn.lock": true,
+    "**/package-lock.json": true,
+    "**/coverage": true,
+    "**/logs": true,
+    "**/README.md": true, // Keep README visible
+    "**/.DS_Store": true,
+    "**/components.json": true,
+    "**/.gitingnore": true,
+    "**/package.json": true,
+    "**/tailwind.config.ts": true,
+    "**/.gitignore": true,
+    "**/.vscode": true,
+  },
+
+  // Hide files from search
+  "search.exclude": {
+    "**/.next": true,
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/dist": true,
+    "**/out": true,
+    "**/.env": true,
+    "**/.env.*": true,
+    "**/yarn.lock": true,
+    "**/package-lock.json": true,
+    "**/coverage": true,
+    "**/logs": true
+  },
+
+  // Exclude files from the file watcher to improve performance
+  "files.watcherExclude": {
+    "**/.next/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/out/**": true,
+    "**/.git/**": true,
+    "**/coverage/**": true,
+    "**/logs/**": true
+  }
+}

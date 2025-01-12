@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useRequest } from "@/hooks/RequestContext";
-import * as ScrollArea from "@radix-ui/react-scroll-area";
-import * as Accordion from "@radix-ui/react-accordion";
-import { Rubik } from "next/font/google";
+import { useNewRequest } from '@/hooks/NewRequestContext';
+import * as ScrollArea from '@radix-ui/react-scroll-area';
+import * as Accordion from '@radix-ui/react-accordion';
+import { Rubik } from 'next/font/google';
 
 // Apply Rubik font
-const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
+const rubik = Rubik({ subsets: ['latin'], weight: ['400', '500', '700'] });
 
 interface Entry {
   id: number;
@@ -17,7 +17,7 @@ interface Entry {
 }
 
 export default function SelectedEmployeesColumn() {
-  const { submittedEmployees, setSubmittedEmployees } = useRequest();
+  const { submittedEmployees, setSubmittedEmployees } = useNewRequest();
 
   // Group employees by meal type
   const employeesByMealType: Record<string, Entry[]> =
@@ -31,8 +31,8 @@ export default function SelectedEmployeesColumn() {
   const removeEmployee = (employeeId: number, mealTypeId: number) => {
     setSubmittedEmployees((prev) =>
       prev.filter(
-        (entry) => !(entry.id === employeeId && entry.meal_id === mealTypeId)
-      )
+        (entry) => !(entry.id === employeeId && entry.meal_id === mealTypeId),
+      ),
     );
   };
 
@@ -96,7 +96,7 @@ export default function SelectedEmployeesColumn() {
                       </div>
                     </Accordion.Content>
                   </Accordion.Item>
-                )
+                ),
               )}
             </Accordion.Root>
           </ScrollArea.Viewport>

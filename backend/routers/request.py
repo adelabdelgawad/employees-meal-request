@@ -196,19 +196,18 @@ from datetime import datetime
 )
 async def get_meal_requests(
     maria_session: SessionDep,
-    start_time: Optional[str] = None,
-    end_time: Optional[str] = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
     request_id: Optional[int] = None,
 ):
     try:
-        # Convert date strings to datetime objects, defaulting time to midnight
-        if start_time:
-            start_time = datetime.strptime(start_time, "%Y-%m-%d").replace(
-                hour=23, minute=59, second=59
+        # Convert date strings to datetime objects
+        if from_date:
+            from_date = datetime.strptime(from_date, "%Y-%m-%d").replace(
+                hour=0, minute=0, second=0
             )
-
-        if end_time:
-            end_time = datetime.strptime(end_time, "%Y-%m-%d").replace(
+        if to_date:
+            to_date = datetime.strptime(to_date, "%Y-%m-%d").replace(
                 hour=23, minute=59, second=59
             )
 
@@ -234,15 +233,14 @@ async def get_meal_requests(
         if request_id:
             statement = statement.where(MealRequest.id == request_id)
 
-        if start_time and end_time:
+        if from_date and to_date:
             statement = statement.where(
-                MealRequest.created_time.between(start_time, end_time)
+                MealRequest.created_time.between(from_date, to_date)
             )
 
         # Execute the query
         result = await maria_session.execute(statement)
         meal_requests = result.all()
-        print(meal_requests)
 
         return [request for request in meal_requests]
 

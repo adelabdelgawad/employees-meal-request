@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { RequestProvider } from "@/hooks/RequestContext";
+import { NewRequestProvider } from '@/hooks/NewRequestContext';
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <RequestProvider>{children}</RequestProvider>;
+  return <NewRequestProvider>{children}</NewRequestProvider>;
 }

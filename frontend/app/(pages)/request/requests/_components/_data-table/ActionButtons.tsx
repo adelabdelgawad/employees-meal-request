@@ -1,10 +1,10 @@
-import React, { useState, useTransition } from "react";
-import ViewAction from "../ViewAction";
-import { CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
-import { updateRequestStatus } from "@/pages/api/actions";
-import { useDataTable } from "@/app/(pages)/request/requests/_components/_data-table/DataTableContext";
-import { useAlerts } from "@/components/alert/useAlerts";
-import ConfirmationModal from "./ConfirmationDialog";
+import React, { useState, useTransition } from 'react';
+import ViewAction from '../ViewAction';
+import { CheckIcon, Cross2Icon } from '@radix-ui/react-icons';
+import { updateRequestStatus } from '@/pages/api/actions';
+import { useAlerts } from '@/components/alert/useAlerts';
+import ConfirmationModal from './ConfirmationDialog';
+import { useRequest } from '@/hooks/RequestContext';
 
 interface ActionsProps {
   recordId: number;
@@ -18,20 +18,20 @@ export const ActionButtons: React.FC<ActionsProps> = ({
   const { addAlert } = useAlerts();
   const [isPending, startTransition] = useTransition();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [actionType, setActionType] = useState<"accept" | "reject" | null>(
-    null
+  const [actionType, setActionType] = useState<'accept' | 'reject' | null>(
+    null,
   );
 
-  const { mutate } = useDataTable();
+  const { mutate } = useRequest();
 
   const disableStatus = requestStatusId !== 1;
 
   // Handle Accept/Reject with confirmation
   const handleConfirm = async () => {
     setShowConfirmModal(false);
-    if (actionType === "accept") {
+    if (actionType === 'accept') {
       handleAccept();
-    } else if (actionType === "reject") {
+    } else if (actionType === 'reject') {
       handleReject();
     }
   };
@@ -42,10 +42,10 @@ export const ActionButtons: React.FC<ActionsProps> = ({
     startTransition(async () => {
       try {
         const result = await updateRequestStatus(recordId, 4);
-        addAlert(result.message, "success");
+        addAlert(result.message, 'success');
         await mutate();
       } catch (error) {
-        addAlert("Failed to update request status.", "error");
+        addAlert('Failed to update request status.', 'error');
       }
     });
   };
@@ -56,10 +56,10 @@ export const ActionButtons: React.FC<ActionsProps> = ({
     startTransition(async () => {
       try {
         const result = await updateRequestStatus(recordId, 3);
-        addAlert(result.message, "success");
+        addAlert(result.message, 'success');
         await mutate();
       } catch (error) {
-        addAlert("Failed to update request status.", "error");
+        addAlert('Failed to update request status.', 'error');
       }
     });
   };
@@ -72,11 +72,11 @@ export const ActionButtons: React.FC<ActionsProps> = ({
         <button
           className={`w-10 h-10 flex items-center justify-center rounded-full ${
             disableStatus || isPending
-              ? "bg-gray-300 cursor-not-allowed"
-              : "bg-red-200 hover:bg-red-300 cursor-pointer"
+              ? 'bg-gray-300 cursor-not-allowed'
+              : 'bg-red-200 hover:bg-red-300 cursor-pointer'
           }`}
           onClick={() => {
-            setActionType("reject");
+            setActionType('reject');
             setShowConfirmModal(true);
           }}
           title="Reject"
@@ -90,11 +90,11 @@ export const ActionButtons: React.FC<ActionsProps> = ({
           disabled={disableStatus || isPending}
           className={`w-10 h-10 flex items-center justify-center rounded-full ${
             disableStatus || isPending
-              ? "bg-gray-300 cursor-not-allowed"
-              : "bg-green-200 hover:bg-green-300 cursor-pointer"
+              ? 'bg-gray-300 cursor-not-allowed'
+              : 'bg-green-200 hover:bg-green-300 cursor-pointer'
           }`}
           onClick={() => {
-            setActionType("accept");
+            setActionType('accept');
             setShowConfirmModal(true);
           }}
           title="Accept"
@@ -109,7 +109,7 @@ export const ActionButtons: React.FC<ActionsProps> = ({
         onCancel={() => setShowConfirmModal(false)}
         title="Are you sure?"
         message={`Do you want to ${
-          actionType === "accept" ? "accept" : "reject"
+          actionType === 'accept' ? 'accept' : 'reject'
         } this request?`}
       />
     </div>

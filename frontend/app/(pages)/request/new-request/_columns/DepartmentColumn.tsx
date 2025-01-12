@@ -1,23 +1,23 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useMemo } from "react";
-import * as ScrollArea from "@radix-ui/react-scroll-area";
-import * as Checkbox from "@radix-ui/react-checkbox";
-import { CheckIcon } from "@radix-ui/react-icons";
-import { useRequest } from "@/hooks/RequestContext";
-import FilterComponent from "../_components/Filter";
-import SelectionActions from "../_components/SelectionActions";
+import { useState, useEffect, useMemo } from 'react';
+import * as ScrollArea from '@radix-ui/react-scroll-area';
+import * as Checkbox from '@radix-ui/react-checkbox';
+import { CheckIcon } from '@radix-ui/react-icons';
+import { useNewRequest } from '@/hooks/NewRequestContext';
+import FilterComponent from '../_components/Filter';
+import SelectionActions from '../_components/SelectionActions';
 
 export default function DepartmentColumn() {
   const { departments, selectedDepartments, setSelectedDepartments } =
-    useRequest();
+    useNewRequest();
 
   const [filteredDepartments, setFilteredDepartments] = useState(departments);
 
   // Memoize filteredDepartments to avoid recalculation on each render
   const filteredList = useMemo(
     () => filteredDepartments,
-    [filteredDepartments]
+    [filteredDepartments],
   );
 
   // Update filteredDepartments when departments change
@@ -30,7 +30,7 @@ export default function DepartmentColumn() {
     setSelectedDepartments((prev) =>
       prev.includes(deptId)
         ? prev.filter((id) => id !== deptId)
-        : [...prev, deptId]
+        : [...prev, deptId],
     );
   };
 
@@ -81,8 +81,8 @@ export default function DepartmentColumn() {
                   key={dept.id}
                   className={`flex items-center justify-between border rounded-lg p-3 my-2  cursor-pointer ${
                     selectedDepartments.includes(dept.id.toString())
-                      ? "bg-blue-50 border-blue-500"
-                      : "bg-white border-gray-300"
+                      ? 'bg-blue-50 border-blue-500'
+                      : 'bg-white border-gray-300'
                   }`}
                 >
                   <span className="text-sm font-medium">{dept.name}</span>

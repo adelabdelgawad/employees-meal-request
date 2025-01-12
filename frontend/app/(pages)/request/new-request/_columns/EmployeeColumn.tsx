@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import * as ScrollArea from "@radix-ui/react-scroll-area";
-import * as Checkbox from "@radix-ui/react-checkbox";
-import { CheckIcon } from "@radix-ui/react-icons";
-import { useRequest } from "@/hooks/RequestContext";
-import EmployeeSelectionDialog from "../_components/EmployeeSelectionDialog";
-import FilterComponent from "../_components/Filter";
-import SelectionActions from "../_components/SelectionActions";
-import { Rubik } from "next/font/google";
+import { useEffect, useState } from 'react';
+import * as ScrollArea from '@radix-ui/react-scroll-area';
+import * as Checkbox from '@radix-ui/react-checkbox';
+import { CheckIcon } from '@radix-ui/react-icons';
+import { useNewRequest } from '@/hooks/NewRequestContext';
+import EmployeeSelectionDialog from '../_components/EmployeeSelectionDialog';
+import FilterComponent from '../_components/Filter';
+import SelectionActions from '../_components/SelectionActions';
+import { Rubik } from 'next/font/google';
 
 // Apply Rubik font
-const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
+const rubik = Rubik({ subsets: ['latin'], weight: ['400', '500', '700'] });
 
 export default function EmployeeColumn() {
   const {
@@ -21,7 +21,7 @@ export default function EmployeeColumn() {
     mealTypes,
     selectedDepartments,
     submittedEmployees,
-  } = useRequest();
+  } = useNewRequest();
 
   // Filter employees based on selected departments and meal types
   const [filteredEmployees, setFilteredEmployees] = useState(() =>
@@ -30,10 +30,10 @@ export default function EmployeeColumn() {
         !mealTypes.every((mealType) =>
           submittedEmployees.some(
             (submitted) =>
-              submitted.id === emp.id && submitted.meal_id === mealType.id
-          )
-        )
-    )
+              submitted.id === emp.id && submitted.meal_id === mealType.id,
+          ),
+        ),
+    ),
   );
 
   // Re-filter employees when dependencies change
@@ -43,16 +43,16 @@ export default function EmployeeColumn() {
         ? !mealTypes.every((mealType) =>
             submittedEmployees.some(
               (submitted) =>
-                submitted.id === emp.id && submitted.meal_id === mealType.id
-            )
+                submitted.id === emp.id && submitted.meal_id === mealType.id,
+            ),
           )
         : selectedDepartments.includes(emp.department_id.toString()) &&
           !mealTypes.every((mealType) =>
             submittedEmployees.some(
               (submitted) =>
-                submitted.id === emp.id && submitted.meal_id === mealType.id
-            )
-          )
+                submitted.id === emp.id && submitted.meal_id === mealType.id,
+            ),
+          ),
     );
     setFilteredEmployees(filterEmployees);
   }, [employees, selectedDepartments, submittedEmployees, mealTypes]);
@@ -60,14 +60,14 @@ export default function EmployeeColumn() {
   // Toggle employee selection
   const toggleEmployee = (empId: string) => {
     const selectedEmployee = employees.find(
-      (emp) => emp.id.toString() === empId
+      (emp) => emp.id.toString() === empId,
     );
     if (!selectedEmployee) return;
 
     setSelectedEmployees((prev) =>
       prev.some((emp) => emp.id === selectedEmployee.id)
         ? prev.filter((emp) => emp.id !== selectedEmployee.id)
-        : [...prev, selectedEmployee]
+        : [...prev, selectedEmployee],
     );
   };
 
@@ -118,8 +118,8 @@ export default function EmployeeColumn() {
                   key={emp.id}
                   className={`flex items-center justify-between border rounded-lg p-3 my-2  cursor-pointer ${
                     selectedEmployees.some((e) => e.id === emp.id)
-                      ? "bg-blue-50 border-blue-500"
-                      : "bg-white border-gray-300"
+                      ? 'bg-blue-50 border-blue-500'
+                      : 'bg-white border-gray-300'
                   }`}
                   onClick={() => toggleEmployee(emp.id.toString())}
                 >
@@ -161,9 +161,10 @@ export default function EmployeeColumn() {
       {/* Employee Dialog */}
       <EmployeeSelectionDialog
         selectedEmployees={selectedEmployees}
+        setSelectedEmployees={setSelectedEmployees}
         mealTypes={mealTypes}
         onSelectMealType={(selectedMealTypes) => {
-          console.log("Meal Types Selected:", selectedMealTypes);
+          console.log('Meal Types Selected:', selectedMealTypes);
         }}
       />
     </div>

@@ -8,8 +8,6 @@ import { DateRangePicker } from "@/components/data-table/DateRangePicker";
 
 interface TableOptionsProps {
   data: RequestRecord[];
-  fromDate: Date;
-  toDate: Date;
   setFromDate: (value: Date) => void;
   setToDate: (value: Date) => void;
   searchQuery: string;
@@ -21,8 +19,6 @@ interface TableOptionsProps {
 
 export default function TableOptions({
   data,
-  fromDate,
-  toDate,
   setFromDate,
   setToDate,
   searchQuery,

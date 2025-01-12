@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRequest } from "@/hooks/RequestContext";
-import { useAlerts } from "@/components/alert/useAlerts";
-import { useRouter } from "next/navigation";
-import { debounce } from "@/lib/utils";
+import { useState } from 'react';
+import { useNewRequest } from '@/hooks/NewRequestContext';
+import { useAlerts } from '@/components/alert/useAlerts';
+import { useRouter } from 'next/navigation';
+import { debounce } from '@/lib/utils';
 
 export default function SubmitRequestButton() {
-  const { submittedEmployees } = useRequest();
+  const { submittedEmployees } = useNewRequest();
   const { addAlert } = useAlerts();
   const [loading, setLoading] = useState(false);
 
@@ -16,33 +16,33 @@ export default function SubmitRequestButton() {
 
   const handleRequestSubmission = async () => {
     if (submittedEmployees.length === 0) {
-      addAlert("No requests to submit!", "warning");
+      addAlert('No requests to submit!', 'warning');
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await fetch("/api/submit-request", {
-        method: "POST",
+      const response = await fetch('/api/submit-request', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ requests: submittedEmployees }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to submit requests");
+        throw new Error('Failed to submit requests');
       }
 
       const result = await response.json();
-      addAlert(result.message, "success");
+      addAlert(result.message, 'success');
 
       // ✅ Redirect to confirmation page with multiple IDs
-      const requestIds = result.created_meal_request_ids.join(",");
+      const requestIds = result.created_meal_request_ids.join(',');
       router.push(`/request-success?requestIds=${requestIds}`);
     } catch (error: any) {
-      addAlert(error.message || "An error occurred", "error");
+      addAlert(error.message || 'An error occurred', 'error');
     } finally {
       setLoading(false);
     }
@@ -51,7 +51,7 @@ export default function SubmitRequestButton() {
   // ✅ Debounced submission handler
   const debouncedHandleRequestSubmission = debounce(
     handleRequestSubmission,
-    300
+    300,
   );
 
   return (
@@ -60,11 +60,11 @@ export default function SubmitRequestButton() {
       disabled={submittedEmployees.length === 0 || loading}
       className={`w-full py-2 px-4 rounded-md text-sm font-medium ${
         submittedEmployees.length === 0 || loading
-          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-          : "bg-green-700 text-white hover:bg-green-800"
+          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+          : 'bg-green-700 text-white hover:bg-green-800'
       }`}
     >
-      {loading ? "Submitting..." : "Submit Request"}
+      {loading ? 'Submitting...' : 'Submit Request'}
     </button>
   );
 }

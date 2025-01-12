@@ -16,7 +16,7 @@ export interface MealType {
   name: string;
 }
 
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from '@tanstack/react-table';
 
 export interface Column {
   id: string;
@@ -54,9 +54,7 @@ export interface RequestRecord {
   notes?: string;
 }
 
-export type DashboardRecord = {
+export interface ChangedStatus {
   id: number;
-  department: string;
-  dinnerRequests: number;
-  lunchRequests: number;
-};
+  is_accepted: boolean;
+}

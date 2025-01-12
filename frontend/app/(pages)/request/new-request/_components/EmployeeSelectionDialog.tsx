@@ -1,38 +1,40 @@
-"use client";
+'use client';
 
-import { FC, useState } from "react";
+import { FC, useState } from 'react';
 import {
   Dialog,
   DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import * as ScrollArea from "@radix-ui/react-scroll-area";
-import { Input } from "@/components/ui/input";
-import MealTypeOption from "./MealTypeOption";
-import { useRequest } from "@/hooks/RequestContext";
-import { EmployeeType, MealType } from "@/pages/definitions";
-import { useAlerts } from "@/components/alert/useAlerts";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import * as ScrollArea from '@radix-ui/react-scroll-area';
+import { Input } from '@/components/ui/input';
+import MealTypeOption from './MealTypeOption';
+import { useNewRequest } from '@/hooks/NewRequestContext';
+import { EmployeeType, MealType } from '@/pages/definitions';
+import { useAlerts } from '@/components/alert/useAlerts';
 
 interface EmployeeSelectionDialogProps {
   selectedEmployees: EmployeeType[];
+  setSelectedEmployees: (employees: EmployeeType[]) => void;
   mealTypes: MealType[];
   onSelectMealType: (selectedMealTypes: MealType[]) => void;
 }
 
 const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
   selectedEmployees,
+  setSelectedEmployees,
   mealTypes,
   onSelectMealType,
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [employeeNotes, setEmployeeNotes] = useState<Record<number, string>>(
-    {}
+    {},
   );
   const [selectedMealTypes, setSelectedMealTypes] = useState<MealType[]>([]);
-  const { submittedEmployees, setSubmittedEmployees } = useRequest();
+  const { submittedEmployees, setSubmittedEmployees } = useNewRequest();
   const { addAlert } = useAlerts();
 
   // Handle notes input change
@@ -53,8 +55,8 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
   const handleSubmit = () => {
     if (selectedMealTypes.length === 0) {
       addAlert(
-        "Please select at least one meal type before submitting.",
-        "warning"
+        'Please select at least one meal type before submitting.',
+        'warning',
       );
       return;
     }
@@ -66,16 +68,16 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
         department_id: employee.department_id,
         meal_id: mealType.id,
         meal_name: mealType.name,
-        notes: employeeNotes[employee.id] || "",
-      }))
+        notes: employeeNotes[employee.id] || '',
+      })),
     );
 
     // Check for duplicates and generate detailed error messages
     const duplicateEntries = finalData.filter((entry) =>
       submittedEmployees.some(
         (submitted) =>
-          submitted.id === entry.id && submitted.meal_id === entry.meal_id
-      )
+          submitted.id === entry.id && submitted.meal_id === entry.meal_id,
+      ),
     );
 
     if (duplicateEntries.length > 0) {
@@ -83,7 +85,7 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
       duplicateEntries.forEach((entry) => {
         addAlert(
           `${entry.name} already has Meal Type "${entry.meal_name}" submitted.`,
-          "warning"
+          'warning',
         );
         console.log(entry);
       });
@@ -94,13 +96,14 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
       (entry) =>
         !submittedEmployees.some(
           (submitted) =>
-            submitted.id === entry.id && submitted.meal_id === entry.meal_id
-        )
+            submitted.id === entry.id && submitted.meal_id === entry.meal_id,
+        ),
     );
 
     setSubmittedEmployees([...submittedEmployees, ...newEntries]);
 
     // Hide the dialog after submission
+    setSelectedEmployees([]);
     setIsDialogOpen(false);
   };
 
@@ -157,7 +160,7 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
                     <Input
                       type="text"
                       placeholder="Notes"
-                      value={employeeNotes[employee.id] || ""}
+                      value={employeeNotes[employee.id] || ''}
                       onChange={(e) =>
                         handleNoteChange(employee.id, e.target.value)
                       }

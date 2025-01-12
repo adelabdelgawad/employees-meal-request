@@ -1,13 +1,11 @@
-"use client";
-
-import React from "react";
-import { DataTable } from "./DataTable";
-import { DataTableProvider } from "@/app/(pages)/request/requests/_components/_data-table/DataTableContext";
+'use client';
+import React from 'react';
+import { RequestsTable } from './RequestsTable';
 
 export default function Page() {
   return (
-    <DataTableProvider>
-      <DataTable />
-    </DataTableProvider>
+    <div>
+      <RequestsTable />
+    </div>
   );
 }
