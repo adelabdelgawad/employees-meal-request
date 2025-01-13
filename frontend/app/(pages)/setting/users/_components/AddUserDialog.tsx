@@ -18,7 +18,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
-import { useUserContext } from '@/hooks/SettingUserContext';
+import { useSettingUserContext } from '@/hooks/SettingUserContext';
 import { submitAddUser } from '@/lib/services/setting-user';
 import {
   Dialog,
@@ -30,11 +30,12 @@ import { DialogHeader } from '@/components/ui/dialog';
 import { useAlerts } from '@/components/alert/useAlerts';
 
 export function AddUserDialog() {
-  const { domainUsers, roles, loading } = useUserContext();
+  const { domainUsers, roles, loading } = useSettingUserContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const selectedUser = domainUsers.find((user) => user.id === selectedUserId);
   const { addAlert } = useAlerts();
 
@@ -46,6 +47,13 @@ export function AddUserDialog() {
         : [...prev, roleId],
     );
   };
+
+  // Filter users based on search query (only by fullName or username)
+  const filteredUsers = domainUsers.filter(
+    (user) =>
+      user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.username.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   // Form submission
   const onSubmit = async (e: React.FormEvent) => {
@@ -85,7 +93,7 @@ export function AddUserDialog() {
           <Plus className="w-5 h-5" /> Add User
         </Button>
       </DialogTrigger>
-      <DialogContent className="fixed inset-0 flex items-center justify-center p-4">
+      <DialogContent className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
         <div className="w-[580px] bg-white rounded-lg shadow-lg p-6 max-h-[85vh] overflow-y-auto">
           <DialogHeader className="items-center">
             <DialogTitle>Add New User</DialogTitle>
@@ -113,11 +121,14 @@ export function AddUserDialog() {
                     <CommandInput
                       placeholder="Search user..."
                       className="h-9"
+                      value={searchQuery}
+                      onValueChange={(value) => setSearchQuery(value)}
                     />
+
                     <CommandList>
                       <CommandEmpty>No user found.</CommandEmpty>
                       <CommandGroup>
-                        {domainUsers.map((user) => (
+                        {filteredUsers.map((user) => (
                           <CommandItem
                             key={user.id}
                             onSelect={() => {

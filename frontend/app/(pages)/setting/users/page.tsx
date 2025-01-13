@@ -1,6 +1,7 @@
 'use client';
 
 import { AddUserDialog } from './_components/AddUserDialog';
+import { SettingUsersTable } from './SettingUsersTable';
 
 export default function AddUserPage() {
   return (
@@ -8,6 +9,7 @@ export default function AddUserPage() {
       <div className="flex justify-end">
         <AddUserDialog />
       </div>
+      <SettingUsersTable />
     </div>
   );
 }

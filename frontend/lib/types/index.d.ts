@@ -17,6 +17,14 @@ declare global {
     username: string;
     title: string;
   };
+
+  type User = {
+    id: number;
+    fullName: string;
+    username: string;
+    title: string;
+    roles: string[];
+  };
 }
 
 export {};
