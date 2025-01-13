@@ -9,7 +9,6 @@ interface DataTableBodyProps {
 }
 
 export default function DataTableBody({ records }: DataTableBodyProps) {
-  console.log(records);
   return (
     <TableBody>
       {records.length > 0 ? (
@@ -19,17 +18,25 @@ export default function DataTableBody({ records }: DataTableBodyProps) {
             <TableCell>{record.fullName}</TableCell>
             <TableCell>{record.title}</TableCell>
             <TableCell>
-              {Array.isArray(record.roles) ? record.roles.join(', ') : ''}
+              {Array.isArray(record.roles)
+                ? record.roles
+                    .map((role) =>
+                      typeof role === 'string' ? role : role.name,
+                    )
+                    .join(', ')
+                : ''}
             </TableCell>
             <TableCell>
-              <ActionButtons recordId={record.id} />
+              <div className="flex justify-center">
+                <ActionButtons recordId={record.id} />
+              </div>
             </TableCell>
           </TableRow>
         ))
       ) : (
         <TableRow>
-          <TableCell colSpan={5} className="text-center">
-            No results found.
+          <TableCell colSpan={5} className="text-center text-gray-500">
+            No users found.
           </TableCell>
         </TableRow>
       )}

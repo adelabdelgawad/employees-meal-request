@@ -23,7 +23,7 @@ declare global {
     fullName: string;
     username: string;
     title: string;
-    roles: string[];
+    roles: { id: number; name: string }[] | string[];
   };
 }
 

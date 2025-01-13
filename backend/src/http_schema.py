@@ -65,3 +65,12 @@ class ReportDashboardResponse(BaseModel):
     lunch_requests: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class DomainUser(BaseModel):
+    id: int
+    username: str
+    fullName: Optional[str] = None
+    title: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)

@@ -3,7 +3,7 @@ import ViewAction from '../ViewAction';
 import { CheckIcon, Cross2Icon } from '@radix-ui/react-icons';
 import { updateRequestStatus } from '@/pages/api/actions';
 import { useAlerts } from '@/components/alert/useAlerts';
-import ConfirmationModal from './ConfirmationDialog';
+import ConfirmationModal from '../../../../../../components/data-table/ConfirmationDialog';
 import { useRequest } from '@/hooks/RequestContext';
 
 interface ActionsProps {

@@ -1,95 +1,85 @@
+import asyncio
 import os
-from dotenv import load_dotenv
+from typing import List, Optional
+from pydantic import BaseModel, ConfigDict
+from src.http_schema import DomainUser  # Ensure this path is correct
+from fastapi import APIRouter, HTTPException, status
 import logging
-from ldap3 import Server, Connection, SIMPLE, ALL, SUBTREE
-from typing import Optional, List
-from src.schema import DomainAccount
 
-# Load environment variables from the .env file
+import bonsai
+from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
+
+# Fix Windows event loop issue for Windows
+if os.name == "nt":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+# Load environment variables
 load_dotenv()
 
-# Set up logger
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+# Environment variables
+ldap_url: str = os.getenv("LDAP_URL")
+ldap_user: str = os.getenv("LDAP_USER")
+ldap_password: str = os.getenv("LDAP_PASSWORD")
+
+# The OUs to search
+search_bases: List[str] = [
+    "OU=Users,OU=SMH,OU=Andalusia,DC=andalusia,DC=loc",
+    "OU=Users,OU=ARC,OU=Andalusia,DC=andalusia,DC=loc",
+    "OU=Users,OU=ANC,OU=Andalusia,DC=andalusia,DC=loc",
+]
 
 
-class LDAPAuthenticator:
-    """
-    A class to authenticate users against an LDAP server and retrieve user attributes.
+async def search_ldap(ou: str) -> List[DomainUser]:
+    """Search a specific OU and return a list of DomainUser objects."""
 
-    Attributes:
-        domain (str): The domain of the LDAP server.
-        dc (str): The domain controller (DC) hostname or IP address.
-    """
+    client = bonsai.LDAPClient(ldap_url)
+    client.set_credentials("SIMPLE", user=ldap_user, password=ldap_password)
 
-    def get_domain_accounts(self) -> Optional[List[DomainAccount]]:
-        """
-        Authenticate a user against the LDAP server using simple bind and retrieve user attributes.
+    try:
+        async with client.connect(is_async=True) as conn:
+            logger.info(f"Connected to LDAP: {ldap_url}")
 
-        Returns:
-            Optional[List[DomainAccount]]: A list of DomainAccount objects if authenticated successfully, otherwise None.
-        """
-        try:
-            DC = os.getenv("AD_SERVER")
-            USERNAME = os.getenv("SERVICE_ACCOUNT")
-            PASSWORD = os.getenv("SERVICE_PASSWORD")
-
-            # Set up the server and connection
-            server = Server(DC, port=389, use_ssl=False, get_info=ALL)
-            connection = Connection(
-                server,
-                user=USERNAME,
-                password=PASSWORD,
-                authentication=SIMPLE,
-                auto_bind=True,
+            # Search filter for active user accounts
+            search_filter: str = (
+                "(&(objectCategory=person)(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))"
             )
+            attrlist: List[str] = ["sAMAccountName", "displayName", "title"]
 
-            # Search the directory for active users.
-            search_base = 'OU=Andalusia,DC=andalusia,DC=loc'
-            search_filter = '(&(objectCategory=person)(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))'
+            # Perform the search
+            results = await conn.search(ou, 2, search_filter, attrlist)
+            logger.info(f"Found {len(results)} users in {ou}")
 
-            # Use paged search to retrieve all results
-            paged_size = 1000
-            domain_accounts = []
-            connection.search(
-                search_base=search_base,
-                search_filter=search_filter,
-                search_scope=SUBTREE,
-                attributes=['sAMAccountName', 'displayName', 'title'],
-                paged_size=paged_size
-            )
+            # Convert the results to Pydantic models
+            users: List[DomainUser] = [
+                DomainUser(
+                    id=0,  # Temporary ID, will be set later
+                    username=entry.get("sAMAccountName", ["N/A"])[0],
+                    fullName=entry.get("displayName", ["N/A"])[0],
+                    title=entry.get("title", ["N/A"])[0],
+                )
+                for entry in results
+            ]
+            return users
+    except Exception as e:
+        logger.error(f"Error during LDAP search: {e}")
+        raise
 
-            while True:
-                domain_accounts.extend([
-                    DomainAccount(
-                        username=entry.sAMAccountName.value,
-                        fullName=entry.displayName.value,
-                        title=entry.title.value
-                    )
-                    for entry in connection.entries
-                ])
 
-                # Check if there are more pages
-                if 'controls' in connection.result and '1.2.840.113556.1.4.319' in connection.result['controls']:
-                    cookie = connection.result['controls']['1.2.840.113556.1.4.319']['value']['cookie']
-                    if cookie:
-                        connection.search(
-                            search_base=search_base,
-                            search_filter=search_filter,
-                            search_scope=SUBTREE,
-                            attributes=['sAMAccountName',
-                                        'displayName', 'title'],
-                            paged_size=paged_size,
-                            paged_cookie=cookie
-                        )
-                    else:
-                        break
-                else:
-                    break
+async def read_domain_users() -> List[DomainUser]:
+    """Perform parallel searches on multiple OUs and return a list of DomainUser objects."""
+    # Perform parallel searches
+    tasks = [search_ldap(ou) for ou in search_bases]
+    results = await asyncio.gather(*tasks)
 
-            connection.unbind()
-            return domain_accounts if domain_accounts else None
+    # Flatten the list of lists into a single list
+    all_users: List[DomainUser] = [
+        user for sublist in results for user in sublist
+    ]
 
-        except Exception as e:
-            logger.error(f"Authentication failed for users: {e}")
-            return None
+    # Add an ID to each record
+    for i, user in enumerate(all_users, start=1):
+        user.id = i
+
+    return all_users

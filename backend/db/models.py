@@ -12,8 +12,11 @@ class Role(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(nullable=False, max_length=64)
+    description: str = Field(nullable=False, max_length=64)
 
-    role_permissions: List["RolePermission"] = Relationship(back_populates="role")
+    role_permissions: List["RolePermission"] = Relationship(
+        back_populates="role"
+    )
     permission_logs_admin: Optional["LogRolePermission"] = Relationship(
         back_populates="role"
     )
@@ -64,7 +67,9 @@ class Employee(SQLModel, table=True):
     department_id: int = Field(foreign_key="department.id", nullable=False)
 
     # Relationships
-    department: Optional["Department"] = Relationship(back_populates="employees")
+    department: Optional["Department"] = Relationship(
+        back_populates="employees"
+    )
     meal_request_lines: List["MealRequestLine"] = Relationship(
         back_populates="employee"
     )
@@ -95,7 +100,9 @@ class MealType(SQLModel, table=True):
     name: str = Field(nullable=False, max_length=64)
 
     # Relationships
-    meal_requests: List["MealRequest"] = Relationship(back_populates="meal_type")
+    meal_requests: List["MealRequest"] = Relationship(
+        back_populates="meal_type"
+    )
 
 
 class Account(SQLModel, table=True):
@@ -111,13 +118,17 @@ class Account(SQLModel, table=True):
     password: Optional[str] = Field(default=None, max_length=64)
     title: Optional[str] = Field(default=None, max_length=64)
     is_domain_user: bool = Field(default=False)
-    hris_security_user_id: Optional[int] = Field(foreign_key="hris_security_user.id")
+    hris_security_user_id: Optional[int] = Field(
+        foreign_key="hris_security_user.id"
+    )
 
     # Relationships
     security_user: Optional["HRISSecurityUser"] = Relationship(
         back_populates="accounts"
     )
-    role_permissions: List["RolePermission"] = Relationship(back_populates="account")
+    role_permissions: List["RolePermission"] = Relationship(
+        back_populates="account"
+    )
     meal_request_line_logs: List["LogMealRequestLine"] = Relationship(
         back_populates="account"
     )
@@ -143,7 +154,9 @@ class RolePermission(SQLModel, table=True):
 
     # Relationships
     role: Optional["Role"] = Relationship(back_populates="role_permissions")
-    account: Optional["Account"] = Relationship(back_populates="role_permissions")
+    account: Optional["Account"] = Relationship(
+        back_populates="role_permissions"
+    )
 
 
 class EmployeeShift(SQLModel, table=True):
@@ -159,7 +172,9 @@ class EmployeeShift(SQLModel, table=True):
     date_from: datetime = Field(nullable=False)
 
     # Relationships
-    meal_request_lines: List["MealRequestLine"] = Relationship(back_populates="shift")
+    meal_request_lines: List["MealRequestLine"] = Relationship(
+        back_populates="shift"
+    )
 
 
 class MealRequest(SQLModel, table=True):
@@ -176,14 +191,20 @@ class MealRequest(SQLModel, table=True):
     requester_id: int = Field(foreign_key="account.id", nullable=False)
     meal_type_id: int = Field(foreign_key="meal_type.id", nullable=False)
     request_time: Optional[datetime] = Field(default=None)
-    created_time: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
+    created_time: datetime = Field(
+        default_factory=lambda: datetime.now(cairo_tz)
+    )
     closed_time: Optional[datetime] = Field(default=None)
     notes: Optional[str] = Field(default=None, max_length=256)
     auditor_id: Optional[int] = Field(foreign_key="account.id", default=None)
 
     # Relationships
-    status: Optional["MealRequestStatus"] = Relationship(back_populates="meal_requests")
-    meal_type: Optional["MealType"] = Relationship(back_populates="meal_requests")
+    status: Optional["MealRequestStatus"] = Relationship(
+        back_populates="meal_requests"
+    )
+    meal_type: Optional["MealType"] = Relationship(
+        back_populates="meal_requests"
+    )
     meal_request_lines: List["MealRequestLine"] = Relationship(
         back_populates="meal_request"
     )
@@ -215,14 +236,20 @@ class MealRequestLine(SQLModel, table=True):
     attendance: Optional[datetime] = Field(default=None)
     notes: Optional[str] = Field(default=None, max_length=256)
     is_accepted: bool = Field(default=True)
-    shift_id: Optional[int] = Field(foreign_key="employee_shift.id", default=None)
+    shift_id: Optional[int] = Field(
+        foreign_key="employee_shift.id", default=None
+    )
 
     # Relationships
-    employee: Optional["Employee"] = Relationship(back_populates="meal_request_lines")
+    employee: Optional["Employee"] = Relationship(
+        back_populates="meal_request_lines"
+    )
     meal_request: Optional["MealRequest"] = Relationship(
         back_populates="meal_request_lines"
     )
-    shift: Optional["EmployeeShift"] = Relationship(back_populates="meal_request_lines")
+    shift: Optional["EmployeeShift"] = Relationship(
+        back_populates="meal_request_lines"
+    )
     meal_request_line_logs: List["LogMealRequestLine"] = Relationship(
         back_populates="meal_request_line"
     )
@@ -245,7 +272,9 @@ class LogRolePermission(SQLModel, table=True):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
 
     # Relationships
-    role: Optional["Role"] = Relationship(back_populates="permission_logs_admin")
+    role: Optional["Role"] = Relationship(
+        back_populates="permission_logs_admin"
+    )
 
 
 class LogMealRequestLine(SQLModel, table=True):
@@ -269,7 +298,9 @@ class LogMealRequestLine(SQLModel, table=True):
     meal_request_line: Optional["MealRequestLine"] = Relationship(
         back_populates="meal_request_line_logs"
     )
-    account: Optional["Account"] = Relationship(back_populates="meal_request_line_logs")
+    account: Optional["Account"] = Relationship(
+        back_populates="meal_request_line_logs"
+    )
 
 
 class LogTraffic(SQLModel, table=True):

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -8,12 +8,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { EyeOpenIcon } from "@radix-ui/react-icons";
-import DialogTable from "./_request-lines/DialogTable";
-import { useAlerts } from "@/components/alert/useAlerts";
-import ConfirmationModal from "./_data-table/ConfirmationDialog";
-import { updateRequestLines } from "@/lib/services/request-lines";
+} from '@/components/ui/dialog';
+import { EyeOpenIcon } from '@radix-ui/react-icons';
+import DialogTable from './_request-lines/DialogTable';
+import { useAlerts } from '@/components/alert/useAlerts';
+import ConfirmationModal from '../../../../../components/data-table/ConfirmationDialog';
+import { updateRequestLines } from '@/lib/services/request-lines';
 // Import the ConfirmationModal
 
 interface ViewActionProps {
@@ -41,25 +41,25 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
       const res = await fetch(
         `http://localhost:8000/request-lines?request_id=${id}`,
         {
-          cache: "no-store",
-        }
+          cache: 'no-store',
+        },
       );
 
       if (!res.ok) {
-        throw new Error("Failed to fetch requests");
+        throw new Error('Failed to fetch requests');
       }
 
       const result = await res.json();
 
       if (result.length === 0) {
-        console.error("No data found.");
+        console.error('No data found.');
         return;
       }
 
       setData(result);
       setOriginalData(result);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -87,12 +87,12 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
         // Call the API to update the request lines
         const message = await updateRequestLines(changedStatus);
         setOpen(false); // Close the main dialog on success
-        addAlert(message, "success");
+        addAlert(message, 'success');
       } catch (error) {
-        addAlert("Error saving changes. Please try again.", "error");
+        addAlert('Error saving changes. Please try again.', 'error');
       }
     } else {
-      addAlert("No changes made.", "warning");
+      addAlert('No changes made.', 'warning');
       setOpen(false); // Close the main dialog if no changes were made
     }
   };
@@ -115,7 +115,7 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
             onClick={() => handleDialogChange(true)}
             disabled={loading}
           >
-            {loading ? "Loading..." : <EyeOpenIcon width={20} height={20} />}
+            {loading ? 'Loading...' : <EyeOpenIcon width={20} height={20} />}
           </Button>
         </DialogTrigger>
 
@@ -136,25 +136,25 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
                   prevData.map((line) =>
                     line.id === lineId
                       ? { ...line, is_accepted: checked }
-                      : line
-                  )
+                      : line,
+                  ),
                 );
 
                 const originalLine = originalData.find(
-                  (line) => line.id === lineId
+                  (line) => line.id === lineId,
                 );
                 if (!originalLine) return;
 
                 setChangedStatus((prevChanged) => {
                   if (originalLine.is_accepted !== checked) {
                     const existingChange = prevChanged.find(
-                      (item) => item.id === lineId
+                      (item) => item.id === lineId,
                     );
                     if (existingChange) {
                       return prevChanged.map((item) =>
                         item.id === lineId
                           ? { id: lineId, is_accepted: checked }
-                          : item
+                          : item,
                       );
                     } else {
                       return [

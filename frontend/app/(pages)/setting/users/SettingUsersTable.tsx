@@ -9,7 +9,6 @@ import DataTableBody from './_components/_data-table/DataTableBody';
 import { useSettingUserContext } from '@/hooks/SettingUserContext';
 
 export function SettingUsersTable() {
-  // State to store users data
   const { users } = useSettingUserContext();
 
   const [filteredData, setFilteredData] = useState<User[]>([]);
@@ -18,11 +17,9 @@ export function SettingUsersTable() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [rolesFilter, setRolesFilter] = useState<string[]>([]);
 
-  // Handle filtering
   useEffect(() => {
     let filtered = users;
 
-    // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(
         (user) =>
@@ -31,18 +28,20 @@ export function SettingUsersTable() {
       );
     }
 
-    // Apply roles filter
     if (rolesFilter.length > 0) {
       filtered = filtered.filter((user) =>
-        user.roles.some((role) => rolesFilter.includes(role)),
+        user.roles.some((role) =>
+          typeof role === 'string'
+            ? rolesFilter.includes(role)
+            : rolesFilter.includes(role.name),
+        ),
       );
     }
 
     setFilteredData(filtered);
-    setCurrentPage(1); // Reset to first page after filtering
+    setCurrentPage(1);
   }, [searchQuery, rolesFilter, users]);
 
-  // Pagination logic
   const totalRows = filteredData.length;
   const totalPages = Math.ceil(totalRows / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
@@ -51,17 +50,27 @@ export function SettingUsersTable() {
     startIndex + rowsPerPage,
   );
 
-  // Extract unique values for roles filter
   const rolesOptions = users.length
-    ? Array.from(new Set(users.flatMap((user) => user.roles))).map((role) => ({
+    ? Array.from(
+        new Set(
+          users.flatMap((user) =>
+            user.roles.map((role) =>
+              typeof role === 'string' ? role : role.name,
+            ),
+          ),
+        ),
+      ).map((role) => ({
         value: role,
-        count: users.filter((user) => user.roles.includes(role)).length,
+        count: users.filter((user) =>
+          user.roles.some((r) =>
+            typeof r === 'string' ? r === role : r.name === role,
+          ),
+        ).length,
       }))
     : [];
 
   return (
     <div className="w-full overflow-x-auto">
-      {/* Table Options and Search Input */}
       <div className="p-2">
         <TableOptions
           data={filteredData}
@@ -69,11 +78,10 @@ export function SettingUsersTable() {
           setSearchQuery={setSearchQuery}
           rolesFilter={rolesFilter}
           setRolesFilter={setRolesFilter}
-          rolesOptions={rolesOptions} // ✅ Pass this correctly
+          rolesOptions={rolesOptions}
         />
       </div>
 
-      {/* Data Table */}
       <Table>
         <TableHeader>
           <DataTableRowHeader />
@@ -81,7 +89,6 @@ export function SettingUsersTable() {
         <DataTableBody records={currentPageData} />
       </Table>
 
-      {/* Pagination */}
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
