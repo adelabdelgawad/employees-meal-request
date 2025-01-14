@@ -8,9 +8,8 @@ from fastapi import (
     HTTPException,
     status,
     BackgroundTasks,
-    Query,
 )
-from sqlmodel import Session, select, func
+from sqlmodel import Session, select, func, case
 from typing import Annotated, Dict
 from collections import defaultdict
 
@@ -24,7 +23,8 @@ from db.models import (
 )
 from hris_db.models import HRISEmployeeAttendanceWithDetails
 from hris_db.database import get_hris_session
-from src.http_schema import RequestBody, RequestResponse
+from db.cruds import request as crud
+from src.http_schema import RequestBody, RequestPageRecordResponse
 import pytz
 
 from icecream import ic
@@ -186,12 +186,9 @@ async def create_meal_request_endpoint(
         )
 
 
-from datetime import datetime
-
-
 @router.get(
     "/requests",
-    response_model=List[RequestResponse],
+    response_model=List[RequestPageRecordResponse],
     status_code=status.HTTP_200_OK,
 )
 async def get_meal_requests(
@@ -211,39 +208,11 @@ async def get_meal_requests(
                 hour=23, minute=59, second=59
             )
 
-        # Build the statement
-        statement = (
-            select(
-                MealRequest.id,
-                MealRequestStatus.name.label("status_name"),
-                MealRequestStatus.id.label("status_id"),
-                Account.full_name.label("requester"),
-                Account.title.label("requester_title"),
-                MealType.name.label("meal_type"),
-                MealRequest.created_time.label("request_time"),
-                MealRequest.closed_time,
-                MealRequest.notes,
-                Account.full_name.label("auditor"),
-            )
-            .join(Account, MealRequest.requester_id == Account.id)
-            .join(MealRequestStatus, MealRequest.status)
-            .join(MealType, MealRequest.meal_type_id == MealType.id)
+        requests = await crud.read_meal_request_for_request_page(
+            maria_session, request_id, from_date, to_date
         )
 
-        if request_id:
-            statement = statement.where(MealRequest.id == request_id)
-
-        if from_date and to_date:
-            statement = statement.where(
-                MealRequest.created_time.between(from_date, to_date)
-            )
-
-        # Execute the query
-        result = await maria_session.execute(statement)
-        meal_requests = result.all()
-
-        return [request for request in meal_requests]
-
+        return requests
     except Exception as err:
         logger.error(f"Unexpected error while reading meal requests: {err}")
         raise HTTPException(
@@ -287,8 +256,12 @@ async def update_meal_order_status_endpoint(
         meal_request.status_id = status_id
         meal_request.closed_time = datetime.now(cairo_tz)
         maria_session.add(meal_request)
+
         await maria_session.commit()
         await maria_session.refresh(meal_request)
+
+        if status_id == 4:
+            await update_mealrequest_line(maria_session, request_id)
 
         logger.info("Successfully updated meal request.")
         return {"status": "success", "message": "Request updated successfully"}

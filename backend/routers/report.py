@@ -33,8 +33,10 @@ async def get_meal_requests(
     - Lunch  is mapped to meal_type_id == 2
     """
     try:
+        print("get_meal_requests")
         # Convert date strings to datetime objects
         if from_date:
+            ic(from_date)
             from_date = datetime.strptime(from_date, "%Y-%m-%d").replace(
                 hour=0, minute=0, second=0
             )
@@ -59,7 +61,7 @@ async def get_meal_requests(
             .join(MealRequest, MealRequest.id == MealRequestLine.meal_request_id)
             .where(MealRequestLine.is_accepted == True)
             .group_by(Department.id, Department.name)
-        )
+        ).where(MealRequestLine.is_accepted == True)
         if from_date and to_date:
             statement = statement.where(
                 MealRequest.created_time.between(from_date, to_date)

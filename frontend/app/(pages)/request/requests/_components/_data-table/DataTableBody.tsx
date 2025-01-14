@@ -28,6 +28,9 @@ export default function DataTableBody({ records }: DataTableBodyProps) {
             <TableCell>
               {record?.closed_time ? record.closed_time.replace('T', ' ') : '-'}
             </TableCell>
+            <TableCell>{record?.total_order_lines ?? '-'}</TableCell>
+            <TableCell>{record?.accepted_order_lines ?? '-'}</TableCell>
+
             <TableCell>{record?.notes ?? '-'}</TableCell>
             <TableCell>
               <ActionButtons

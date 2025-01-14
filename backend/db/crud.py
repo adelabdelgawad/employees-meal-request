@@ -41,7 +41,8 @@ def read_meal_requests(session: Session) -> List[MealRequestSummary]:
             MealType.name.label("meal_type"),
             func.count(MealRequestLine.id).label("total_request_lines"),
             func.sum(case((MealRequestLine.is_accepted == True, 1), else_=0)).label(
-                "accepted_request_lines"),
+                "accepted_request_lines"
+            ),
         )
         .join(MealRequestStatus, MealRequest.status_id == MealRequestStatus.id)
         .join(Account, MealRequest.requester_id == Account.id)
@@ -68,7 +69,8 @@ def read_meal_requests(session: Session) -> List[MealRequestSummary]:
             return []
 
         logger.info(
-            f"Retrieved {len(meal_requests)} meal requests with aggregated data.")
+            f"Retrieved {len(meal_requests)} meal requests with aggregated data."
+        )
         return [
             MealRequestSummary(
                 meal_request_id=row.id,
@@ -129,12 +131,12 @@ async def read_meal_request_line_for_requests_page(
     try:
         meal_request_lines = session.exec(query).all()
         if not meal_request_lines:
-            logger.info(
-                f"No meal request lines found for request ID: {request_id}")
+            logger.info(f"No meal request lines found for request ID: {request_id}")
             return []
 
         logger.info(
-            f"Retrieved {len(meal_request_lines)} meal request lines for request ID: {request_id}")
+            f"Retrieved {len(meal_request_lines)} meal request lines for request ID: {request_id}"
+        )
         return [
             MealRequestLineResponse(
                 id=row.id,
@@ -152,6 +154,7 @@ async def read_meal_request_line_for_requests_page(
         ]
     except Exception as e:
         logger.error(
-            f"Failed to read meal request lines for request ID {request_id}: {e}")
+            f"Failed to read meal request lines for request ID {request_id}: {e}"
+        )
         logger.debug(f"Traceback: {traceback.format_exc()}")
         return []

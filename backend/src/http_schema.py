@@ -25,7 +25,7 @@ class RequestBody(BaseModel):
 
 
 # ✅ RequestResponse Model
-class RequestResponse(BaseModel):
+class RequestPageRecordResponse(BaseModel):
     id: int
     status_name: str
     status_id: int
@@ -35,6 +35,8 @@ class RequestResponse(BaseModel):
     request_time: datetime
     closed_time: Optional[datetime] = None
     notes: str
+    total_order_lines: int
+    accepted_order_lines: int
 
     model_config = ConfigDict(from_attributes=True)
 

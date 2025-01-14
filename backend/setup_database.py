@@ -21,7 +21,7 @@ from sqlmodel import select, SQLModel
 from dotenv import load_dotenv
 
 # Import models from your project
-from db.models import Role, Account, MealType, EmailRole, MealRequestStatus
+from db.models import Role, Account, MealType, EmailRole, MealRequestStatus, Menu
 
 
 # ------------------------------------------------------------------------------
@@ -41,8 +41,12 @@ if not DB_USER or not DB_PASSWORD or not DB_SERVER or not DB_NAME:
 # ------------------------------------------------------------------------------
 #  Database URLs
 # ------------------------------------------------------------------------------
-ASYNC_DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
-SYNC_DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
+ASYNC_DATABASE_URL = (
+    f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
+)
+SYNC_DATABASE_URL = (
+    f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
+)
 BASE_SYNC_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}"
 
 
@@ -123,6 +127,7 @@ async def seed_default_values(engine: AsyncEngine) -> None:
             await seed_meal_types(session)
             await seed_admin_user(session)
             await seed_meal_request_status(session)
+            await seed_menu(session)
             await session.commit()
             print("Default values seeding complete.")
         except Exception as e:
@@ -187,6 +192,19 @@ async def seed_meal_types(session: AsyncSession) -> None:
         print("Default meal types added.")
 
 
+async def seed_menu(session: AsyncSession) -> None:
+    standard_menu = (
+        await session.exec(select(Menu).where(Menu.name == "Standard"))
+    ).first()
+    if not standard_menu:
+        standard_menu = Menu(
+            name="Standard",
+            details="routine Meal",
+        )
+        session.add(standard_menu)
+        print("Default menu, added.")
+
+
 # ------------------------------------------------------------------------------
 # 3.4 Helper: Seed Admin User
 # ------------------------------------------------------------------------------
@@ -207,9 +225,7 @@ async def seed_admin_user(session: AsyncSession) -> None:
 
 
 async def seed_meal_request_status(session: AsyncSession) -> None:
-    existing_meal_request_status = await session.exec(
-        select(MealRequestStatus)
-    )
+    existing_meal_request_status = await session.exec(select(MealRequestStatus))
     if not existing_meal_request_status.all():
         request_status = [
             MealRequestStatus(name="Pending"),
@@ -233,9 +249,7 @@ async def main_async() -> None:
     """
     create_database_if_not_exists()
 
-    async_engine = create_async_engine(
-        ASYNC_DATABASE_URL, echo=False, future=True
-    )
+    async_engine = create_async_engine(ASYNC_DATABASE_URL, echo=False, future=True)
 
     try:
         await create_tables(async_engine)
@@ -247,6 +261,4 @@ async def main_async() -> None:
 if __name__ == "__main__":
     print("Starting database setup...")
     asyncio.run(main_async())
-    print(
-        "Database setup and default values insertion completed successfully."
-    )
+    print("Database setup and default values insertion completed successfully.")

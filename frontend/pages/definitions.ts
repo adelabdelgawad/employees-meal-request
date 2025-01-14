@@ -52,6 +52,8 @@ export interface RequestRecord {
   request_time: string;
   closed_time?: string;
   notes?: string;
+  total_order_lines: number;
+  accepted_order_lines: number;
 }
 
 export interface ChangedStatus {
