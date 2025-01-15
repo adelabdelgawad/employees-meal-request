@@ -1,5 +1,5 @@
 import React, { useState, useTransition } from 'react';
-import ViewAction from '../ViewAction';
+import ViewAction from '../../../../request/requests/_components/ViewAction';
 import { CheckIcon, Cross2Icon } from '@radix-ui/react-icons';
 import { updateRequestStatus } from '@/pages/api/actions';
 import { useAlerts } from '@/components/alert/useAlerts';

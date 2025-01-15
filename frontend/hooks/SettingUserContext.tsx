@@ -1,18 +1,16 @@
 'use client';
 
-import {
-  fetchDomainUsers,
-  fetchRoles,
-  fetchUsers,
-} from '@/lib/services/setting-user';
+import { fetchRoles, fetchUsers } from '@/lib/services/setting-user';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 // Define the shape of the context
 interface UserContextType {
   domainUsers: DomainUser[];
+  setDomainUsers: React.Dispatch<React.SetStateAction<DomainUser[]>>;
   roles: Role[];
   users: User[];
   loading: boolean;
+  mutate: () => Promise<void>;
 }
 
 // Create the context
@@ -29,14 +27,17 @@ export const SettingUserProvider: React.FC<{ children: React.ReactNode }> = ({
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Initial data fetch
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [fetchedDomainUsers, fetchedRoles, fetchedUsers] =
-          await Promise.all([fetchDomainUsers(), fetchRoles(), fetchUsers()]);
-        setDomainUsers(fetchedDomainUsers);
+        const [fetchedRoles, fetchedUsers] = await Promise.all([
+          fetchRoles(),
+          fetchUsers(),
+        ]);
         setRoles(fetchedRoles);
         setUsers(fetchedUsers);
+        setDomainUsers(fetchedUsers); // Ensure domainUsers is set initially
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -47,8 +48,28 @@ export const SettingUserProvider: React.FC<{ children: React.ReactNode }> = ({
     loadData();
   }, []);
 
+  // Mutate function to refresh users
+  const mutate = async () => {
+    try {
+      const updatedUsers = await fetchUsers();
+      setUsers(updatedUsers);
+      setDomainUsers(updatedUsers);
+    } catch (error) {
+      console.error('Error updating users:', error);
+    }
+  };
+
   return (
-    <SettingUserContext.Provider value={{ domainUsers, roles, users, loading }}>
+    <SettingUserContext.Provider
+      value={{
+        domainUsers,
+        setDomainUsers,
+        roles,
+        users,
+        loading,
+        mutate,
+      }}
+    >
       {children}
     </SettingUserContext.Provider>
   );

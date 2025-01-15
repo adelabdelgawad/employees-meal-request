@@ -7,8 +7,10 @@ import TableOptions from './_components/_data-table/TableOptions';
 import Pagination from '@/components/data-table/Pagination';
 import DataTableBody from './_components/_data-table/DataTableBody';
 import { useSettingUserContext } from '@/hooks/SettingUserContext';
+import { AddUserDialog } from './_components/_add-user-dialog/AddUserDialog';
 
 export function SettingUsersTable() {
+  // ✅ Use the users array from context
   const { users } = useSettingUserContext();
 
   const [filteredData, setFilteredData] = useState<User[]>([]);
@@ -42,6 +44,7 @@ export function SettingUsersTable() {
     setCurrentPage(1);
   }, [searchQuery, rolesFilter, users]);
 
+  // Pagination calculations
   const totalRows = filteredData.length;
   const totalPages = Math.ceil(totalRows / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
@@ -50,6 +53,7 @@ export function SettingUsersTable() {
     startIndex + rowsPerPage,
   );
 
+  // Role filter options
   const rolesOptions = users.length
     ? Array.from(
         new Set(
@@ -70,19 +74,24 @@ export function SettingUsersTable() {
     : [];
 
   return (
-    <div className="w-full overflow-x-auto">
-      <div className="p-2">
-        <TableOptions
-          data={filteredData}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          rolesFilter={rolesFilter}
-          setRolesFilter={setRolesFilter}
-          rolesOptions={rolesOptions}
-        />
+    <div className="w-full overflow-x-auto p-2 ">
+      <div className="flex justify-between items-center w-full p-1">
+        <div className="text-sm">
+          <TableOptions
+            data={filteredData}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            rolesFilter={rolesFilter}
+            setRolesFilter={setRolesFilter}
+            rolesOptions={rolesOptions}
+          />
+        </div>
+        <div className="text-sm">
+          <AddUserDialog />
+        </div>
       </div>
 
-      <Table>
+      <Table className="mt-5">
         <TableHeader>
           <DataTableRowHeader />
         </TableHeader>

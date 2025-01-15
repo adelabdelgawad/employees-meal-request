@@ -60,3 +60,20 @@ export interface ChangedStatus {
   id: number;
   is_accepted: boolean;
 }
+
+// Code 	Name 	Title 	Department 	Requester 	Requester Title 	Request Time 	Meal Type 	Attendance In 	Attendance Out 	Hours 	Notes
+export interface ReportDetailRecord {
+  id: number;
+  code: number;
+  name: string;
+  title: string;
+  department_name: string;
+  requester_name: string;
+  requester_title: string;
+  request_time: Date;
+  meal_type: string;
+  attendance_in: Date;
+  attendance_out: Date;
+  hours: number;
+  notes: string;
+}

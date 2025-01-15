@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Dict
 
 
 # ✅ DepartmentResponse Model
@@ -74,5 +74,62 @@ class DomainUser(BaseModel):
     username: str
     fullName: Optional[str] = None
     title: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RoleResponse(BaseModel):
+    id: int
+    name: str
+
+
+class SettingUserResponse(BaseModel):
+    id: int
+    fullName: str | None = None
+    username: str
+    title: str | None = None
+    roles: Optional[List[RoleResponse]] | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserCreateRequest(BaseModel):
+    username: str
+    full_name: str
+    title: str
+    roles: List[int]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserCreateResponse(BaseModel):
+    success: bool
+    message: str
+    data: dict
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UpdateRolesRequest(BaseModel):
+    added_roles: List[int] | None = None
+    removed_roles: List[int] | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ReportDetailsResponse(BaseModel):
+    id: int
+    code: int
+    name: str
+    title: str
+    department_name: str
+    requester_name: str
+    requester_title: str
+    request_time: datetime
+    meal_type: str
+    attendance_in: datetime | None = None
+    attendance_out: datetime | None = None
+    hours: float
+    notes: str | None = None
 
     model_config = ConfigDict(from_attributes=True)

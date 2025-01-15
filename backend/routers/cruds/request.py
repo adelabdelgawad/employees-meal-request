@@ -66,7 +66,6 @@ async def read_meal_request_for_request_page(
     result = await session.execute(statement)
     meal_requests = result.all()
 
-    print(meal_requests)
     return [request for request in meal_requests]
 
 

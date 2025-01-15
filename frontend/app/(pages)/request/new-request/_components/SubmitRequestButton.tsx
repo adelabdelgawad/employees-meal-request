@@ -10,6 +10,7 @@ export default function SubmitRequestButton() {
   const { submittedEmployees } = useNewRequest();
   const { addAlert } = useAlerts();
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   // ✅ Call useRouter at the top level
   const router = useRouter();
@@ -38,6 +39,9 @@ export default function SubmitRequestButton() {
       const result = await response.json();
       addAlert(result.message, 'success');
 
+      // ✅ Set submitted state to true to disable the button
+      setSubmitted(true);
+
       // ✅ Redirect to confirmation page with multiple IDs
       const requestIds = result.created_meal_request_ids.join(',');
       router.push(`/request-success?requestIds=${requestIds}`);
@@ -57,9 +61,9 @@ export default function SubmitRequestButton() {
   return (
     <button
       onClick={debouncedHandleRequestSubmission}
-      disabled={submittedEmployees.length === 0 || loading}
+      disabled={submitted || submittedEmployees.length === 0 || loading}
       className={`w-full py-2 px-4 rounded-md text-sm font-medium ${
-        submittedEmployees.length === 0 || loading
+        submitted || submittedEmployees.length === 0 || loading
           ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
           : 'bg-green-700 text-white hover:bg-green-800'
       }`}

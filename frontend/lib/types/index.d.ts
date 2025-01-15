@@ -25,6 +25,21 @@ declare global {
     title: string;
     roles: { id: number; name: string }[] | string[];
   };
+  type ReportDetailRecord = {
+    id: number;
+    code: number;
+    name: string;
+    title: string;
+    department_name: string;
+    requester_name: string;
+    requester_title: string;
+    request_time: string;
+    meal_type: string;
+    attendance_in: string;
+    attendance_out: string;
+    hours: number;
+    notes: string;
+  };
 }
 
 export {};

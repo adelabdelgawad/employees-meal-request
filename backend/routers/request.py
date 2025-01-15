@@ -17,13 +17,10 @@ from db.database import get_application_session
 from db.models import (
     MealRequest,
     MealRequestLine,
-    Account,
-    MealType,
-    MealRequestStatus,
 )
 from hris_db.models import HRISEmployeeAttendanceWithDetails
 from hris_db.database import get_hris_session
-from db.cruds import request as crud
+from routers.cruds import request as crud
 from src.http_schema import RequestBody, RequestPageRecordResponse
 import pytz
 
@@ -76,7 +73,11 @@ async def process_meal_requests_for_employees(
 
         for line in request_lines:
             attendance = next(
-                (a.date_in for a in attendances if a.employee_code == line.employee_id),
+                (
+                    a.date_in
+                    for a in attendances
+                    if a.employee_code == line.employee_id
+                ),
                 None,
             )
 
@@ -89,7 +90,9 @@ async def process_meal_requests_for_employees(
             maria_session.add(meal_request_line)
             created_request_lines.append(meal_request_line)
 
-            logger.info(f"Created meal request line for employee ID {line.employee_id}")
+            logger.info(
+                f"Created meal request line for employee ID {line.employee_id}"
+            )
 
         await maria_session.commit()
         return created_request_lines
@@ -239,7 +242,9 @@ async def update_meal_order_status_endpoint(
         dict: A success message with the HTTP status code.
     """
     try:
-        logger.info(f"Updating meal order {request_id} with status {status_id}")
+        logger.info(
+            f"Updating meal order {request_id} with status {status_id}"
+        )
 
         # Fetch the meal request
         statement = select(MealRequest).where(MealRequest.id == request_id)
@@ -261,7 +266,7 @@ async def update_meal_order_status_endpoint(
         await maria_session.refresh(meal_request)
 
         if status_id == 4:
-            await update_mealrequest_line(maria_session, request_id)
+            await crud.update_mealrequest_line(maria_session, request_id)
 
         logger.info("Successfully updated meal request.")
         return {"status": "success", "message": "Request updated successfully"}

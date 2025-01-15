@@ -2,11 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { Table, TableHeader } from '@/components/ui/table';
-import DataTableRowHeader from './_components/_data-table/DataTableRowHeader';
-import TableOptions from './_components/_data-table/TableOptions';
+import DataTableRowHeader from '../../report/requests-details/_components/_data-table/DataTableRowHeader';
+import TableOptions from '../../report/requests-details/_components/_data-table/TableOptions';
 import Pagination from '@/components/data-table/Pagination';
 import { RequestRecord } from '@/pages/definitions';
-import DataTableBody from './_components/_data-table/DataTableBody';
+import DataTableBody from '../../report/requests-details/_components/_data-table/DataTableBody';
 import { useRequest } from '@/hooks/RequestContext';
 
 export function RequestsTable() {
@@ -22,6 +22,23 @@ export function RequestsTable() {
   // Initialize date state to today's date
   const [fromDate, setFromDate] = useState<Date>(new Date());
   const [toDate, setToDate] = useState<Date>(new Date());
+
+  // Pagination logic
+  const totalRows = filteredData.length;
+  const totalPages = Math.ceil(totalRows / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const currentPageData = filteredData.slice(
+    startIndex,
+    startIndex + rowsPerPage,
+  );
+
+  // Extract unique values for status_name filter
+  const uniqueStatusOptions = Array.from(
+    new Set(requests.map((r) => r.status_name)),
+  ).map((status_name) => ({
+    value: status_name,
+    count: requests.filter((r) => r.status_name === status_name).length,
+  }));
 
   // Handle filtering
   useEffect(() => {
@@ -46,23 +63,6 @@ export function RequestsTable() {
     setFilteredData(filtered);
     setCurrentPage(1); // Reset to first page after filtering
   }, [searchQuery, statusFilter, requests]);
-
-  // Pagination logic
-  const totalRows = filteredData.length;
-  const totalPages = Math.ceil(totalRows / rowsPerPage);
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const currentPageData = filteredData.slice(
-    startIndex,
-    startIndex + rowsPerPage,
-  );
-
-  // Extract unique values for status_name filter
-  const uniqueStatusOptions = Array.from(
-    new Set(requests.map((r) => r.status_name)),
-  ).map((status_name) => ({
-    value: status_name,
-    count: requests.filter((r) => r.status_name === status_name).length,
-  }));
 
   return (
     <div className="w-full overflow-x-auto">
