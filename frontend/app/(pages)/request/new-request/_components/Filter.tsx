@@ -1,47 +1,53 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Row } from "@tanstack/react-table";
+import React, { ChangeEvent } from 'react';
 
-interface FilterProps<T> {
-  items: Row<T>[]; // Now filtering rows, not raw data
-  filterKey: keyof T;
-  onFilter: (filteredItems: Row<T>[]) => void;
+/**
+ * Props for the FilterComponent.
+ */
+interface FilterProps {
+  /** The current search string. */
+  search: string;
+
+  /**
+   * Setter for the search string state.
+   * Provided by the parent (EmployeeColumn) so
+   * we can lift the state up.
+   */
+  setSearch: React.Dispatch<React.SetStateAction<string>>;
+
+  /** Placeholder text for the search input. */
   placeholder?: string;
 }
 
-export default function Filter<T>({
-  items,
-  filterKey,
-  onFilter,
-  placeholder = "Search...",
-}: FilterProps<T>) {
-  const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    if (!search) {
-      onFilter(items);
-    } else {
-      onFilter(
-        items.filter((row) => {
-          const value = row.original[filterKey];
-          return (
-            typeof value === "string" &&
-            value.toLowerCase().includes(search.toLowerCase())
-          );
-        })
-      );
-    }
-  }, [search, items, filterKey, onFilter]);
+/**
+ * FilterComponent
+ *
+ * A simple input for capturing user search text.
+ * It delegates all actual filtering to the parent.
+ */
+export default function FilterComponent({
+  search,
+  setSearch,
+  placeholder = 'Search...',
+}: FilterProps) {
+  /**
+   * Handles changes to the input, updating the parent's `search` state.
+   * @param {ChangeEvent<HTMLInputElement>} e - The change event for the input field
+   */
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
 
   return (
-    <div className="mb-4">
+    <div>
       <input
         type="text"
         placeholder={placeholder}
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        onChange={handleChange}
+        className="w-full p-2 border border-gray-300 rounded-md
+                   focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     </div>
   );

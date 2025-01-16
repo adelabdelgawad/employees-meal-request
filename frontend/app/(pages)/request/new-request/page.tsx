@@ -1,7 +1,7 @@
-import SubmitRequestButton from "./_components/SubmitRequestButton";
-import DepartmentColumn from "./_columns/DepartmentColumn";
-import EmployeeColumn from "./_columns/EmployeeColumn";
-import SelectedEmployeesColumn from "./_columns/SelectedEmployeesColumn";
+import SubmitRequestButton from './_components/SubmitRequestButton';
+import DepartmentColumn from './DepartmentColumn';
+import EmployeeColumn from './EmployeeColumn';
+import SelectedEmployeesColumn from './SelectedEmployeesColumn';
 
 export default function Page() {
   return (

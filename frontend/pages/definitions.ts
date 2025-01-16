@@ -11,7 +11,7 @@ export interface EmployeeType {
   department_id: string;
 }
 
-export interface MealType {
+export interface Meal {
   id: number;
   name: string;
 }
@@ -29,31 +29,18 @@ export interface ViewProps {
   toggleColumnVisibility: (id: string) => void;
 }
 
-/**
- * Custom column definition extending ColumnDef from @tanstack/react-table.
- * The meta field is used for custom properties like enableFiltering, isVisible, and enableDateTimeFilter.
- */
-export type CustomColumnDef<TData> = ColumnDef<TData> & {
-  meta?: {
-    enableFiltering?: boolean;
-    enableInputFiltering?: boolean;
-    isVisible?: boolean;
-    enableDateTimeFilter?: boolean;
-  };
-};
-
 export interface RequestRecord {
   id: number;
   status_name: string;
   status_id: number;
   requester: string;
   requester_title?: string;
-  meal_type: string;
+  meal: string;
   request_time: string;
   closed_time?: string;
   notes?: string;
-  total_order_lines: number;
-  accepted_order_lines: number;
+  total_lines: number;
+  accepted_lines: number;
 }
 
 export interface ChangedStatus {
@@ -61,7 +48,6 @@ export interface ChangedStatus {
   is_accepted: boolean;
 }
 
-// Code 	Name 	Title 	Department 	Requester 	Requester Title 	Request Time 	Meal Type 	Attendance In 	Attendance Out 	Hours 	Notes
 export interface ReportDetailRecord {
   id: number;
   code: number;
@@ -71,7 +57,7 @@ export interface ReportDetailRecord {
   requester_name: string;
   requester_title: string;
   request_time: Date;
-  meal_type: string;
+  meal: string;
   attendance_in: Date;
   attendance_out: Date;
   hours: number;

@@ -20,7 +20,7 @@ export default function SelectedEmployeesColumn() {
   const { submittedEmployees, setSubmittedEmployees } = useNewRequest();
 
   // Group employees by meal type
-  const employeesByMealType: Record<string, Entry[]> =
+  const employeesByMeal: Record<string, Entry[]> =
     submittedEmployees.reduce((acc, entry) => {
       acc[entry.meal_name] = acc[entry.meal_name] || [];
       acc[entry.meal_name].push(entry);
@@ -28,10 +28,10 @@ export default function SelectedEmployeesColumn() {
     }, {} as Record<string, Entry[]>);
 
   // Remove an employee from the submitted list
-  const removeEmployee = (employeeId: number, mealTypeId: number) => {
+  const removeEmployee = (employeeId: number, MealId: number) => {
     setSubmittedEmployees((prev) =>
       prev.filter(
-        (entry) => !(entry.id === employeeId && entry.meal_id === mealTypeId),
+        (entry) => !(entry.id === employeeId && entry.meal_id === MealId),
       ),
     );
   };
@@ -46,14 +46,14 @@ export default function SelectedEmployeesColumn() {
       </div>
 
       {/* Employee List */}
-      {Object.keys(employeesByMealType).length > 0 ? (
+      {Object.keys(employeesByMeal).length > 0 ? (
         <ScrollArea.Root className="flex-1 overflow-auto border rounded-lg bg-gray-50">
           <ScrollArea.Viewport className="p-4">
             <Accordion.Root
               type="multiple"
-              defaultValue={Object.keys(employeesByMealType)}
+              defaultValue={Object.keys(employeesByMeal)}
             >
-              {Object.entries(employeesByMealType).map(
+              {Object.entries(employeesByMeal).map(
                 ([mealName, employees]) => (
                   <Accordion.Item key={mealName} value={mealName}>
                     <Accordion.Header>

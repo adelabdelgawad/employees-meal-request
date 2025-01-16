@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_application_session
-from db.models import MealRequestLine
+from db.models import RequestLine
 from hris_db.database import get_hris_session
 from src.http_schema import ReportDashboardResponse, ReportDetailsResponse
 from routers.cruds import report as crud
@@ -22,7 +22,7 @@ HRISSessionDep = Annotated[AsyncSession, Depends(get_hris_session)]
     response_model=List[ReportDashboardResponse],
     status_code=status.HTTP_200_OK,
 )
-async def get_meal_requests(
+async def get_requests(
     maria_session: SessionDep,
     from_date: Optional[str] = None,
     to_date: Optional[str] = None,
@@ -31,7 +31,7 @@ async def get_meal_requests(
     Returns the number of dinner and lunch requests grouped by department.
     """
     try:
-        result = await crud.read_meal_requests_data(
+        result = await crud.read_requests_data(
             maria_session, from_date, to_date
         )
         return result

@@ -1,5 +1,10 @@
 import React from 'react';
+import { DetailsTable } from './DetailTable';
 
 export default function page() {
-  return <div>page</div>;
+  return (
+    <div>
+      <DetailsTable />
+    </div>
+  );
 }

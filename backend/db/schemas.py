@@ -63,27 +63,27 @@ class EmployeeCreate(BaseModel):
     department_id: int
 
 
-# ----- MealRequestStatus Schemas -----
-class MealRequestStatusRead(BaseModel):
+# ----- RequestStatus Schemas -----
+class RequestStatusRead(BaseModel):
     id: Optional[int]
     name: str
 
     model_config = {"from_attributes": True}
 
 
-class MealRequestStatusCreate(BaseModel):
+class RequestStatusCreate(BaseModel):
     name: str
 
 
-# ----- MealType Schemas -----
-class MealTypeRead(BaseModel):
+# ----- Meal Schemas -----
+class MealRead(BaseModel):
     id: Optional[int]
     name: str
 
     model_config = {"from_attributes": True}
 
 
-class MealTypeCreate(BaseModel):
+class MealCreate(BaseModel):
     name: str
 
 
@@ -136,12 +136,12 @@ class EmployeeShiftCreate(BaseModel):
     date_from: datetime
 
 
-# ----- MealRequest Schemas -----
-class MealRequestRead(BaseModel):
+# ----- Request Schemas -----
+class RequestRead(BaseModel):
     id: Optional[int]
     status_id: int
     requester_id: int
-    meal_type_id: int
+    id: int
     request_time: Optional[datetime]
     created_time: datetime
     closed_time: Optional[datetime]
@@ -151,10 +151,10 @@ class MealRequestRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class MealRequestCreate(BaseModel):
+class RequestCreate(BaseModel):
     status_id: int
     requester_id: int
-    meal_type_id: int
+    id: int
     request_time: Optional[datetime] = None
     created_time: datetime
     closed_time: Optional[datetime] = None
@@ -162,12 +162,12 @@ class MealRequestCreate(BaseModel):
     auditor_id: Optional[int] = None
 
 
-# ----- MealRequestLine Schemas -----
-class MealRequestLineRead(BaseModel):
+# ----- RequestLine Schemas -----
+class RequestLineRead(BaseModel):
     id: Optional[int]
     employee_id: int
     department_id: int
-    meal_request_id: int
+    request_id: int
     attendance: Optional[datetime]
     notes: Optional[str]
     is_accepted: bool
@@ -176,10 +176,10 @@ class MealRequestLineRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class MealRequestLineCreate(BaseModel):
+class RequestLineCreate(BaseModel):
     employee_id: int
     department_id: int
-    meal_request_id: int
+    request_id: int
     attendance: Optional[datetime] = None
     notes: Optional[str] = None
     is_accepted: bool = True
@@ -210,10 +210,10 @@ class LogRolePermissionCreate(BaseModel):
     timestamp: datetime
 
 
-# ----- LogMealRequestLine Schemas -----
-class LogMealRequestLineRead(BaseModel):
+# ----- LogRequestLine Schemas -----
+class LogRequestLineRead(BaseModel):
     id: Optional[int]
-    meal_request_line_id: int
+    request_line_id: int
     account_id: int
     action: str
     is_successful: bool
@@ -223,8 +223,8 @@ class LogMealRequestLineRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class LogMealRequestLineCreate(BaseModel):
-    meal_request_line_id: int
+class LogRequestLineCreate(BaseModel):
+    request_line_id: int
     account_id: int
     action: str
     is_successful: bool

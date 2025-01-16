@@ -2,23 +2,20 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 
-import { DepartmentType, EmployeeType, MealType } from '@/pages/definitions';
-import {
-  getDepartments,
-  getEmployees,
-  getMealTypes,
-} from '@/lib/services/data';
+import { DepartmentType, EmployeeType, Meal } from '@/pages/definitions';
+import { getDepartments, getEmployees, getMeals } from '@/lib/services/data';
 
 interface NewRequestContextType {
   departments: DepartmentType[];
   employees: EmployeeType[];
-  mealTypes: MealType[];
+  Meals: Meal[];
   selectedDepartments: string[];
   setSelectedDepartments: React.Dispatch<React.SetStateAction<string[]>>;
   selectedEmployees: EmployeeType[];
   setSelectedEmployees: React.Dispatch<React.SetStateAction<EmployeeType[]>>;
   submittedEmployees: any[];
   setSubmittedEmployees: React.Dispatch<React.SetStateAction<any[]>>;
+  resetSubmittedEmployees: () => void;
   loading: boolean;
   error: string | null;
 }
@@ -34,7 +31,7 @@ export function NewRequestProvider({
 }) {
   const [departments, setDepartments] = useState<DepartmentType[]>([]);
   const [employees, setEmployees] = useState<EmployeeType[]>([]);
-  const [mealTypes, setMealTypes] = useState<MealType[]>([]);
+  const [Meals, setMeals] = useState<Meal[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<EmployeeType[]>(
     [],
@@ -42,6 +39,11 @@ export function NewRequestProvider({
   const [submittedEmployees, setSubmittedEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // ✅ Function to reset submitted employees
+  const resetSubmittedEmployees = () => {
+    setSubmittedEmployees([]);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,8 +55,8 @@ export function NewRequestProvider({
         const fetchedEmployees = await getEmployees();
         setEmployees(fetchedEmployees);
 
-        const fetchedMealTypes = await getMealTypes();
-        setMealTypes(fetchedMealTypes);
+        const fetchedMeals = await getMeals();
+        setMeals(fetchedMeals);
       } catch (err: any) {
         setError(err.message || 'An error occurred while fetching data.');
       } finally {
@@ -70,13 +72,14 @@ export function NewRequestProvider({
       value={{
         departments,
         employees,
-        mealTypes,
+        Meals,
         selectedDepartments,
         setSelectedDepartments,
         selectedEmployees,
         setSelectedEmployees,
         submittedEmployees,
         setSubmittedEmployees,
+        resetSubmittedEmployees,
         loading,
         error,
       }}
@@ -89,7 +92,7 @@ export function NewRequestProvider({
 export function useNewRequest() {
   const context = useContext(NewRequestContext);
   if (!context) {
-    throw new Error('useRequest must be used within a RequestProvider');
+    throw new Error('useNewRequest must be used within a NewRequestProvider');
   }
   return context;
 }

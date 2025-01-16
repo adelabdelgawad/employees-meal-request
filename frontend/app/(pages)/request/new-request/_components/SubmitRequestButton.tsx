@@ -3,17 +3,13 @@
 import { useState } from 'react';
 import { useNewRequest } from '@/hooks/NewRequestContext';
 import { useAlerts } from '@/components/alert/useAlerts';
-import { useRouter } from 'next/navigation';
 import { debounce } from '@/lib/utils';
 
 export default function SubmitRequestButton() {
-  const { submittedEmployees } = useNewRequest();
+  const { submittedEmployees, resetSubmittedEmployees } = useNewRequest(); // ✅ Added reset function
   const { addAlert } = useAlerts();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
-  // ✅ Call useRouter at the top level
-  const router = useRouter();
 
   const handleRequestSubmission = async () => {
     if (submittedEmployees.length === 0) {
@@ -39,12 +35,9 @@ export default function SubmitRequestButton() {
       const result = await response.json();
       addAlert(result.message, 'success');
 
-      // ✅ Set submitted state to true to disable the button
-      setSubmitted(true);
-
-      // ✅ Redirect to confirmation page with multiple IDs
-      const requestIds = result.created_meal_request_ids.join(',');
-      router.push(`/request-success?requestIds=${requestIds}`);
+      // ✅ Reset the form after successful submission
+      resetSubmittedEmployees();
+      setSubmitted(false); // Reset the button state
     } catch (error: any) {
       addAlert(error.message || 'An error occurred', 'error');
     } finally {

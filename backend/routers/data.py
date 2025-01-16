@@ -7,7 +7,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from collections import defaultdict
 
 from db.database import get_application_session
-from db.models import Employee, Department, MealType
+from db.models import Employee, Department, Meal
 
 # Create API Router
 router = APIRouter()
@@ -65,25 +65,25 @@ async def read_employees(session: SessionDep):
         )
 
 
-@router.get("/meal-types", response_model=List[MealType])
-async def read_meal_types(session: SessionDep):
+@router.get("/meal-types", response_model=List[Meal])
+async def read_meals(session: SessionDep):
     """
-    Fetch a list of meal_type from the database grouped by department.
+    Fetch a list of meal from the database grouped by department.
 
     :param session: AsyncSession connected to the application database.
-    :return: Dictionary of meal_type grouped by department.
+    :return: Dictionary of meal grouped by department.
     """
     try:
-        statement = select(MealType)
+        statement = select(Meal)
 
         result = await session.execute(statement)
-        meal_type = result.scalars().all()
-        return meal_type
+        meal = result.scalars().all()
+        return meal
 
     except Exception as e:
-        logger.error(f"Error retrieving meal_type: {e}")
+        logger.error(f"Error retrieving meal: {e}")
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An internal error occurred while fetching meal_types.",
+            detail="An internal error occurred while fetching meals.",
         )

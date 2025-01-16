@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
 from db.database import get_application_session
-from db.models import MealRequestLine, Employee, EmployeeShift
+from db.models import RequestLine, Employee, EmployeeShift
 from src.http_schema import RequestLineRespose, ChangedStatusRequest
 from hris_db.database import get_hris_session
 
@@ -24,7 +24,7 @@ HRISSessionDep = Annotated[Session, Depends(get_hris_session)]
     response_model=List[RequestLineRespose],
     status_code=status.HTTP_200_OK,
 )
-async def get_meal_request_line(
+async def get_request_line(
     maria_session: SessionDep, request_id: int
 ) -> List[RequestLineRespose]:
     """
@@ -35,25 +35,23 @@ async def get_meal_request_line(
         request_id (Optional[int]): ID of the meal request to filter lines.
 
     Returns:
-        List[MealRequestLine]: A list of meal request lines.
+        List[RequestLine]: A list of meal request lines.
     """
     logger.info(
         f"Attempting to read meal request lines for request_id: {request_id}"
     )
     try:
         statement = select(
-            MealRequestLine.id,
+            RequestLine.id,
             Employee.name,
             Employee.title,
             Employee.code,
-            MealRequestLine.attendance,
-            MealRequestLine.is_accepted,
-            MealRequestLine.shift_id,
-        ).join(MealRequestLine.employee)
+            RequestLine.attendance,
+            RequestLine.is_accepted,
+            RequestLine.shift_id,
+        ).join(RequestLine.employee)
 
-        statement = statement.where(
-            MealRequestLine.meal_request_id == request_id
-        )
+        statement = statement.where(RequestLine.request_id == request_id)
 
         # Execute the query
         result = await maria_session.execute(statement)
@@ -93,12 +91,12 @@ async def update_request_lines(
 
     # Process each change
     for change in changes:
-        # Fetch the MealRequestLine record by ID
-        record = await maria_session.get(MealRequestLine, change.id)
+        # Fetch the RequestLine record by ID
+        record = await maria_session.get(RequestLine, change.id)
         if not record:
             raise HTTPException(
                 status_code=404,
-                detail=f"MealRequestLine with ID {change.id} not found",
+                detail=f"RequestLine with ID {change.id} not found",
             )
 
         # Update the is_accepted field

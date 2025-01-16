@@ -20,9 +20,6 @@ from hris_db.models import (
     TMSShift,
 )
 
-# Dependency annotations
-HRISSessionDep = Annotated[AsyncSession, Depends(get_hris_session)]
-
 # Logger setup
 logger = logging.getLogger(__name__)
 
@@ -44,7 +41,9 @@ async def add_and_commit(session: AsyncSession, items: List):
         await session.refresh(item)
 
 
-async def replicate(hris_session: AsyncSession, app_session: AsyncSession) -> None:
+async def replicate(
+    hris_session: AsyncSession, app_session: AsyncSession
+) -> None:
     """
     Replicate data from the HRIS database to the local application database.
     This includes departments, employees, shifts, and security users.
@@ -60,10 +59,14 @@ async def replicate(hris_session: AsyncSession, app_session: AsyncSession) -> No
         await _create_or_update_shifts(hris_session, app_session)
         logger.info("Data replication completed successfully.")
     except Exception as e:
-        logger.error("An error occurred during data replication:", exc_info=True)
+        logger.error(
+            "An error occurred during data replication:", exc_info=True
+        )
 
 
-def schedule_replication(hris_session: AsyncSession, app_session: AsyncSession):
+def schedule_replication(
+    hris_session: AsyncSession, app_session: AsyncSession
+):
     """
     Schedule the data replication task to run periodically (every hour).
 
@@ -92,7 +95,9 @@ async def _create_or_update_departments(
     :param app_session: AsyncSession connected to the local application database.
     """
     hris_departments = (
-        (await hris_session.execute(select(HRISOrganizationUnit))).scalars().all()
+        (await hris_session.execute(select(HRISOrganizationUnit)))
+        .scalars()
+        .all()
     )
     for hris_dep in hris_departments:
         dep = (
@@ -128,12 +133,19 @@ async def _create_or_update_employees(
             HRISEmployeePosition.org_unit_id,
             HRISPosition.en_name.label("title"),
         )
-        .join(HRISEmployeePosition, HRISEmployee.id == HRISEmployeePosition.employee_id)
-        .join(HRISPosition, HRISEmployeePosition.position_id == HRISPosition.id)
+        .join(
+            HRISEmployeePosition,
+            HRISEmployee.id == HRISEmployeePosition.employee_id,
+        )
+        .join(
+            HRISPosition, HRISEmployeePosition.position_id == HRISPosition.id
+        )
         .where(HRISEmployee.is_active == True)
     )
 
-    hris_employees_with_positions = (await hris_session.execute(statement)).all()
+    hris_employees_with_positions = (
+        await hris_session.execute(statement)
+    ).all()
     for emp_data in hris_employees_with_positions:
         full_name = " ".join(
             filter(
@@ -189,7 +201,11 @@ async def _create_or_update_shifts(
                 HRISShiftAssignment.duration_hours,
                 HRISShiftAssignment.date_from,
             )
-            .join(TMSShift, HRISShiftAssignment.shift_id == TMSShift.id, isouter=True)
+            .join(
+                TMSShift,
+                HRISShiftAssignment.shift_id == TMSShift.id,
+                isouter=True,
+            )
             .where(
                 func.cast(HRISShiftAssignment.date_from, Date)
                 == func.cast(func.getdate(), Date)
@@ -199,7 +215,9 @@ async def _create_or_update_shifts(
         for hris_shift in hris_shifts:
             shift = (
                 await app_session.execute(
-                    select(EmployeeShift).where(EmployeeShift.id == hris_shift.id)
+                    select(EmployeeShift).where(
+                        EmployeeShift.id == hris_shift.id
+                    )
                 )
             ).scalar_one_or_none()
             if shift:
@@ -239,7 +257,9 @@ async def _create_or_update_security_users(
     for hris_sec_user in hris_sec_users:
         sec_user = (
             await app_session.execute(
-                select(HRISSecurityUser).where(HRISSecurityUser.id == hris_sec_user.id)
+                select(HRISSecurityUser).where(
+                    HRISSecurityUser.id == hris_sec_user.id
+                )
             )
         ).scalar_one_or_none()
         if not sec_user:

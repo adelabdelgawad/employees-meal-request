@@ -11,29 +11,30 @@ import {
 import { Button } from '@/components/ui/button';
 import * as ScrollArea from '@radix-ui/react-scroll-area';
 import { Input } from '@/components/ui/input';
-import MealTypeOption from './MealTypeOption';
+import MealOption from './MealOption';
 import { useNewRequest } from '@/hooks/NewRequestContext';
-import { EmployeeType, MealType } from '@/pages/definitions';
+import { EmployeeType, Meal } from '@/pages/definitions';
 import { useAlerts } from '@/components/alert/useAlerts';
+import { sub } from 'date-fns';
 
 interface EmployeeSelectionDialogProps {
   selectedEmployees: EmployeeType[];
   setSelectedEmployees: (employees: EmployeeType[]) => void;
-  mealTypes: MealType[];
-  onSelectMealType: (selectedMealTypes: MealType[]) => void;
+  Meals: Meal[];
+  onSelectMeal: (selectedMeals: Meal[]) => void;
 }
 
 const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
   selectedEmployees,
   setSelectedEmployees,
-  mealTypes,
-  onSelectMealType,
+  Meals,
+  onSelectMeal,
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [employeeNotes, setEmployeeNotes] = useState<Record<number, string>>(
     {},
   );
-  const [selectedMealTypes, setSelectedMealTypes] = useState<MealType[]>([]);
+  const [selectedMeals, setSelectedMeals] = useState<Meal[]>([]);
   const { submittedEmployees, setSubmittedEmployees } = useNewRequest();
   const { addAlert } = useAlerts();
 
@@ -46,14 +47,14 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
   };
 
   // Handle meal type selection
-  const handleMealTypeChange = (selectedMealTypes: MealType[]) => {
-    setSelectedMealTypes(selectedMealTypes);
-    onSelectMealType(selectedMealTypes);
+  const handleMealChange = (selectedMeals: Meal[]) => {
+    setSelectedMeals(selectedMeals);
+    onSelectMeal(selectedMeals);
   };
 
   // Handle form submission
   const handleSubmit = () => {
-    if (selectedMealTypes.length === 0) {
+    if (selectedMeals.length === 0) {
       addAlert(
         'Please select at least one meal type before submitting.',
         'warning',
@@ -62,12 +63,13 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
     }
 
     const finalData = selectedEmployees.flatMap((employee) =>
-      selectedMealTypes.map((mealType) => ({
+      selectedMeals.map((Meal) => ({
         id: employee.id,
+        code: employee.code,
         name: employee.name,
         department_id: employee.department_id,
-        meal_id: mealType.id,
-        meal_name: mealType.name,
+        meal_id: Meal.id,
+        meal_name: Meal.name,
         notes: employeeNotes[employee.id] || '',
       })),
     );
@@ -76,7 +78,9 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
     const duplicateEntries = finalData.filter((entry) =>
       submittedEmployees.some(
         (submitted) =>
-          submitted.id === entry.id && submitted.meal_id === entry.meal_id,
+          submitted.id === entry.id &&
+          submitted.meal_id === entry.meal_id &&
+          submitted.code === entry.code,
       ),
     );
 
@@ -124,10 +128,10 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
 
         {/* Meal Type Selection (Always Visible) */}
         <div className="mb-2">
-          <MealTypeOption
-            mealTypes={mealTypes}
-            selectedMealTypes={selectedMealTypes}
-            onSelectMealType={handleMealTypeChange}
+          <MealOption
+            Meals={Meals}
+            selectedMeals={selectedMeals}
+            onSelectMeal={handleMealChange}
           />
         </div>
 
@@ -189,7 +193,7 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
           <Button
             onClick={handleSubmit}
             className="w-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
-            disabled={selectedMealTypes.length === 0}
+            disabled={selectedMeals.length === 0}
           >
             Confirm
           </Button>

@@ -22,14 +22,14 @@ export async function getEmployees() {
   return res.json();
 }
 
-export async function getMealTypes() {
+export async function getMeals() {
   const res = await fetch("http://localhost:8000/meal-types", {
     cache: "no-store",
   });
 
   if (!res.ok) {
     throw new Error("Failed to fetch employees");
-  }
+np  }
 
   return res.json();
 }

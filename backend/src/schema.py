@@ -14,15 +14,15 @@ class UserAttributes(BaseModel):
     title: Optional[str] = None
 
 
-class MealRequestSummary(BaseModel):
-    meal_request_id: int
+class RequestSummary(BaseModel):
+    request_id: int
     status_name: str
     requester_name: str
     requester_title: Optional[str] = None
     notes: Optional[str]
     request_time: datetime
     closed_time: Optional[datetime]
-    meal_type: Optional[str] = None
+    meal: Optional[str] = None
     total_request_lines: int
     accepted_request_lines: Optional[int]
 
@@ -30,15 +30,15 @@ class MealRequestSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MealRequestLineRequest(BaseModel):
+class RequestLineRequest(BaseModel):
     employee_id: int
     employee_code: int
     department_id: int
     notes: Optional[str] = None
 
 
-class MealRequestResponse(BaseModel):
-    meal_request_id: int
+class RequestResponse(BaseModel):
+    request_id: int
     requester_name: str
     request_time: datetime
     request_notes: Optional[str] = None
@@ -57,7 +57,7 @@ class FormData(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MealRequestLineResponse(BaseModel):
+class RequestLineResponse(BaseModel):
     id: int
     code: int
     name: str
@@ -67,7 +67,7 @@ class MealRequestLineResponse(BaseModel):
     sign_in_time: Optional[datetime] = None
     accepted: Optional[bool] = True
     notes: Optional[str] = None
-    meal_type: Optional[str] = None
+    meal: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -127,7 +127,7 @@ class AuditRecordRequest(BaseModel):
     department: Optional[str]
     requester: Optional[str]
     requester_title: Optional[str]
-    meal_type: Optional[str]
+    meal: Optional[str]
     notes: Optional[str]
     request_time: Optional[datetime]
 

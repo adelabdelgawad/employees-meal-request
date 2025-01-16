@@ -5,8 +5,8 @@ import * as ScrollArea from '@radix-ui/react-scroll-area';
 import * as Checkbox from '@radix-ui/react-checkbox';
 import { CheckIcon } from '@radix-ui/react-icons';
 import { useNewRequest } from '@/hooks/NewRequestContext';
-import FilterComponent from '../_components/Filter';
-import SelectionActions from '../_components/SelectionActions';
+import FilterComponent from './_components/Filter';
+import SelectionActions from './_components/SelectionActions';
 
 export default function DepartmentColumn() {
   const { departments, selectedDepartments, setSelectedDepartments } =

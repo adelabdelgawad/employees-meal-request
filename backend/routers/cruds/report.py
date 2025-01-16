@@ -9,11 +9,11 @@ from sqlalchemy.sql.expression import case
 from sqlmodel import select, func
 
 # Project-Specific Imports
-from db.models import Department, MealRequest, MealRequestLine
+from db.models import Department, Request, RequestLine
 from src.http_schema import ReportDashboardResponse
 
 
-async def read_meal_requests_data(
+async def read_requests_data(
     session: AsyncSession, from_date: Optional[str], to_date: Optional[str]
 ) -> List[ReportDashboardResponse]:
     """
@@ -29,9 +29,9 @@ async def read_meal_requests_data(
             hour=23, minute=59, second=59
         )
 
-    # CASE expressions for dinner (meal_type_id=1) and lunch (meal_type_id=2)
-    dinner_case = case((MealRequest.meal_type_id == 1, 1), else_=0)
-    lunch_case = case((MealRequest.meal_type_id == 2, 1), else_=0)
+    # CASE expressions for dinner (id=1) and lunch (id=2)
+    dinner_case = case((Request.id == 1, 1), else_=0)
+    lunch_case = case((Request.id == 2, 1), else_=0)
 
     # Build the query
     statement = (
@@ -41,15 +41,15 @@ async def read_meal_requests_data(
             func.sum(dinner_case).label("dinner_requests"),
             func.sum(lunch_case).label("lunch_requests"),
         )
-        .join(MealRequestLine, MealRequestLine.department_id == Department.id)
-        .join(MealRequest, MealRequest.id == MealRequestLine.meal_request_id)
-        .where(MealRequestLine.is_accepted == True)
+        .join(RequestLine, RequestLine.department_id == Department.id)
+        .join(Request, Request.id == RequestLine.request_id)
+        .where(RequestLine.is_accepted == True)
         .group_by(Department.id, Department.name)
     )
 
     if from_date and to_date:
         statement = statement.where(
-            MealRequest.created_time.between(from_date, to_date)
+            Request.created_time.between(from_date, to_date)
         )
 
     # Execute the query
@@ -76,49 +76,49 @@ async def read_meal_requests_data(
     return response_data
 
 
-async def read_closed_accepted_requests_for_audit_page(
-    session: AsyncSession,
-    start_time: Optional[datetime] = None,
-    end_time: Optional[datetime] = None,
-) -> List[AuditRecordRequest]:
-    stmt = (
-        select(
-            MealRequestLine.id,
-            Employee.code,
-            Employee.name.label("employee_name"),
-            Employee.title,
-            Department.name.label("department"),
-            Account.username.label("requester"),
-            Account.title.label("requester_title"),
-            MealType.name.label("meal_type"),
-            MealRequestLine.notes,
-            MealRequest.request_time,
-        )
-        .join(Employee, MealRequestLine.employee_id == Employee.id)
-        .join(Department, MealRequestLine.department_id == Department.id)
-        .join(MealRequest, MealRequestLine.meal_request_id == MealRequest.id)
-        .join(Account, MealRequest.requester_id == Account.id)
-        .join(MealType, MealRequest.meal_type_id == MealType.id)
-        .where(MealRequestLine.is_accepted == True, MealRequest.status_id == 2)
-    )
+# async def read_closed_accepted_requests_for_audit_page(
+#     session: AsyncSession,
+#     start_time: Optional[datetime] = None,
+#     end_time: Optional[datetime] = None,
+# ) -> List[AuditRecordRequest]:
+#     stmt = (
+#         select(
+#             RequestLine.id,
+#             Employee.code,
+#             Employee.name.label("employee_name"),
+#             Employee.title,
+#             Department.name.label("department"),
+#             Account.username.label("requester"),
+#             Account.title.label("requester_title"),
+#             Meal.name.label("meal"),
+#             RequestLine.notes,
+#             Request.request_time,
+#         )
+#         .join(Employee, RequestLine.employee_id == Employee.id)
+#         .join(Department, RequestLine.department_id == Department.id)
+#         .join(Request, RequestLine.request_id == Request.id)
+#         .join(Account, Request.requester_id == Account.id)
+#         .join(Meal, Request.id == Meal.id)
+#         .where(RequestLine.is_accepted == True, Request.status_id == 2)
+#     )
 
-    # Add date range filter if start_time and/or end_time are provided
-    if start_time and end_time:
-        stmt = stmt.where(
-            and_(
-                MealRequest.request_time >= start_time,
-                MealRequest.request_time <= end_time,
-            )
-        )
-    elif start_time:
-        stmt = stmt.where(MealRequest.request_time >= start_time)
-    elif end_time:
-        stmt = stmt.where(MealRequest.request_time <= end_time)
+#     # Add date range filter if start_time and/or end_time are provided
+#     if start_time and end_time:
+#         stmt = stmt.where(
+#             and_(
+#                 Request.request_time >= start_time,
+#                 Request.request_time <= end_time,
+#             )
+#         )
+#     elif start_time:
+#         stmt = stmt.where(Request.request_time >= start_time)
+#     elif end_time:
+#         stmt = stmt.where(Request.request_time <= end_time)
 
-    # Execute the query asynchronously
-    result = await session.execute(stmt)
-    records = result.fetchall()
+#     # Execute the query asynchronously
+#     result = await session.execute(stmt)
+#     records = result.fetchall()
 
-    # Convert to list of AuditRecordRequest
-    response = [AuditRecordRequest.model_validate(row) for row in records]
-    return response
+#     # Convert to list of AuditRecordRequest
+#     response = [AuditRecordRequest.model_validate(row) for row in records]
+#     return response

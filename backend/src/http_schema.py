@@ -14,11 +14,10 @@ class DepartmentResponse(BaseModel):
 
 # ✅ RequestBody Model
 class RequestBody(BaseModel):
-    id: int
-    name: str
+    employee_id: int
+    employee_code: int
     department_id: int
     meal_id: int
-    meal_name: str
     notes: Optional[str] = Field(default="")
 
     model_config = ConfigDict(from_attributes=True)
@@ -31,12 +30,12 @@ class RequestPageRecordResponse(BaseModel):
     status_id: int
     requester: Optional[str] = None
     requester_title: Optional[str] = None
-    meal_type: str
+    meal: str
     request_time: datetime
     closed_time: Optional[datetime] = None
     notes: str
-    total_order_lines: int
-    accepted_order_lines: int
+    total_lines: int
+    accepted_lines: int
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -126,7 +125,7 @@ class ReportDetailsResponse(BaseModel):
     requester_name: str
     requester_title: str
     request_time: datetime
-    meal_type: str
+    meal: str
     attendance_in: datetime | None = None
     attendance_out: datetime | None = None
     hours: float

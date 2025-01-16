@@ -1,9 +1,15 @@
 import logging
 from sqlmodel import select, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.models import MealRequestLine, MealRequest, MealRequestStatus, Account, MealType
-from typing import Optional
-from src.http_schema import RequestPageRecordResponse
+from db.models import (
+    RequestLine,
+    Request,
+    RequestStatus,
+    Account,
+    Meal,
+)
+from typing import Optional, List
+from src.http_schema import RequestPageRecordResponse, RequestBody
 import pytz
 
 
@@ -14,62 +20,130 @@ cairo_tz = pytz.timezone("Africa/Cairo")
 logger = logging.getLogger(__name__)
 
 
-async def read_meal_request_for_request_page(
+async def create_meal_request_lines(
+    meal_id: int, request_lines: List[RequestBody], maria_session: AsyncSession
+) -> List[RequestLine]:
+    """
+    Handles the SQL logic for creating a meal request and its lines.
+
+    Args:
+        request_lines (List[RequestBody]): List of meal request lines.
+        maria_session (AsyncSession): Application database session.
+
+    Returns:
+        dict: Contains the created meal request ID and created request line IDs.
+    """
+    try:
+        # Step 1: Create a new meal request
+        new_request = Request(
+            requester_id=1,
+            meal_id=meal_id,
+            notes="",
+        )
+        maria_session.add(new_request)
+        await maria_session.commit()
+        await maria_session.refresh(new_request)
+
+        logger.info(f"Created meal request with ID: {new_request.id}")
+
+        # Step 2: Create meal request lines
+        lines = [
+            RequestLine(
+                employee_id=line.employee_id,
+                employee_code=line.employee_code,
+                department_id=line.department_id,
+                request_id=new_request.id,
+                meal_id=line.meal_id,
+                notes=line.notes,
+            )
+            for line in request_lines
+        ]
+        maria_session.add_all(lines)
+        await maria_session.commit()
+        await maria_session.flush()
+
+        # Retrieve created line IDs
+
+        return lines
+
+    except Exception as e:
+        logger.error(f"Error in create_meal_request: {e}")
+        raise e
+
+
+async def read_request_for_request_page(
     session: AsyncSession,
-    request_id: int,
+    request_id: Optional[int] = None,
     from_date: Optional[str] = None,
     to_date: Optional[str] = None,
-) -> RequestPageRecordResponse:
-    # Build the statement
+) -> List[RequestPageRecordResponse]:
     statement = (
         select(
-            MealRequest.id,
-            MealRequestStatus.name.label("status_name"),
-            MealRequestStatus.id.label("status_id"),
+            Request.id,
+            RequestStatus.name.label("status_name"),
+            RequestStatus.id.label("status_id"),
             Account.full_name.label("requester"),
             Account.title.label("requester_title"),
-            MealType.name.label("meal_type"),
-            MealRequest.created_time.label("request_time"),
-            MealRequest.closed_time,
-            MealRequest.notes,
-            func.count(MealRequestLine.id).label("total_order_lines"),
-            func.sum(case((MealRequestLine.is_accepted == True, 1), else_=0)).label(
-                "accepted_order_lines"
-            ),
-            Account.full_name.label("auditor"),
+            Meal.name.label("meal"),
+            Request.created_time.label("request_time"),
+            Request.closed_time,
+            Request.notes,
+            func.count(RequestLine.id).label("total_lines"),
+            func.sum(
+                case((RequestLine.is_accepted == True, 1), else_=0)
+            ).label("accepted_lines"),
         )
-        .join(Account, MealRequest.requester_id == Account.id)
-        .join(MealRequestStatus, MealRequest.status)
-        .join(MealType, MealRequest.meal_type_id == MealType.id)
-        .outerjoin(
-            MealRequestLine, MealRequest.id == MealRequestLine.meal_request_id
-        )  # Correct join
+        .join(Account, Request.requester_id == Account.id)
+        .join(RequestStatus, Request.status_id == RequestStatus.id)
+        .outerjoin(RequestLine, Request.id == RequestLine.request_id)
+        .outerjoin(Meal, RequestLine.meal_id == Meal.id)
         .group_by(
-            MealRequest.id,
-            MealRequestStatus.name,
-            Account.username,
-            MealRequest.created_time,
-            MealRequest.closed_time,
+            Request.id,
+            RequestStatus.name,
+            RequestStatus.id,
+            Account.full_name,
+            Account.title,
+            Meal.name,
+            Request.created_time,
+            Request.closed_time,
+            Request.notes,
         )
-        .order_by(MealRequest.id.desc())
+        .order_by(Request.id.desc())
     )
 
+    # Apply filters if provided
     if request_id:
-        statement = statement.where(MealRequest.id == request_id)
+        statement = statement.where(Request.id == request_id)
 
     if from_date and to_date:
         statement = statement.where(
-            MealRequest.created_time.between(from_date, to_date)
+            Request.created_time.between(from_date, to_date)
         )
 
     # Execute the query
     result = await session.execute(statement)
-    meal_requests = result.all()
+    requests = result.all()
 
-    return [request for request in meal_requests]
+    # Convert to list of RequestPageRecordResponse
+    return [
+        RequestPageRecordResponse(
+            id=request.id,
+            status_name=request.status_name,
+            status_id=request.status_id,
+            requester=request.requester,
+            requester_title=request.requester_title,
+            meal=request.meal,
+            request_time=request.request_time,
+            closed_time=request.closed_time,
+            notes=request.notes,
+            total_lines=request.total_lines,
+            accepted_lines=request.accepted_lines,
+        )
+        for request in requests
+    ]
 
 
-async def update_mealrequest_line(session: AsyncSession, request_id: int):
+async def update_Request_line(session: AsyncSession, request_id: int):
     """
     Update the is_accepted status of all meal request lines for a given request ID.
 
@@ -80,15 +154,13 @@ async def update_mealrequest_line(session: AsyncSession, request_id: int):
     Returns:
         None
     """
-    statement = select(MealRequestLine).where(
-        MealRequestLine.meal_request_id == request_id
-    )
+    statement = select(RequestLine).where(RequestLine.request_id == request_id)
     result = await session.execute(statement)
-    meal_request_lines = result.scalars().all()
+    request_lines = result.scalars().all()
 
-    for meal_request_line in meal_request_lines:
-        meal_request_line.is_accepted = False
-        session.add(meal_request_line)
+    for request_line in request_lines:
+        request_line.is_accepted = False
+        session.add(request_line)
 
     await session.commit()
-    await session.refresh(meal_request_line)
+    await session.refresh(request_line)

@@ -34,7 +34,7 @@ declare global {
     requester_name: string;
     requester_title: string;
     request_time: string;
-    meal_type: string;
+    meal: string;
     attendance_in: string;
     attendance_out: string;
     hours: number;

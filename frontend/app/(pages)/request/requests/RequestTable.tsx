@@ -2,12 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { Table, TableHeader } from '@/components/ui/table';
-import DataTableRowHeader from '../../report/requests-details/_components/_data-table/DataTableRowHeader';
-import TableOptions from '../../report/requests-details/_components/_data-table/TableOptions';
 import Pagination from '@/components/data-table/Pagination';
 import { RequestRecord } from '@/pages/definitions';
-import DataTableBody from '../../report/requests-details/_components/_data-table/DataTableBody';
 import { useRequest } from '@/hooks/RequestContext';
+import TableOptions from './_components/_data-table/TableOptions';
+import DataTableRowHeader from './_components/_data-table/DataTableRowHeader';
+import DataTableBody from './_components/_data-table/DataTableBody';
 
 export function RequestsTable() {
   // State to store requests data

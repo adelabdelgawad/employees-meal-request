@@ -12,9 +12,9 @@ import {
 import { EyeOpenIcon } from '@radix-ui/react-icons';
 import DialogTable from './_request-lines/DialogTable';
 import { useAlerts } from '@/components/alert/useAlerts';
-import ConfirmationModal from '../../../../../components/data-table/ConfirmationDialog';
+import ConfirmationModal from '@/components/data-table/ConfirmationDialog';
 import { updateRequestLines } from '@/lib/services/request-lines';
-// Import the ConfirmationModal
+import { useRequest } from '@/hooks/RequestContext'; // ✅ Import useRequest
 
 interface ViewActionProps {
   id: number;
@@ -22,6 +22,7 @@ interface ViewActionProps {
 }
 
 const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
+  const { mutate } = useRequest(); // ✅ Destructure mutate function
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<any[]>([]);
   const [originalData, setOriginalData] = useState<any[]>([]);
@@ -86,8 +87,12 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
       try {
         // Call the API to update the request lines
         const message = await updateRequestLines(changedStatus);
-        setOpen(false); // Close the main dialog on success
         addAlert(message, 'success');
+
+        // ✅ Call mutate to refresh data
+        await mutate();
+
+        setOpen(false); // Close the main dialog on success
       } catch (error) {
         addAlert('Error saving changes. Please try again.', 'error');
       }

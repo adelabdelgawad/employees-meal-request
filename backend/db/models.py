@@ -14,7 +14,9 @@ class Role(SQLModel, table=True):
     name: str = Field(nullable=False, max_length=64)
     description: str = Field(nullable=False, max_length=64)
 
-    role_permissions: List["RolePermission"] = Relationship(back_populates="role")
+    role_permissions: List["RolePermission"] = Relationship(
+        back_populates="role"
+    )
     permission_logs_admin: Optional["LogRolePermission"] = Relationship(
         back_populates="role"
     )
@@ -65,38 +67,41 @@ class Employee(SQLModel, table=True):
     department_id: int = Field(foreign_key="department.id", nullable=False)
 
     # Relationships
-    department: Optional["Department"] = Relationship(back_populates="employees")
-    meal_request_lines: List["MealRequestLine"] = Relationship(
+    department: Optional["Department"] = Relationship(
+        back_populates="employees"
+    )
+    request_lines: List["RequestLine"] = Relationship(
         back_populates="employee"
     )
 
 
-class MealRequestStatus(SQLModel, table=True):
+class RequestStatus(SQLModel, table=True):
     """
-    Represents the status of a MealRequest.
+    Represents the status of a Request.
     """
 
-    __tablename__ = "meal_request_status"
+    __tablename__ = "request_status"
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(nullable=False, max_length=64)
 
     # Relationships
-    meal_requests: List["MealRequest"] = Relationship(back_populates="status")
+    requests: List["Request"] = Relationship(back_populates="status")
 
 
-class MealType(SQLModel, table=True):
+class Meal(SQLModel, table=True):
     """
-    Represents the type of a MealRequest.
+    Represents the type of a Request.
     """
 
-    __tablename__ = "meal_type"
+    __tablename__ = "meal"
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(nullable=False, max_length=64)
 
     # Relationships
-    meal_requests: List["MealRequest"] = Relationship(back_populates="meal_type")
+    request_lines: List["RequestLine"] = Relationship(back_populates="meal")
+    requests: List["Request"] = Relationship(back_populates="meal")
 
 
 class Account(SQLModel, table=True):
@@ -112,26 +117,30 @@ class Account(SQLModel, table=True):
     password: Optional[str] = Field(default=None, max_length=64)
     title: Optional[str] = Field(default=None, max_length=64)
     is_domain_user: bool = Field(default=False)
-    hris_security_user_id: Optional[int] = Field(foreign_key="hris_security_user.id")
+    hris_security_user_id: Optional[int] = Field(
+        foreign_key="hris_security_user.id"
+    )
 
     # Relationships
     security_user: Optional["HRISSecurityUser"] = Relationship(
         back_populates="accounts"
     )
-    role_permissions: List["RolePermission"] = Relationship(back_populates="account")
-    meal_request_line_logs: List["LogMealRequestLine"] = Relationship(
+    role_permissions: List["RolePermission"] = Relationship(
+        back_populates="account"
+    )
+    request_line_logs: List["LogRequestLine"] = Relationship(
         back_populates="account"
     )
     # Relationship: One Account can have many Requests they initiated
-    requests: List["MealRequest"] = Relationship(
+    requests: List["Request"] = Relationship(
         back_populates="requester",
-        sa_relationship_kwargs={"foreign_keys": "[MealRequest.requester_id]"},
+        sa_relationship_kwargs={"foreign_keys": "[Request.requester_id]"},
     )
 
     # Relationship: One Account can audit many Requests
-    audits: List["MealRequest"] = Relationship(
+    audits: List["Request"] = Relationship(
         back_populates="auditor",
-        sa_relationship_kwargs={"foreign_keys": "[MealRequest.auditor_id]"},
+        sa_relationship_kwargs={"foreign_keys": "[Request.auditor_id]"},
     )
 
 
@@ -144,7 +153,9 @@ class RolePermission(SQLModel, table=True):
 
     # Relationships
     role: Optional["Role"] = Relationship(back_populates="role_permissions")
-    account: Optional["Account"] = Relationship(back_populates="role_permissions")
+    account: Optional["Account"] = Relationship(
+        back_populates="role_permissions"
+    )
 
 
 class EmployeeShift(SQLModel, table=True):
@@ -160,75 +171,87 @@ class EmployeeShift(SQLModel, table=True):
     date_from: datetime = Field(nullable=False)
 
     # Relationships
-    meal_request_lines: List["MealRequestLine"] = Relationship(back_populates="shift")
+    request_lines: List["RequestLine"] = Relationship(back_populates="shift")
 
 
-class MealRequest(SQLModel, table=True):
+class Request(SQLModel, table=True):
     """
     Represents a meal request.
     """
 
-    __tablename__ = "meal_request"
+    __tablename__ = "request"
 
     id: Optional[int] = Field(default=None, primary_key=True)
     status_id: int = Field(
-        foreign_key="meal_request_status.id", nullable=False, default=1
+        foreign_key="request_status.id", nullable=False, default=1
     )
     requester_id: int = Field(foreign_key="account.id", nullable=False)
-    meal_type_id: int = Field(foreign_key="meal_type.id", nullable=False)
+    meal_id: int = Field(foreign_key="meal.id", nullable=False)
+
     request_time: Optional[datetime] = Field(default=None)
-    created_time: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
+    created_time: datetime = Field(
+        default_factory=lambda: datetime.now(cairo_tz)
+    )
     closed_time: Optional[datetime] = Field(default=None)
     notes: Optional[str] = Field(default=None, max_length=256)
     auditor_id: Optional[int] = Field(foreign_key="account.id", default=None)
     menu_id: int = Field(foreign_key="menu.id", default=1)
 
     # Relationships
-    status: Optional["MealRequestStatus"] = Relationship(back_populates="meal_requests")
-    meal_type: Optional["MealType"] = Relationship(back_populates="meal_requests")
-    menu: Optional["Menu"] = Relationship(back_populates="meal_requests")
+    meal: Optional["Meal"] = Relationship(back_populates="requests")
 
-    meal_request_lines: List["MealRequestLine"] = Relationship(
-        back_populates="meal_request"
-    )
+    status: Optional["RequestStatus"] = Relationship(back_populates="requests")
+    menu: Optional["Menu"] = Relationship(back_populates="requests")
+
+    request_lines: List["RequestLine"] = Relationship(back_populates="request")
 
     # Relationship back to the Account who requested
     requester: "Account" = Relationship(
         back_populates="requests",
-        sa_relationship_kwargs={"foreign_keys": "[MealRequest.requester_id]"},
+        sa_relationship_kwargs={"foreign_keys": "[Request.requester_id]"},
     )
 
     # Relationship back to the Account who audits
     auditor: "Account" = Relationship(
         back_populates="audits",
-        sa_relationship_kwargs={"foreign_keys": "[MealRequest.auditor_id]"},
+        sa_relationship_kwargs={"foreign_keys": "[Request.auditor_id]"},
     )
 
 
-class MealRequestLine(SQLModel, table=True):
+class RequestLine(SQLModel, table=True):
     """
-    Represents individual line items in a MealRequest.
+    Represents individual line items in a Request.
     """
 
-    __tablename__ = "meal_request_line"
+    __tablename__ = "request_line"
 
     id: Optional[int] = Field(default=None, primary_key=True)
     employee_id: int = Field(foreign_key="employee.id", nullable=False)
+    employee_code: int = Field(nullable=False)
     department_id: int = Field(foreign_key="department.id", nullable=False)
-    meal_request_id: int = Field(foreign_key="meal_request.id", nullable=False)
+    request_id: int = Field(foreign_key="request.id", nullable=False)
+    meal_id: int = Field(foreign_key="meal.id", nullable=False)
     attendance: Optional[datetime] = Field(default=None)
     notes: Optional[str] = Field(default=None, max_length=256)
     is_accepted: bool = Field(default=True)
-    shift_id: Optional[int] = Field(foreign_key="employee_shift.id", default=None)
+    shift_id: Optional[int] = Field(
+        foreign_key="employee_shift.id", default=None
+    )
 
     # Relationships
-    employee: Optional["Employee"] = Relationship(back_populates="meal_request_lines")
-    meal_request: Optional["MealRequest"] = Relationship(
-        back_populates="meal_request_lines"
+    meal: Optional["Meal"] = Relationship(back_populates="request_lines")
+
+    employee: Optional["Employee"] = Relationship(
+        back_populates="request_lines"
     )
-    shift: Optional["EmployeeShift"] = Relationship(back_populates="meal_request_lines")
-    meal_request_line_logs: List["LogMealRequestLine"] = Relationship(
-        back_populates="meal_request_line"
+    request: Optional["Request"] = Relationship(  # Change Request to Request
+        back_populates="request_lines"
+    )
+    shift: Optional["EmployeeShift"] = Relationship(
+        back_populates="request_lines"
+    )
+    request_line_logs: List["LogRequestLine"] = Relationship(
+        back_populates="request_line"
     )
 
 
@@ -249,20 +272,20 @@ class LogRolePermission(SQLModel, table=True):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
 
     # Relationships
-    role: Optional["Role"] = Relationship(back_populates="permission_logs_admin")
+    role: Optional["Role"] = Relationship(
+        back_populates="permission_logs_admin"
+    )
 
 
-class LogMealRequestLine(SQLModel, table=True):
+class LogRequestLine(SQLModel, table=True):
     """
     Represents logs for meal request lines, tracking actions and changes.
     """
 
-    __tablename__ = "log_meal_request_line"
+    __tablename__ = "log_request_line"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    meal_request_line_id: int = Field(
-        foreign_key="meal_request_line.id", nullable=False
-    )
+    request_line_id: int = Field(foreign_key="request_line.id", nullable=False)
     account_id: int = Field(foreign_key="account.id", nullable=False)
     action: str = Field(nullable=False, max_length=32)
     is_successful: bool = Field(nullable=False)
@@ -270,10 +293,12 @@ class LogMealRequestLine(SQLModel, table=True):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
 
     # Relationships
-    meal_request_line: Optional["MealRequestLine"] = Relationship(
-        back_populates="meal_request_line_logs"
+    request_line: Optional["RequestLine"] = Relationship(
+        back_populates="request_line_logs"
     )
-    account: Optional["Account"] = Relationship(back_populates="meal_request_line_logs")
+    account: Optional["Account"] = Relationship(
+        back_populates="request_line_logs"
+    )
 
 
 class LogTraffic(SQLModel, table=True):
@@ -333,4 +358,4 @@ class Menu(SQLModel, table=True):
     details: Optional[str] = Field(default=None, max_length=256)
 
     # Relationships
-    meal_requests: List["MealRequest"] = Relationship(back_populates="menu")
+    requests: List["Request"] = Relationship(back_populates="menu")
