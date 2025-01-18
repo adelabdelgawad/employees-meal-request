@@ -27,10 +27,10 @@ declare global {
   };
   type ReportDetailRecord = {
     id: number;
-    code: number;
-    name: string;
-    title: string;
-    department_name: string;
+    employee_code: number;
+    employee_name: string;
+    employee_title: string;
+    department: string;
     requester_name: string;
     requester_title: string;
     request_time: string;

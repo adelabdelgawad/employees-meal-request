@@ -1,10 +1,19 @@
-export async function fetchReportDetails(
-  page: number = 1,
-  pageSize: number = 10,
-) {
+interface FetchReportDetailsParams {
+  query?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export async function fetchReportDetails({
+  query = '',
+  page = 1,
+  pageSize = 10,
+}: FetchReportDetailsParams) {
   try {
     const res = await fetch(
-      `http://localhost:8000/report-details?page=${page}&pageSize=${pageSize}`,
+      `http://localhost:8000/report-details?query=${encodeURIComponent(
+        query,
+      )}&page=${page}&pageSize=${pageSize}`,
       {
         cache: 'no-store', // Ensures fresh data each time
       },
