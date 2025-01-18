@@ -19,6 +19,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select, SQLModel
 from dotenv import load_dotenv
 
+from hris_db.database import get_hris_session
+from hris_db.clone import replicate
+
 # Import models from your project
 from db.models import (
     Role,
@@ -47,8 +50,12 @@ if not DB_USER or not DB_PASSWORD or not DB_SERVER or not DB_NAME:
 # ------------------------------------------------------------------------------
 #  Database URLs
 # ------------------------------------------------------------------------------
-ASYNC_DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
-SYNC_DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
+ASYNC_DATABASE_URL = (
+    f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
+)
+SYNC_DATABASE_URL = (
+    f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
+)
 BASE_SYNC_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}"
 
 
@@ -126,12 +133,14 @@ async def seed_default_values(engine: AsyncEngine) -> None:
         try:
             await seed_roles(session)
             await seed_email_roles(session)
-            await seed_meal_types(session)
+            await seed_meals(session)
             await seed_admin_user(session)
-            await seed_meal_request_status(session)
+            await seed_request_status(session)
             await seed_menu(session)
             await session.commit()
             print("Default values seeding complete.")
+            async for hris_session in get_hris_session():
+                await replicate(hris_session, session)
         except Exception as e:
             print(f"Error seeding default values: {e}")
             await session.rollback()
@@ -183,14 +192,14 @@ async def seed_email_roles(session: AsyncSession) -> None:
 # ------------------------------------------------------------------------------
 # 3.3 Helper: Seed Meal Types
 # ------------------------------------------------------------------------------
-async def seed_meal_types(session: AsyncSession) -> None:
-    existing_meal_types = (await session.exec(select(Meal))).all()
-    if not existing_meal_types:
-        meal_types = [
+async def seed_meals(session: AsyncSession) -> None:
+    existing_meals = (await session.exec(select(Meal))).all()
+    if not existing_meals:
+        meals = [
             Meal(name="Lunch"),
             Meal(name="Dinner"),
         ]
-        session.add_all(meal_types)
+        session.add_all(meals)
         print("Default meal types added.")
 
 
@@ -226,7 +235,7 @@ async def seed_admin_user(session: AsyncSession) -> None:
         print("Default admin account added.")
 
 
-async def seed_meal_request_status(session: AsyncSession) -> None:
+async def seed_request_status(session: AsyncSession) -> None:
     existing_meal_request_status = await session.exec(select(RequestStatus))
     if not existing_meal_request_status.all():
         request_status = [
@@ -236,7 +245,7 @@ async def seed_meal_request_status(session: AsyncSession) -> None:
             RequestStatus(name="Rejected"),
         ]
         session.add_all(request_status)
-        print("Default meal request statuses added.")
+        print("Default request statuses added.")
 
 
 # ------------------------------------------------------------------------------
@@ -251,13 +260,12 @@ async def main_async() -> None:
     """
     create_database_if_not_exists()
 
-    async_engine = create_async_engine(
-        ASYNC_DATABASE_URL, echo=False, future=True
-    )
+    async_engine = create_async_engine(ASYNC_DATABASE_URL, echo=False, future=True)
 
     try:
         await create_tables(async_engine)
         await seed_default_values(async_engine)
+
     finally:
         await async_engine.dispose()
 
@@ -265,6 +273,4 @@ async def main_async() -> None:
 if __name__ == "__main__":
     print("Starting database setup...")
     asyncio.run(main_async())
-    print(
-        "Database setup and default values insertion completed successfully."
-    )
+    print("Database setup and default values insertion completed successfully.")

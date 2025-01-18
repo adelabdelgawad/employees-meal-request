@@ -30,7 +30,7 @@ class RequestPageRecordResponse(BaseModel):
     status_id: int
     requester: Optional[str] = None
     requester_title: Optional[str] = None
-    meal: str
+    meal: Optional[str] = None
     request_time: datetime
     closed_time: Optional[datetime] = None
     notes: str
@@ -46,13 +46,13 @@ class RequestLineRespose(BaseModel):
     title: str
     code: int
     attendance: datetime | None = None
-    shift: int | None = None
+    shift_hours: int | None = None
     is_accepted: bool
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class ChangedStatusRequest(BaseModel):
+class UpdateRequestStatus(BaseModel):
     id: int
     is_accepted: bool
 
@@ -118,17 +118,17 @@ class UpdateRolesRequest(BaseModel):
 
 class ReportDetailsResponse(BaseModel):
     id: int
-    code: int
-    name: str
-    title: str
-    department_name: str
-    requester_name: str
-    requester_title: str
-    request_time: datetime
-    meal: str
+    employee_code: int | None = None
+    employee_name: str | None = None
+    employee_title: str | None = None
+    department: str | None = None
+    requester_name: str | None = None
+    requester_title: str | None = None
+    request_time: datetime | None = None
+    meal: str | None = None
     attendance_in: datetime | None = None
     attendance_out: datetime | None = None
-    hours: float
+    shift_hours: int | None = None
     notes: str | None = None
 
     model_config = ConfigDict(from_attributes=True)

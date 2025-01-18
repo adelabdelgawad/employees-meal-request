@@ -67,7 +67,7 @@ export function RequestsTable() {
   return (
     <div className="w-full overflow-x-auto">
       {/* Table Options and Search Input */}
-      <div className="p-2">
+      <div className="p-5">
         <TableOptions
           data={filteredData}
           setFromDate={setFromDate}

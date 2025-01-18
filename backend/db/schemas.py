@@ -120,22 +120,6 @@ class RolePermissionCreate(BaseModel):
     account_id: int
 
 
-# ----- EmployeeShift Schemas -----
-class EmployeeShiftRead(BaseModel):
-    id: Optional[int]
-    employee_id: int
-    duration_hours: int
-    date_from: datetime
-
-    model_config = {"from_attributes": True}
-
-
-class EmployeeShiftCreate(BaseModel):
-    employee_id: int
-    duration_hours: int
-    date_from: datetime
-
-
 # ----- Request Schemas -----
 class RequestRead(BaseModel):
     id: Optional[int]
@@ -171,7 +155,7 @@ class RequestLineRead(BaseModel):
     attendance: Optional[datetime]
     notes: Optional[str]
     is_accepted: bool
-    shift_id: Optional[int]
+    shift_hours: Optional[int]
 
     model_config = {"from_attributes": True}
 
@@ -183,7 +167,7 @@ class RequestLineCreate(BaseModel):
     attendance: Optional[datetime] = None
     notes: Optional[str] = None
     is_accepted: bool = True
-    shift_id: Optional[int] = None
+    shift_hours: Optional[int] = None
 
 
 # ----- LogRolePermission Schemas -----

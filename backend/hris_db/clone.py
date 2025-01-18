@@ -8,8 +8,7 @@ from fastapi import Depends
 from sqlmodel import select, func, Date
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from db.models import Employee, HRISSecurityUser, Department, EmployeeShift
-from hris_db.database import get_hris_session
+from db.models import Employee, HRISSecurityUser, Department
 from hris_db.models import (
     HRISOrganizationUnit,
     HRISEmployee,
@@ -41,9 +40,7 @@ async def add_and_commit(session: AsyncSession, items: List):
         await session.refresh(item)
 
 
-async def replicate(
-    hris_session: AsyncSession, app_session: AsyncSession
-) -> None:
+async def replicate(hris_session: AsyncSession, app_session: AsyncSession) -> None:
     """
     Replicate data from the HRIS database to the local application database.
     This includes departments, employees, shifts, and security users.
@@ -56,17 +53,12 @@ async def replicate(
         await _create_or_update_security_users(hris_session, app_session)
         await _create_or_update_departments(hris_session, app_session)
         await _create_or_update_employees(hris_session, app_session)
-        await _create_or_update_shifts(hris_session, app_session)
         logger.info("Data replication completed successfully.")
     except Exception as e:
-        logger.error(
-            "An error occurred during data replication:", exc_info=True
-        )
+        logger.error("An error occurred during data replication:", exc_info=True)
 
 
-def schedule_replication(
-    hris_session: AsyncSession, app_session: AsyncSession
-):
+def schedule_replication(hris_session: AsyncSession, app_session: AsyncSession):
     """
     Schedule the data replication task to run periodically (every hour).
 
@@ -95,16 +87,14 @@ async def _create_or_update_departments(
     :param app_session: AsyncSession connected to the local application database.
     """
     hris_departments = (
-        (await hris_session.execute(select(HRISOrganizationUnit)))
-        .scalars()
-        .all()
+        (await hris_session.execute(select(HRISOrganizationUnit))).scalars().all()
     )
     for hris_dep in hris_departments:
         dep = (
-            await app_session.execute(
+            await app_session.exec(
                 select(Department).where(Department.id == hris_dep.id)
             )
-        ).scalar_one_or_none()
+        ).first()
         if dep:
             dep.name = hris_dep.name  # Update existing department
         else:
@@ -137,15 +127,11 @@ async def _create_or_update_employees(
             HRISEmployeePosition,
             HRISEmployee.id == HRISEmployeePosition.employee_id,
         )
-        .join(
-            HRISPosition, HRISEmployeePosition.position_id == HRISPosition.id
-        )
+        .join(HRISPosition, HRISEmployeePosition.position_id == HRISPosition.id)
         .where(HRISEmployee.is_active == True)
     )
 
-    hris_employees_with_positions = (
-        await hris_session.execute(statement)
-    ).all()
+    hris_employees_with_positions = (await hris_session.execute(statement)).all()
     for emp_data in hris_employees_with_positions:
         full_name = " ".join(
             filter(
@@ -159,10 +145,8 @@ async def _create_or_update_employees(
             )
         ).strip()
         emp = (
-            await app_session.execute(
-                select(Employee).where(Employee.id == emp_data.id)
-            )
-        ).scalar_one_or_none()
+            await app_session.exec(select(Employee).where(Employee.id == emp_data.id))
+        ).first()
         if emp:
             emp.code, emp.name, emp.title, emp.is_active, emp.department_id = (
                 emp_data.code,
@@ -184,62 +168,6 @@ async def _create_or_update_employees(
     await app_session.commit()
 
 
-async def _create_or_update_shifts(
-    hris_session: AsyncSession, app_session: AsyncSession
-):
-    """
-    Fetch HRIS shift assignments and update or insert them into the local database.
-
-    :param hris_session: AsyncSession connected to the HRIS database.
-    :param app_session: AsyncSession connected to the local application database.
-    """
-    try:
-        statement = (
-            select(
-                HRISShiftAssignment.id,
-                HRISShiftAssignment.employee_id,
-                HRISShiftAssignment.duration_hours,
-                HRISShiftAssignment.date_from,
-            )
-            .join(
-                TMSShift,
-                HRISShiftAssignment.shift_id == TMSShift.id,
-                isouter=True,
-            )
-            .where(
-                func.cast(HRISShiftAssignment.date_from, Date)
-                == func.cast(func.getdate(), Date)
-            )
-        )
-        hris_shifts = (await hris_session.execute(statement)).fetchall()
-        for hris_shift in hris_shifts:
-            shift = (
-                await app_session.execute(
-                    select(EmployeeShift).where(
-                        EmployeeShift.id == hris_shift.id
-                    )
-                )
-            ).scalar_one_or_none()
-            if shift:
-                shift.employee_id, shift.duration_hours, shift.date_from = (
-                    hris_shift.employee_id,
-                    hris_shift.duration_hours,
-                    hris_shift.date_from,
-                )
-            else:
-                new_shift = EmployeeShift(
-                    id=hris_shift.id,
-                    employee_id=hris_shift.employee_id,
-                    duration_hours=hris_shift.duration_hours,
-                    date_from=hris_shift.date_from,
-                )
-                app_session.add(new_shift)
-        await app_session.commit()
-
-    except Exception as e:
-        logger.error(f"An error occurred during data replication: {e}")
-
-
 async def _create_or_update_security_users(
     hris_session: AsyncSession, app_session: AsyncSession
 ):
@@ -256,20 +184,18 @@ async def _create_or_update_security_users(
     hris_sec_users = (await hris_session.execute(statement)).scalars().all()
     for hris_sec_user in hris_sec_users:
         sec_user = (
-            await app_session.execute(
-                select(HRISSecurityUser).where(
-                    HRISSecurityUser.id == hris_sec_user.id
-                )
+            await app_session.exec(
+                select(HRISSecurityUser).where(HRISSecurityUser.id == hris_sec_user.id)
             )
-        ).scalar_one_or_none()
+        ).first()
         if not sec_user:
             sec_user = (
-                await app_session.execute(
+                await app_session.exec(
                     select(HRISSecurityUser).where(
                         HRISSecurityUser.username == hris_sec_user.name
                     )
                 )
-            ).scalar_one_or_none()
+            ).first()
         if sec_user:
             sec_user.username, sec_user.is_deleted, sec_user.is_locked = (
                 hris_sec_user.name,

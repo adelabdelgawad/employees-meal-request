@@ -1,37 +1,25 @@
-export async function fetchReportDetDetails(
-  fromDate?: string,
-  toDate?: string,
+export async function fetchReportDetails(
+  page: number = 1,
+  pageSize: number = 10,
 ) {
-  const formatDate = (date: Date) => {
-    console.log('date', date);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is zero-based
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  try {
+    const res = await fetch(
+      `http://localhost:8000/report-details?page=${page}&pageSize=${pageSize}`,
+      {
+        cache: 'no-store', // Ensures fresh data each time
+      },
+    );
 
-  const fromDateFormatted = fromDate ? formatDate(new Date(fromDate)) : '';
-  const toDateFormatted = toDate ? formatDate(new Date(toDate)) : '';
+    if (!res.ok) {
+      throw new Error('Failed to fetch report details');
+    }
 
-  const res = await fetch(
-    `http://localhost:8000/report-details?from_date=${fromDateFormatted}&to_date=${toDateFormatted}`,
-    {
-      cache: 'no-store', // Ensures fresh data each time
-    },
-  );
+    const data = await res.json();
 
-  if (!res.ok) {
-    throw new Error('Failed to fetch dashboard records');
+    // Convert snake_case to camelCase if needed
+    return data;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch report details.');
   }
-
-  const data = await res.json();
-  console.log(data);
-
-  // Convert snake_case to camelCase
-  return data.map((record: any) => ({
-    id: record.id,
-    department: record.department,
-    dinnerRequests: record.dinner_requests,
-    lunchRequests: record.lunch_requests,
-  }));
 }

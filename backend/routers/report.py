@@ -1,20 +1,17 @@
 import traceback
 import logging
-from typing import List, Optional, Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.responses import StreamingResponse
 
-from db.database import get_application_session
-from db.models import RequestLine
-from hris_db.database import get_hris_session
 from src.http_schema import ReportDashboardResponse, ReportDetailsResponse
 from routers.cruds import report as crud
+from depandancies import SessionDep, HRISSessionDep
+
+from icecream import ic
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-SessionDep = Annotated[AsyncSession, Depends(get_application_session)]
-HRISSessionDep = Annotated[AsyncSession, Depends(get_hris_session)]
 
 
 @router.get(
@@ -31,18 +28,17 @@ async def get_requests(
     Returns the number of dinner and lunch requests grouped by department.
     """
     try:
-        result = await crud.read_requests_data(
-            maria_session, from_date, to_date
-        )
+        result = await crud.read_requests_data(maria_session, from_date, to_date)
         return result
     except Exception as err:
-        logger.error(f"Unexpected error while reading meal requests: {err}")
+        logger.error(f"Unexpected error while reading requests: {err}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error while reading meal requests.",
+            detail="Internal server error while reading requests.",
         )
 
 
+# Code 	Name 	Title 	Department 	Requester 	Requester Title 	Request Time 	Meal Type 	Attendance In 	Attendance Out 	Hours 	Not
 @router.get(
     "/report-details",
     response_model=List[ReportDetailsResponse],
@@ -50,32 +46,37 @@ async def get_requests(
 )
 async def get_requests_data(
     maria_session: SessionDep,
-    hris_session: HRISSessionDep,
-    from_date: Optional[str] = None,
-    to_date: Optional[str] = None,
+    from_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    to_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
 ):
-    try:
-        """
-        Retrieve all account permissions with associated usernames and role IDs.
-        """
+    """
+    Streams all request lines in JSON lines (one record per line).
 
-        requests_lines = await read_closed_accepted_requests_for_audit_page(
-            maria_session, start_time, end_time
+    :param maria_session: The async database session for MariaDB.
+    :type maria_session: AsyncSession
+    :param from_date: Filter requests from this date (inclusive, format: 'YYYY-MM-DD').
+    :type from_date: str | None
+    :param to_date: Filter requests up to this date (inclusive, format: 'YYYY-MM-DD').
+    :type to_date: str | None
+    :return: A StreamingResponse that yields each row as a line of JSON.
+    :rtype: StreamingResponse
+    :raises HTTPException: Raises HTTP 500 if an unexpected error occurs.
+    """
+    try:
+
+        # Create streaming response
+        response = await crud.read_request_lines_with_attendance(
+            session=maria_session, start_date=from_date, end_date=to_date
         )
-        data = await get_employee_attendance(hris_session, employee_requests)
-        if data is not None:
-            return data
+        return response
 
     except HTTPException as http_exc:
-        # Log and re-raise HTTP-related exceptions
         logger.error(f"HTTP error occurred: {http_exc.detail}")
         raise http_exc
-
     except Exception as err:
-        # Log unexpected exceptions with full traceback and raise a 500 HTTPException
         logger.error(f"Unexpected error: {err}")
         logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error while updating meal request line.",
+            detail="Internal server error while streaming request details.",
         )

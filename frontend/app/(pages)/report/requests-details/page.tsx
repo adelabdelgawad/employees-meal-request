@@ -1,10 +1,6 @@
-import React from 'react';
-import { DetailsTable } from './DetailTable';
+// pages/details.tsx
+import DetailsTable from './DetailsTable';
 
-export default function page() {
-  return (
-    <div>
-      <DetailsTable />
-    </div>
-  );
+export default function DetailsPage() {
+  return <DetailsTable />;
 }

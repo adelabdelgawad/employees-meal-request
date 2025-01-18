@@ -19,12 +19,11 @@ from src.http_schema import (
     UserCreateResponse,
     UpdateRolesRequest,
 )
+from depandancies import SessionDep
+
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-
-SessionDep = Annotated[AsyncSession, Depends(get_application_session)]
 
 
 @router.get(

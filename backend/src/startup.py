@@ -30,10 +30,6 @@ async def lifespan(app: FastAPI):
     """
     try:
 
-        # async for app_session in get_application_session():
-        #     async for hris_session in get_hris_session():
-        #         await replicate(hris_session, app_session)
-
         schedule_replication(HRISSessionDep, SessionDep)
         if not scheduler.running:
             scheduler.start()

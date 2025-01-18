@@ -1,8 +1,8 @@
-import { Rubik } from "next/font/google";
-import SwitchButton from "./SwitchButton";
-
+import { Rubik } from 'next/font/google';
+import SwitchButton from './SwitchButton';
+import { format } from 'date-fns';
 // Apply Rubik font
-const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
+const rubik = Rubik({ subsets: ['latin'], weight: ['400', '500', '700'] });
 
 interface DialogTableProps {
   data: {
@@ -11,27 +11,40 @@ interface DialogTableProps {
     title: string;
     code: string;
     attendance: string;
-    shift_id: string;
+    shift_hours: string;
     is_accepted: boolean;
   }[];
   disableStatus: boolean;
   onSwitchChange: (lineId: number, checked: boolean) => void;
 }
 
-const DialogTable: React.FC<DialogTableProps> = ({ data, disableStatus, onSwitchChange }) => {
+const DialogTable: React.FC<DialogTableProps> = ({
+  data,
+  disableStatus,
+  onSwitchChange,
+}) => {
   return (
     <table className="min-w-full border-collapse text-sm text-left">
       <thead>
         <tr className="bg-gray-100 border-b border-gray-300">
           <th className="px-4 py-2">Employee</th>
           <th className="px-4 py-2">Attendance</th>
-          <th className="px-4 py-2">Shift</th>
+          <th className="px-4 py-2">Shift Hours</th>
           <th className="px-4 py-2">Accepted</th>
         </tr>
       </thead>
       <tbody>
         {data.map((line) => (
-          <tr key={line.id} className="border-b border-gray-300 hover:bg-gray-50">
+          <tr
+            key={line.id}
+            className={`border-b border-gray-300 hover:bg-gray-50 ${
+              !line.is_accepted
+                ? 'bg-red-100'
+                : !line.attendance
+                ? 'bg-yellow-100'
+                : ''
+            }`}
+          >
             {/* Employee Info */}
             <td className="px-4 py-2">
               <div className="text-left">
@@ -46,10 +59,16 @@ const DialogTable: React.FC<DialogTableProps> = ({ data, disableStatus, onSwitch
             </td>
 
             {/* Attendance */}
-            <td className="px-4 py-2">{line.attendance}</td>
+            <td className="px-4 py-2 text-center">
+              {line.attendance
+                ? format(new Date(line.attendance), 'yyyy-MM-dd HH:mm:ss')
+                : 'N/A'}
+            </td>
 
             {/* Shift */}
-            <td className="px-4 py-2">{line.shift_id}</td>
+            <td className="px-4 py-2 text-center">
+              {line.shift_hours ? line.shift_hours : 'N/A'}
+            </td>
 
             {/* Accepted Switch */}
             <td className="px-4 py-2 text-center">

@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   DoubleArrowLeftIcon,
   DoubleArrowRightIcon,
-} from "@radix-ui/react-icons";
+} from '@radix-ui/react-icons';
 
 interface PaginationProps {
   currentPage: number;
@@ -35,26 +35,26 @@ const Pagination = ({
       }
     } else {
       if (currentPage <= 3) {
-        pages.push(1, 2, 3, 4, 5, "...", totalPages);
+        pages.push(1, 2, 3, 4, 5, '...', totalPages);
       } else if (currentPage > totalPages - 3) {
         pages.push(
           1,
-          "...",
+          '...',
           totalPages - 4,
           totalPages - 3,
           totalPages - 2,
           totalPages - 1,
-          totalPages
+          totalPages,
         );
       } else {
         pages.push(
           1,
-          "...",
+          '...',
           currentPage - 1,
           currentPage,
           currentPage + 1,
-          "...",
-          totalPages
+          '...',
+          totalPages,
         );
       }
     }
@@ -62,7 +62,7 @@ const Pagination = ({
   };
 
   return (
-    <div className="flex flex-col items-center justify-between mt-4 space-y-4 sm:flex-row sm:space-y-0">
+    <div className="flex flex-col items-center justify-between m-4 space-y-4 sm:flex-row sm:space-y-0">
       {/* Rows per Page Selector */}
       <div className="flex items-center space-x-2">
         <span className="text-sm">Rows per page:</span>
@@ -101,12 +101,12 @@ const Pagination = ({
         </Button>
 
         {generatePageNumbers().map((page, index) =>
-          typeof page === "number" ? (
+          typeof page === 'number' ? (
             <Button
               key={index}
               onClick={() => onPageChange(page)}
-              variant={page === currentPage ? "default" : "outline"}
-              className={page === currentPage ? "font-bold" : ""}
+              variant={page === currentPage ? 'default' : 'outline'}
+              className={page === currentPage ? 'font-bold' : ''}
             >
               {page}
             </Button>
@@ -114,7 +114,7 @@ const Pagination = ({
             <span key={index} className="px-2 text-gray-500">
               ...
             </span>
-          )
+          ),
         )}
 
         <Button

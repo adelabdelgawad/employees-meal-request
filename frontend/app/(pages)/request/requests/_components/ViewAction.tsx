@@ -51,6 +51,7 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
       }
 
       const result = await res.json();
+      console.log(result);
 
       if (result.length === 0) {
         console.error('No data found.');

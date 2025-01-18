@@ -40,6 +40,21 @@ declare global {
     hours: number;
     notes: string;
   };
+  interface ReportDetailsData {
+    id: number;
+    employee_code?: number;
+    employee_name?: string;
+    employee_title?: string;
+    department?: string;
+    requester_name?: string;
+    requester_title?: string;
+    request_time?: string;
+    meal?: string;
+    attendance_in?: string;
+    attendance_out?: string;
+    shift_hours?: number;
+    notes?: string;
+  }
 }
 
 export {};

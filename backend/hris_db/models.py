@@ -189,7 +189,7 @@ class HRISShiftAssignment(LiveBase, table=True):
         employee_id (int): 'Employee_Id'
         duration_hours (float): 'DurationHours'
         date_from (date): 'Date_From'
-        shift_id (int): 'Shift_Id', FK to TMS_Shift(Id)
+        shift_hours (int): 'shift_hours', FK to TMS_Shift(Id)
     """
 
     __tablename__ = "TMS_ShiftAssignment"
@@ -203,7 +203,7 @@ class HRISShiftAssignment(LiveBase, table=True):
         default=None, sa_column=Column("DurationHours", Float)
     )
     date_from: Optional[date] = Field(default=None, sa_column=Column("DateFrom", Date))
-    shift_id: Optional[int] = Field(
+    shift_hours: Optional[int] = Field(
         default=None, sa_column=Column("ShiftId", Integer, ForeignKey("TMS_Shift.Id"))
     )
 
