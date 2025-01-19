@@ -1,21 +1,64 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Download, Search, Printer } from 'lucide-react';
+import React, { Suspense } from 'react';
 import DataTable from './_components/DataTable';
-import DataTableBar from './_components/DataTableBar';
+import DataTableHeader from './_components/DataTableHeader';
+import { fetchReportDetails } from '@/lib/services/report-details';
+import DataTableFooter from './_components/DataTableFooter';
 
-const Toolbar: React.FC = () => {
+interface SearchParams {
+  query?: string;
+  page?: string;
+  page_size?: string;
+}
+
+export default async function Page({
+  searchParams: searchParamsPromise,
+}: {
+  searchParams?: Promise<SearchParams>;
+}) {
+  // Await searchParams fully before accessing its properties
+  const searchParams = (await searchParamsPromise) || {};
+
+  // 1. Parse search parameters
+  const query = searchParams.query || ''; // Default to an empty search query
+  const currentPage = Number(searchParams.page) || 1; // Default to page 1
+  const pageSize = Number(searchParams.page_size) || 20; // Default rows per page
+
+  // 2. Fetch data (server-side)
+  let data = null;
+  try {
+    data = await fetchReportDetails(query, currentPage, pageSize);
+  } catch (error) {
+    console.error('Error fetching report details:', error);
+  }
+
+  // 3. Use totalPages from fetched data if available
+  const totalPages = data?.total_pages || 1;
+
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col m-2">
+      {/* Header */}
       <div>
-        <DataTableBar />
+        <DataTableHeader />
       </div>
+
+      {/* Table */}
       <div>
-        <DataTable />
+        <Suspense key={`${query}-${currentPage}-${pageSize}`}>
+          {data ? <DataTable data={data.data} /> : <div>No data available</div>}
+        </Suspense>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-2">
+        <DataTableFooter
+          searchParams={searchParams}
+          pageSize={pageSize}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          rowsPerPage={pageSize}
+          totalRows={data?.total_rows || 0}
+        />
       </div>
     </div>
   );
-};
-
-export default Toolbar;
+}

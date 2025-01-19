@@ -13,13 +13,7 @@ import {
 interface ShowRowsPerPageProps {
   rowsPerPage: number;
 }
-/**
- * ShowRowsPerPage Component
- *
- * Renders a ShadCN styled dropdown for selecting the number of rows displayed per page.
- * Displays "Rows per page {x}" inline and updates the URL's query parameter to trigger
- * a new server fetch with the selected page size.
- */
+
 export default function ShowRowsPerPage({ rowsPerPage }: ShowRowsPerPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -27,12 +21,6 @@ export default function ShowRowsPerPage({ rowsPerPage }: ShowRowsPerPageProps) {
   // Fallback to default if searchParams is null
   const currentSize = searchParams?.get('page_size') || rowsPerPage.toString();
 
-  /**
-   * Handles changes to the rows-per-page selection.
-   * Navigates to the same page with an updated page_size, resetting to page 1.
-   *
-   * @param {string} newSize - The new selected page size.
-   */
   const handleValueChange = (newSize: string) => {
     // Create URLSearchParams safely even if searchParams is null
     const params = new URLSearchParams(

@@ -3,8 +3,13 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input'; // Assuming ShadCN's Input component is imported here
 
-export default function SearchBar({ placeholder }: { placeholder: string }) {
+export default function TableSearchBar({
+  placeholder,
+}: {
+  placeholder: string;
+}) {
   const [searchTerm, setSearchTerm] = useState('');
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -30,23 +35,18 @@ export default function SearchBar({ placeholder }: { placeholder: string }) {
   }
 
   return (
-    <div className="relative flex flex-1 flex-shrink-0 items-center">
-      <label htmlFor="search" className="sr-only">
-        Search
-      </label>
-      <input
+    <div className="flex items-center gap-2 border rounded px-3 py-1">
+      <Search className="w-4 h-4 text-gray-500" />
+
+      <Input
         id="search"
         type="text"
-        className="block w-full rounded-lg border border-neutral-300 bg-white py-2 pl-10 pr-4 text-sm text-neutral-700 placeholder-neutral-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none"
+        className="border-none outline-none text-sm focus:ring-0 focus:border-transparent"
         placeholder={placeholder}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         onKeyDown={handleKeyDown}
         aria-label="Search"
-      />
-      <Search
-        className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400 peer-focus:text-blue-500"
-        aria-hidden="true"
       />
     </div>
   );

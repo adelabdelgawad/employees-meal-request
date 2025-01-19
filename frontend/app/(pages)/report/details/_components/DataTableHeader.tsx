@@ -1,23 +1,16 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Download, Search, Printer } from 'lucide-react';
+import TableSearchBar from './TableSearchBar';
 
-export default function DataTableBar() {
+export default function DataTableHeader() {
   return (
     <div>
-      {' '}
-      <div className="flex items-center justify-between bg-white p-4">
+      <div className="flex items-center justify-between bg-white mb-5">
         {/* Left Section */}
+        {/* Search Bar */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 border rounded px-3 py-1">
-            <Search className="w-4 h-4 text-gray-500" />
-            <Input
-              type="text"
-              placeholder="Search active users list"
-              className="border-none outline-none text-sm focus:ring-0 focus:border-transparent"
-            />
-          </div>
+          <TableSearchBar placeholder="Search Employee Name..." />
         </div>
 
         {/* Right Section */}

@@ -1,8 +1,3 @@
-/**
- * @file table-pagination.tsx
- * @description A pagination component that uses shared Pagination UI and includes rows-per-page selection.
- */
-
 'use client'; // Ensure client usage if using client components like ShowRowsPerPage
 
 import React from 'react';
@@ -19,30 +14,21 @@ import {
 import ShowRowsPerPage from './ShowRowsPerPage';
 
 interface TablePaginationProps {
-  query: string;
-  pageSize: number;
-  currentPage: number;
-  totalPages: number;
+  searchParams?: { query?: string; page?: string; page_size?: string }; // Add a type for searchParams
+  rowsPerPage: number; // Number of rows displayed per page
   totalRows: number;
-  rowsPerPage: number;
+  totalPages: number;
 }
 
-/**
- * Renders a pagination control along with a rows-per-page selector.
- *
- * @param {string} query - The current search query.
- * @param {number} currentPage - The current page number (1-based).
- * @param {number} totalPages - The total number of pages available.
- * @returns {JSX.Element} A pagination UI component integrated with a rows-per-page selector.
- */
 export default function TablePagination({
-  query,
-  pageSize,
-  currentPage,
-  totalPages,
-  totalRows,
+  searchParams = {}, // Default to an empty object if not provided
   rowsPerPage,
+  totalRows,
+  totalPages,
 }: TablePaginationProps) {
+  const query = searchParams?.query || ''; // Default search query
+  const currentPage = Number(searchParams?.page) || 1; // Default to page 1
+  const pageSize = Number(searchParams?.page_size) || 20; // Default rows per page
   const allPages = generatePagination(currentPage, totalPages);
 
   const createPageURL = (page: number | string) =>

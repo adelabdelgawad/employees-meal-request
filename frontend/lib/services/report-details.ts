@@ -1,34 +1,26 @@
-interface FetchReportDetailsParams {
+interface fetchReportDetailsParams {
   query?: string;
   page?: number;
   pageSize?: number;
 }
-
-export async function fetchReportDetails({
-  query = '',
-  page = 1,
-  pageSize = 10,
-}: FetchReportDetailsParams) {
+export async function fetchReportDetails(
+  query: string,
+  currentPage: number,
+  pageSize: number,
+) {
   try {
     const res = await fetch(
-      `http://localhost:8000/report-details?query=${encodeURIComponent(
-        query,
-      )}&page=${page}&pageSize=${pageSize}`,
-      {
-        cache: 'no-store', // Ensures fresh data each time
-      },
+      `http://localhost:8000/report-details?query=${query}&page=${currentPage}&page_size=${pageSize}`,
+      { cache: 'no-store' },
     );
 
     if (!res.ok) {
-      throw new Error('Failed to fetch report details');
+      throw new Error('Failed to fetch data');
     }
 
-    const data = await res.json();
-
-    // Convert snake_case to camelCase if needed
-    return data;
+    return await res.json();
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch report details.');
+    console.error('Error fetching data:', error);
+    throw error;
   }
 }

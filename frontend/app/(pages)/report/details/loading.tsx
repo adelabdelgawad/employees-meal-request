@@ -1,4 +1,6 @@
-export function TableSkeleton() {
+import React from 'react';
+
+export default function loading() {
   return (
     <div className="animate-pulse">
       <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
