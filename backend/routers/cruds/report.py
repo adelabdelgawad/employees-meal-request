@@ -1,12 +1,9 @@
 # Standard Library Imports
-import logging
 from datetime import datetime
-from decimal import Decimal
-from typing import List, Optional, AsyncGenerator
+from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-import json
-from sqlalchemy.sql.expression import case
-from sqlmodel import select, func
+from sqlmodel import select, func, case
+from sqlalchemy.sql.functions import count
 
 # Project-Specific Imports
 from db.models import Department, Request, RequestLine, Employee, Account, Meal
@@ -56,7 +53,9 @@ async def read_requests_data(
 
     # Apply date filters if provided
     if from_date and to_date:
-        statement = statement.where(Request.created_time.between(from_date, to_date))
+        statement = statement.where(
+            Request.created_time.between(from_date, to_date)
+        )
 
     # Group by department
     statement = statement.group_by(Department.id, Department.name)
@@ -84,14 +83,60 @@ async def read_requests_data(
 
 async def read_request_lines_with_attendance(
     session: AsyncSession,
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None,
-) -> ReportDetailsResponse:
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    employee_name: Optional[str] = None,
+    page: int = 1,
+    page_size: int = 10,
+) -> dict:
+    """
+    Retrieves paginated request data with optional filters.
+
+    :param session: The async database session for MariaDB.
+    :param start_date: Start date for filtering data (inclusive, format: 'YYYY-MM-DD').
+    :param end_date: End date for filtering data (inclusive, format: 'YYYY-MM-DD').
+    :param employee_name: Filter by employee name (case-insensitive, partial match).
+    :param page: The current page number (1-based).
+    :param page_size: Number of rows per page.
+    :return: A dictionary containing paginated data and metadata.
+    """
     # Convert string dates to datetime objects if provided
     start_date_dt = datetime.fromisoformat(start_date) if start_date else None
     end_date_dt = datetime.fromisoformat(end_date) if end_date else None
-    # Build the query
-    statement = (
+
+    # Calculate offset for pagination
+    offset = (page - 1) * page_size
+
+    # Base query with joins
+    base_query = (
+        select(func.count())
+        .select_from(RequestLine)
+        .join(Employee, RequestLine.employee_id == Employee.id)
+        .join(Department, Employee.department_id == Department.id)
+        .join(Request, RequestLine.request_id == Request.id)
+        .join(Account, Request.requester_id == Account.id)
+        .join(Meal, RequestLine.meal_id == Meal.id)
+    )
+
+    # Add filters to the base query
+    if start_date:
+        base_query = base_query.where(RequestLine.attendance >= start_date_dt)
+    if end_date:
+        base_query = base_query.where(RequestLine.attendance <= end_date_dt)
+    if employee_name:
+        base_query = base_query.where(
+            Employee.name.ilike(f"%{employee_name}%")
+        )
+
+    # Execute the total count query
+    total_count_result = await session.execute(base_query)
+    total_count = total_count_result.scalar()
+
+    # Calculate total pages
+    total_pages = (total_count + page_size - 1) // page_size
+
+    # Query to fetch paginated data
+    data_query = (
         select(
             RequestLine.id,
             Employee.code.label("employee_code"),
@@ -114,12 +159,33 @@ async def read_request_lines_with_attendance(
         .join(Meal, RequestLine.meal_id == Meal.id)
     )
 
-    # Add optional date filters
+    # Add filters to the data query
     if start_date:
-        statement = statement.where(RequestLine.attendance >= start_date_dt)
+        data_query = data_query.where(RequestLine.attendance >= start_date_dt)
     if end_date:
-        statement = statement.where(RequestLine.attendance <= end_date_dt)
+        data_query = data_query.where(RequestLine.attendance <= end_date_dt)
+    if employee_name:
+        data_query = data_query.where(
+            Employee.name.ilike(f"%{employee_name}%")
+        )
 
-    result = await session.execute(statement)
+    # Apply pagination (offset and limit)
+    data_query = data_query.offset(offset).limit(page_size)
+
+    # Execute query and fetch data
+    result = await session.execute(data_query)
     rows = result.fetchall()
-    return [ReportDetailsResponse.model_validate(row).model_dump() for row in rows]
+
+    # Transform rows into the expected response format
+    items = [
+        ReportDetailsResponse.model_validate(row).model_dump() for row in rows
+    ]
+
+    # Return the paginated data along with metadata
+    return {
+        "data": items,
+        "current_page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+        "total_count": total_count,
+    }

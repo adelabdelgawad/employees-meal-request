@@ -35,7 +35,7 @@ const data = {
         },
         {
           title: 'Requests  Details',
-          url: '/report/requests-details',
+          url: '/report/details',
           role: 'admin',
         },
         {
