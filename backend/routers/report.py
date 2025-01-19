@@ -28,9 +28,7 @@ async def get_requests(
     Returns the number of dinner and lunch requests grouped by department.
     """
     try:
-        result = await crud.read_requests_data(
-            maria_session, from_date, to_date
-        )
+        result = await crud.read_requests_data(maria_session, from_date, to_date)
         return result
     except Exception as err:
         logger.error(f"Unexpected error while reading requests: {err}")
@@ -48,15 +46,11 @@ async def get_requests(
 )
 async def get_requests_data(
     maria_session: SessionDep,
-    from_date: Optional[str] = Query(
-        None, description="Start date (YYYY-MM-DD)"
-    ),
+    from_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     to_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     page: int = Query(1, ge=1, description="Page number (1-based)"),
-    page_size: int = Query(
-        10, ge=1, le=100, description="Number of rows per page"
-    ),
-    search: str = Query(None, description="Search parameters"),
+    page_size: int = Query(10, ge=1, le=100, description="Number of rows per page"),
+    query: str = Query(None, description="Search parameters"),
 ):
     """
     Retrieves paginated request data with optional date filtering.
@@ -73,7 +67,7 @@ async def get_requests_data(
         result = await crud.read_request_lines_with_attendance(
             session=maria_session,
             start_date=from_date,
-            employee_name=search,
+            employee_name=query,
             end_date=to_date,
             page=page,
             page_size=page_size,

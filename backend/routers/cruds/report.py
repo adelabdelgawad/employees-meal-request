@@ -53,9 +53,7 @@ async def read_requests_data(
 
     # Apply date filters if provided
     if from_date and to_date:
-        statement = statement.where(
-            Request.created_time.between(from_date, to_date)
-        )
+        statement = statement.where(Request.created_time.between(from_date, to_date))
 
     # Group by department
     statement = statement.group_by(Department.id, Department.name)
@@ -124,16 +122,14 @@ async def read_request_lines_with_attendance(
     if end_date:
         base_query = base_query.where(RequestLine.attendance <= end_date_dt)
     if employee_name:
-        base_query = base_query.where(
-            Employee.name.ilike(f"%{employee_name}%")
-        )
+        base_query = base_query.where(Employee.name.ilike(f"%{employee_name}%"))
 
     # Execute the total count query
-    total_count_result = await session.execute(base_query)
-    total_count = total_count_result.scalar()
+    total_rows_result = await session.execute(base_query)
+    total_rows = total_rows_result.scalar()
 
     # Calculate total pages
-    total_pages = (total_count + page_size - 1) // page_size
+    total_pages = (total_rows + page_size - 1) // page_size
 
     # Query to fetch paginated data
     data_query = (
@@ -165,9 +161,7 @@ async def read_request_lines_with_attendance(
     if end_date:
         data_query = data_query.where(RequestLine.attendance <= end_date_dt)
     if employee_name:
-        data_query = data_query.where(
-            Employee.name.ilike(f"%{employee_name}%")
-        )
+        data_query = data_query.where(Employee.name.ilike(f"%{employee_name}%"))
 
     # Apply pagination (offset and limit)
     data_query = data_query.offset(offset).limit(page_size)
@@ -177,9 +171,7 @@ async def read_request_lines_with_attendance(
     rows = result.fetchall()
 
     # Transform rows into the expected response format
-    items = [
-        ReportDetailsResponse.model_validate(row).model_dump() for row in rows
-    ]
+    items = [ReportDetailsResponse.model_validate(row).model_dump() for row in rows]
 
     # Return the paginated data along with metadata
     return {
@@ -187,5 +179,5 @@ async def read_request_lines_with_attendance(
         "current_page": page,
         "page_size": page_size,
         "total_pages": total_pages,
-        "total_count": total_count,
+        "total_rows": total_rows,
     }
