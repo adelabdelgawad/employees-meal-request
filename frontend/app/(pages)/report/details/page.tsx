@@ -38,7 +38,7 @@ export default async function Page({
     <div className="flex flex-col m-2">
       {/* Header */}
       <div>
-        <DataTableHeader />
+        <DataTableHeader searchParams={searchParams} />
       </div>
 
       {/* Table */}

@@ -11,7 +11,7 @@ export default function DataTable({ data }: { data: any[] }) {
   console.log(data); // Debugging to ensure data is passed correctly
 
   return (
-    <div className="relative overflow-x-auto shadow-md border border-neutral-200 rounded-lg bg-white">
+    <div className="relative overflow-x-auto border border-neutral-200 bg-white">
       <Table className="w-full text-sm text-neutral-700 whitespace-nowrap">
         <TableHeader className="bg-neutral-100 text-xs font-semibold uppercase text-neutral-600">
           <TableRow>

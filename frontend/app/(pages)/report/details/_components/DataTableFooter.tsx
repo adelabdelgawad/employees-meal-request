@@ -1,8 +1,9 @@
 import React from 'react';
 import TablePagination from './TablePagination';
+import ShowRowsPerPage from './ShowRowsPerPage';
 
 interface TablePaginationProps {
-  searchParams?: { query?: string; page?: string; page_size?: string }; // Add a type for searchParams
+  searchParams?: { query?: string; page?: string; page_size?: string };
   rowsPerPage: number;
   pageSize: number;
   currentPage: number;
@@ -12,21 +13,27 @@ interface TablePaginationProps {
 
 export default function DataTableFooter({
   searchParams = {},
-  pageSize,
   currentPage,
   totalPages,
   rowsPerPage,
   totalRows,
 }: TablePaginationProps) {
   return (
-    <div>
-      {' '}
-      <TablePagination
-        searchParams={searchParams}
-        rowsPerPage={pageSize}
-        totalRows={totalRows}
-        totalPages={totalPages}
-      />
+    <div className="flex justify-between items-center">
+      {/* Rows per page selector */}
+      <div>
+        <ShowRowsPerPage rowsPerPage={rowsPerPage} />
+      </div>
+      <div>
+        {/* Pagination Controls */}
+        <TablePagination searchParams={searchParams} totalPages={totalPages} />
+      </div>
+
+      <div>
+        <span className="text-sm">
+          Page {currentPage} of {totalPages} — Total rows: {totalRows}
+        </span>
+      </div>
     </div>
   );
 }

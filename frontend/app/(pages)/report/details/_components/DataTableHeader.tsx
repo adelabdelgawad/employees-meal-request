@@ -3,7 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Download, Search, Printer } from 'lucide-react';
 import TableSearchBar from './TableSearchBar';
 
-export default function DataTableHeader() {
+interface DataTableHeaderProps {
+  searchParams?: { query?: string; page?: string; page_size?: string };
+}
+
+export default function DataTableHeader({
+  searchParams = {},
+}: DataTableHeaderProps) {
   return (
     <div>
       <div className="flex items-center justify-between bg-white mb-5">

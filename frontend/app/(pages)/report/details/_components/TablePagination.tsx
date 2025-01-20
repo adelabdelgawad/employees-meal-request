@@ -11,19 +11,13 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 
-import ShowRowsPerPage from './ShowRowsPerPage';
-
 interface TablePaginationProps {
   searchParams?: { query?: string; page?: string; page_size?: string }; // Add a type for searchParams
-  rowsPerPage: number; // Number of rows displayed per page
-  totalRows: number;
   totalPages: number;
 }
 
 export default function TablePagination({
-  searchParams = {}, // Default to an empty object if not provided
-  rowsPerPage,
-  totalRows,
+  searchParams = {},
   totalPages,
 }: TablePaginationProps) {
   const query = searchParams?.query || ''; // Default search query
@@ -37,12 +31,7 @@ export default function TablePagination({
     )}&page=${page}&page_size=${encodeURIComponent(pageSize)}`;
 
   return (
-    <div className="flex justify-between items-center">
-      {/* Rows per page selector */}
-      <div>
-        <ShowRowsPerPage rowsPerPage={rowsPerPage} />
-      </div>
-      {/* Pagination Controls */}
+    <div>
       <div className="flex flex-nowrap gap-4">
         <Pagination>
           <PaginationContent>
@@ -89,11 +78,6 @@ export default function TablePagination({
             </PaginationItem>
           </PaginationContent>
         </Pagination>
-      </div>
-      <div>
-        <span className="text-sm">
-          Page {currentPage} of {totalPages} — Total rows: {totalRows}
-        </span>
       </div>
     </div>
   );
