@@ -53,7 +53,9 @@ async def read_requests_data(
 
     # Apply date filters if provided
     if from_date and to_date:
-        statement = statement.where(Request.created_time.between(from_date, to_date))
+        statement = statement.where(
+            Request.created_time.between(from_date, to_date)
+        )
 
     # Group by department
     statement = statement.group_by(Department.id, Department.name)
@@ -86,6 +88,7 @@ async def read_request_lines_with_attendance(
     employee_name: Optional[str] = None,
     page: int = 1,
     page_size: int = 10,
+    download: Optional[bool] = False,
 ) -> dict:
     """
     Retrieves paginated request data with optional filters.
@@ -122,7 +125,9 @@ async def read_request_lines_with_attendance(
     if end_date:
         base_query = base_query.where(RequestLine.attendance <= end_date_dt)
     if employee_name:
-        base_query = base_query.where(Employee.name.ilike(f"%{employee_name}%"))
+        base_query = base_query.where(
+            Employee.name.ilike(f"%{employee_name}%")
+        )
 
     # Execute the total count query
     total_rows_result = await session.execute(base_query)
@@ -161,17 +166,21 @@ async def read_request_lines_with_attendance(
     if end_date:
         data_query = data_query.where(RequestLine.attendance <= end_date_dt)
     if employee_name:
-        data_query = data_query.where(Employee.name.ilike(f"%{employee_name}%"))
-
-    # Apply pagination (offset and limit)
-    data_query = data_query.offset(offset).limit(page_size)
+        data_query = data_query.where(
+            Employee.name.ilike(f"%{employee_name}%")
+        )
+    if not download:
+        # Apply pagination (offset and limit)
+        data_query = data_query.offset(offset).limit(page_size)
 
     # Execute query and fetch data
     result = await session.execute(data_query)
     rows = result.fetchall()
 
     # Transform rows into the expected response format
-    items = [ReportDetailsResponse.model_validate(row).model_dump() for row in rows]
+    items = [
+        ReportDetailsResponse.model_validate(row).model_dump() for row in rows
+    ]
 
     # Return the paginated data along with metadata
     return {

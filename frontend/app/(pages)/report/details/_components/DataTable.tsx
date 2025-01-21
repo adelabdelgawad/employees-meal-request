@@ -8,8 +8,6 @@ import {
 import React from 'react';
 
 export default function DataTable({ data }: { data: any[] }) {
-  console.log(data); // Debugging to ensure data is passed correctly
-
   return (
     <div className="relative overflow-x-auto border border-neutral-200 bg-white">
       <Table className="w-full text-sm text-neutral-700 whitespace-nowrap">
