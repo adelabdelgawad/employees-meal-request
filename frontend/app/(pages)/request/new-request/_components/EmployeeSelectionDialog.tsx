@@ -1,22 +1,16 @@
 'use client';
 
 import { FC, useState } from 'react';
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import * as ScrollArea from '@radix-ui/react-scroll-area';
 import { Input } from '@/components/ui/input';
 import MealOption from './MealOption';
 import { useNewRequest } from '@/hooks/NewRequestContext';
 import { EmployeeType, Meal } from '@/pages/definitions';
 import { useAlerts } from '@/components/alert/useAlerts';
-import { sub } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Rubik } from 'next/font/google';
 
+const rubik = Rubik({ subsets: ['latin'], weight: ['400', '500', '700'] });
 interface EmployeeSelectionDialogProps {
   selectedEmployees: EmployeeType[];
   setSelectedEmployees: (employees: EmployeeType[]) => void;
@@ -30,7 +24,7 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
   Meals,
   onSelectMeal,
 }) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [employeeNotes, setEmployeeNotes] = useState<Record<number, string>>(
     {},
   );
@@ -38,7 +32,6 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
   const { submittedEmployees, setSubmittedEmployees } = useNewRequest();
   const { addAlert } = useAlerts();
 
-  // Handle notes input change
   const handleNoteChange = (employeeId: number, note: string) => {
     setEmployeeNotes((prev) => ({
       ...prev,
@@ -46,13 +39,11 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
     }));
   };
 
-  // Handle meal type selection
   const handleMealChange = (selectedMeals: Meal[]) => {
     setSelectedMeals(selectedMeals);
     onSelectMeal(selectedMeals);
   };
 
-  // Handle form submission
   const handleSubmit = () => {
     if (selectedMeals.length === 0) {
       addAlert(
@@ -74,7 +65,6 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
       })),
     );
 
-    // Check for duplicates and generate detailed error messages
     const duplicateEntries = finalData.filter((entry) =>
       submittedEmployees.some(
         (submitted) =>
@@ -85,17 +75,15 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
     );
 
     if (duplicateEntries.length > 0) {
-      // Display detailed error message for each duplicate entry
       duplicateEntries.forEach((entry) => {
         addAlert(
           `${entry.name} already has Meal Type "${entry.meal_name}" submitted.`,
           'warning',
         );
-        console.log(entry);
       });
+      return;
     }
 
-    // Filter out duplicates before adding new entries
     const newEntries = finalData.filter(
       (entry) =>
         !submittedEmployees.some(
@@ -105,101 +93,111 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
     );
 
     setSubmittedEmployees([...submittedEmployees, ...newEntries]);
-
-    // Hide the dialog after submission
     setSelectedEmployees([]);
-    setIsDialogOpen(false);
+    setIsDrawerOpen(false);
   };
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild>
-        <Button
-          className="w-full p-2 mt-2 bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-300 disabled:text-gray-500"
-          disabled={selectedEmployees.length === 0}
-        >
-          Add Selected Employees
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[75vh] flex flex-col">
-        <DialogHeader className="items-center">
-          <DialogTitle>Selected Employees</DialogTitle>
-        </DialogHeader>
+    <div>
+      {/* Trigger Button */}
+      <Button
+        onClick={() => setIsDrawerOpen(true)}
+        className="w-full p-2 mt-2 bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-300 disabled:text-gray-500"
+        disabled={selectedEmployees.length === 0}
+      >
+        Add Selected Employees
+      </Button>
 
-        {/* Meal Type Selection (Always Visible) */}
-        <div className="mb-2">
-          <MealOption
-            Meals={Meals}
-            selectedMeals={selectedMeals}
-            onSelectMeal={handleMealChange}
-          />
-        </div>
-
-        {/* Selected Employees List with Dynamic Scroller */}
-        <div className="flex-grow overflow-y-auto border-t border-b border-gray-300 my-2">
-          {selectedEmployees.length > 0 ? (
-            <ScrollArea.Root className="h-full w-full overflow-hidden">
-              <ScrollArea.Viewport className="h-full w-full">
-                {selectedEmployees.map((employee) => (
-                  <div
-                    key={employee.id}
-                    className="p-2 border border-gray-300 rounded-lg shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white hover:shadow-md"
-                  >
-                    {/* Employee Info */}
-                    <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-800">
-                          {employee.name}
-                        </h4>
-                        <p className="text-sm text-gray-500">
-                          Title: {employee.title}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Code: {employee.code}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Notes Input */}
-                    <Input
-                      type="text"
-                      placeholder="Notes"
-                      value={employeeNotes[employee.id] || ''}
-                      onChange={(e) =>
-                        handleNoteChange(employee.id, e.target.value)
-                      }
-                      className="mt-4 sm:mt-0 sm:w-1/2 w-full"
-                    />
-                  </div>
-                ))}
-              </ScrollArea.Viewport>
-
-              <ScrollArea.Scrollbar
-                orientation="vertical"
-                className="w-2 bg-gray-200"
-              >
-                <ScrollArea.Thumb className="bg-gray-400 rounded" />
-              </ScrollArea.Scrollbar>
-            </ScrollArea.Root>
-          ) : (
-            <p className="text-center text-gray-500">
-              No employees selected. Please select employees to proceed.
-            </p>
-          )}
-        </div>
-
-        {/* Confirm Button (Always Visible) */}
-        <div className="mt-2">
-          <Button
-            onClick={handleSubmit}
-            className="w-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
-            disabled={selectedMeals.length === 0}
-          >
-            Confirm
+      {/* Right-Side Drawer */}
+      <div
+        className={`fixed top-0 right-0 h-full bg-white shadow-lg transform ${
+          isDrawerOpen ? 'translate-x-0' : 'translate-x-full'
+        } transition-transform duration-500 ease-in-out w-96 z-50`}
+      >
+        <div className="flex justify-between items-center p-4 border-b">
+          <h3 className="text-lg font-semibold">Selected Employees</h3>
+          <Button variant="ghost" onClick={() => setIsDrawerOpen(false)}>
+            Close
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+
+        <div className="p-4">
+          {/* Meal Type Selection */}
+          <div className="mb-2">
+            <MealOption
+              Meals={Meals}
+              selectedMeals={selectedMeals}
+              onSelectMeal={handleMealChange}
+            />
+          </div>
+
+          {/* Selected Employees List */}
+          <div className="flex-grow overflow-y-auto border-t border-b border-gray-300 my-2">
+            {selectedEmployees.length > 0 ? (
+              <ScrollArea.Root className="h-[75vh] w-full rounded-lg overflow-hidden border border-gray-300 shadow-sm">
+                <ScrollArea.Viewport className="h-full w-full">
+                  {selectedEmployees.map((emp) => (
+                    <div
+                      key={emp.id}
+                      className="p-2 m-1 border-b border-gray-300 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white hover:shadow-md mb-2 last:mb-0"
+                    >
+                      {/* Employee Info */}
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                        <div>
+                          <div
+                            className={`text-s font-semibold ${rubik.className}`}
+                          >
+                            {emp.name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {emp.title}
+                          </div>
+                          <span className="text-xs text-gray-500 font-bold">
+                            Code: {emp.code}
+                          </span>
+                        </div>
+                      </div>
+                      {/* Notes Input */}
+                      <Input
+                        type="text"
+                        placeholder="Notes"
+                        value={employeeNotes[emp.id] || ''}
+                        onChange={(e) =>
+                          handleNoteChange(emp.id, e.target.value)
+                        }
+                        className="mt-4 sm:mt-0 sm:w-1/2 w-full"
+                      />
+                    </div>
+                  ))}
+                </ScrollArea.Viewport>
+                <ScrollArea.Scrollbar
+                  orientation="vertical"
+                  className="w-2 bg-gray-200"
+                >
+                  <ScrollArea.Thumb className="bg-gray-400 rounded" />
+                </ScrollArea.Scrollbar>
+                <ScrollArea.Corner className="bg-gray-200" />
+              </ScrollArea.Root>
+            ) : (
+              <p className="text-center text-gray-500">
+                No employees selected. Please select employees to proceed.
+              </p>
+            )}
+          </div>
+
+          {/* Confirm Button */}
+          <div className="mt-2">
+            <Button
+              onClick={handleSubmit}
+              className="w-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
+              disabled={selectedMeals.length === 0}
+            >
+              Confirm
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
