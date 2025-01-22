@@ -7,7 +7,10 @@ from fastapi import (
     BackgroundTasks,
 )
 from routers.cruds import request as crud
-from routers.cruds.request_lines import read_request_lines, update_request_lines
+from routers.cruds.request_lines import (
+    read_request_lines,
+    update_request_lines,
+)
 
 
 from src.http_schema import (
@@ -19,6 +22,7 @@ from src.http_schema import (
 import pytz
 
 from depandancies import HRISSessionDep, SessionDep
+from datetime import datetime
 
 # Default timezone
 cairo_tz = pytz.timezone("Africa/Cairo")
@@ -36,6 +40,7 @@ async def create_request_endpoint(
     request_lines: List[RequestBody],
     background_tasks: BackgroundTasks,
     hris_session: HRISSessionDep,
+    request_time: Optional[datetime] = datetime.now(cairo_tz),
 ):
     """
     Create requests and process them in the background.
@@ -45,13 +50,18 @@ async def create_request_endpoint(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No request lines provided",
         )
+    request_time = request_time if request_time else datetime.now(cairo_tz)
 
     try:
         logger.info(f"Received {len(request_lines)} request(s)")
 
         # Create requests and background task
         response_data = await crud.create_requests_with_background_task(
-            request_lines, background_tasks, maria_session, hris_session
+            request_lines,
+            request_time,
+            background_tasks,
+            maria_session,
+            hris_session,
         )
 
         return {
@@ -179,7 +189,9 @@ async def update_request_lines_endpoint(
         return {"message": "Request lines updated successfully"}
     except ValueError as ve:
         logger.error(f"Validation error: {ve}")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(ve)
+        )
     except Exception as e:
         logger.error(f"Unexpected error while updating request lines: {e}")
         raise HTTPException(

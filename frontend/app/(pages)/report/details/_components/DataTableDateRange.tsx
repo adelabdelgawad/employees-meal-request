@@ -22,15 +22,24 @@ interface DateRangePickerProps {
 export default function DateRangePicker({
   placeholder = 'Pick a date',
 }: DateRangePickerProps) {
-  const [date, setDate] = React.useState<DateRange>({
-    from: undefined,
-    to: undefined,
-  });
-  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
   const searchParams = useSearchParams();
   const { replace } = useRouter();
   const pathname = usePathname();
 
+  const defaultFrom = searchParams?.get('start_time')
+    ? new Date(searchParams.get('start_time')!)
+    : undefined;
+
+  const defaultTo = searchParams?.get('end_time')
+    ? new Date(searchParams.get('end_time')!)
+    : undefined;
+
+  const [date, setDate] = React.useState<DateRange>({
+    from: defaultFrom,
+    to: defaultTo,
+  });
+
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
   const { addAlert } = useAlerts();
 
   const handleDateSelect = (newDateRange: DateRange | undefined) => {

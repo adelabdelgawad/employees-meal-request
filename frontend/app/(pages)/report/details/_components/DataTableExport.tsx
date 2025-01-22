@@ -60,18 +60,18 @@ export default function ExportTable({
   const handleExport = async () => {
     const params = new URLSearchParams(searchParams?.toString() || '');
     const query = params.get('query') || '';
-    const currentPage = Number(params.get('page')) || 1;
-    const pageSize = Number(params.get('page_size')) || 20;
+    const startTime = params.get('start_time') || '';
+    const endTime = params.get('end_time') || '';
 
     try {
       setIsLoading(true);
 
-      const response = await fetchReportDetails(
+      const response = await fetchReportDetails({
+        download: true,
         query,
-        undefined,
-        undefined,
-        true,
-      );
+        startTime,
+        endTime,
+      });
 
       if (
         !response ||

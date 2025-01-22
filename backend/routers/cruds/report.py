@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, func, case
-from sqlalchemy.sql.functions import count
 
 # Project-Specific Imports
 from db.models import Department, Request, RequestLine, Employee, Account, Meal
@@ -99,17 +98,20 @@ async def read_request_lines_with_attendance(
     :return: A dictionary containing paginated data and metadata.
     """
     # Parse start_time and end_time into datetime objects
+
     if start_time and end_time:
+        date_format = "%m/%d/%Y, %I:%M:%S %p"
         try:
-            start_dt = (
-                datetime.strptime(start_time, "%m/%d/%Y, %I:%M:%S %p")
-                if start_time
-                else None
+            # Parse input dates
+            start_dt = datetime.strptime(start_time, date_format)
+            end_dt = datetime.strptime(end_time, date_format)
+
+            # Adjust start_time to today's start and end_time to today's end
+            start_dt = start_dt.replace(
+                hour=0, minute=0, second=0, microsecond=0
             )
-            end_dt = (
-                datetime.strptime(end_time, "%m/%d/%Y, %I:%M:%S %p")
-                if end_time
-                else None
+            end_dt = end_dt.replace(
+                hour=23, minute=59, second=59, microsecond=0
             )
         except ValueError:
             raise ValueError(
@@ -131,9 +133,9 @@ async def read_request_lines_with_attendance(
     )
 
     # Apply filters
-    if start_time and end_time:
+    if start_time and end_time: 
         statement = statement.where(
-            Request.created_time.between(start_dt, end_dt)
+            Request.request_time.between(start_dt, end_dt)
         )
     if employee_name:
         statement = statement.where(Employee.name.ilike(f"%{employee_name}%"))
@@ -172,7 +174,7 @@ async def read_request_lines_with_attendance(
     # Apply filters
     if start_time and end_time:
         statement = statement.where(
-            Request.created_time.between(start_dt, end_dt)
+            Request.request_time.between(start_dt, end_dt)
         )
     if employee_name:
         statement = statement.where(Employee.name.ilike(f"%{employee_name}%"))

@@ -29,15 +29,15 @@ export default async function Page({
 
   // 2. Fetch data (server-side)
   let data = null;
-  console.log(searchParams);
+
   try {
-    data = await fetchReportDetails(
+    data = await fetchReportDetails({
       query,
       currentPage,
       pageSize,
       startTime,
       endTime,
-    );
+    });
     console.log(data);
   } catch (error) {
     console.error('Error fetching report details:', error);

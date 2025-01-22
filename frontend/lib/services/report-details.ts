@@ -1,11 +1,11 @@
-export async function fetchReportDetails(
+export async function fetchReportDetails({
   query = '',
   currentPage = 1,
   pageSize = 20,
   startTime = '',
   endTime = '',
   download = false,
-) {
+} = {}) {
   try {
     const baseUrl = 'http://localhost:8000/report-details';
     const url = new URL(baseUrl);

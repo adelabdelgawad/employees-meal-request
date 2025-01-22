@@ -1,6 +1,6 @@
 import logging
 from typing import List, Optional, Dict
-from datetime import datetime, timedelta
+from datetime import datetime
 from sqlmodel import select, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.models import (
@@ -36,6 +36,7 @@ def group_requests_by_meal_id(request_lines: List[RequestBody]) -> List:
 
 async def create_requests_with_background_task(
     request_lines: List[RequestBody],
+    request_time: datetime,
     background_tasks,
     maria_session: AsyncSession,
     hris_session: AsyncSession,
@@ -43,6 +44,7 @@ async def create_requests_with_background_task(
     """
     Create grouped requests and schedule background updates.
     """
+    # Seperate requests by meal_id (Dinner, Lunch, etch..)
     grouped_lines = group_requests_by_meal_id(request_lines)
     created_request_ids = []
     created_lines = []
@@ -50,7 +52,7 @@ async def create_requests_with_background_task(
     for meal_id, lines in grouped_lines:
         lines_list = list(lines)
         created_lines_batch = await create_meal_request_lines(
-            meal_id, lines_list, maria_session
+            meal_id, request_time, lines_list, maria_session
         )
         created_request_ids.append(meal_id)
         created_lines.extend(created_lines_batch)
@@ -67,13 +69,22 @@ async def create_requests_with_background_task(
 
 
 async def create_meal_request_lines(
-    meal_id: int, request_lines: List[RequestBody], maria_session: AsyncSession
+    meal_id: int,
+    request_time: datetime,
+    request_lines: List[RequestBody],
+    maria_session: AsyncSession,
 ) -> List[RequestLine]:
     """
     Create a new request and its lines.
     """
+
     try:
-        new_request = Request(requester_id=1, meal_id=meal_id, notes="")
+        new_request = Request(
+            requester_id=1,
+            meal_id=meal_id,
+            notes="",
+            request_time=request_time,
+        )
         maria_session.add(new_request)
         await maria_session.commit()
         await maria_session.refresh(new_request)
@@ -178,9 +189,9 @@ async def read_requests(
                 Request.closed_time,
                 Request.notes,
                 func.count(RequestLine.id).label("total_lines"),
-                func.sum(case((RequestLine.is_accepted == True, 1), else_=0)).label(
-                    "accepted_lines"
-                ),
+                func.sum(
+                    case((RequestLine.is_accepted == True, 1), else_=0)
+                ).label("accepted_lines"),
             )
             .join(Account, Request.requester_id == Account.id)
             .join(RequestStatus, Request.status_id == RequestStatus.id)
@@ -210,13 +221,17 @@ async def read_requests(
             )
 
         result = await session.execute(statement)
-        return [RequestPageRecordResponse(**row) for row in result.mappings().all()]
+        return [
+            RequestPageRecordResponse(**row) for row in result.mappings().all()
+        ]
     except Exception as e:
         logger.error(f"Error reading requests: {e}")
         raise e
 
 
-async def update_request_status(session: AsyncSession, request_id: int, status_id: int):
+async def update_request_status(
+    session: AsyncSession, request_id: int, status_id: int
+):
     """
     Update the status of a request and related lines.
     """
@@ -248,7 +263,9 @@ async def update_request_lines_status(session: AsyncSession, request_id: int):
     Mark all lines of a request as not accepted.
     """
     try:
-        statement = select(RequestLine).where(RequestLine.request_id == request_id)
+        statement = select(RequestLine).where(
+            RequestLine.request_id == request_id
+        )
         result = await session.execute(statement)
         lines = result.scalars().all()
 
