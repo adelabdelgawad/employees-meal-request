@@ -22,7 +22,10 @@ interface DateRangePickerProps {
 export default function DateRangePicker({
   placeholder = 'Pick a date',
 }: DateRangePickerProps) {
-  const [date, setDate] = React.useState<DateRange | undefined>();
+  const [date, setDate] = React.useState<DateRange>({
+    from: undefined,
+    to: undefined,
+  });
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
   const searchParams = useSearchParams();
   const { replace } = useRouter();
@@ -31,7 +34,11 @@ export default function DateRangePicker({
   const { addAlert } = useAlerts();
 
   const handleDateSelect = (newDateRange: DateRange | undefined) => {
-    setDate(newDateRange);
+    if (newDateRange?.from && newDateRange?.to) {
+      setDate(newDateRange);
+    } else if (newDateRange?.from) {
+      setDate({ from: newDateRange.from, to: undefined });
+    }
   };
 
   const handleSaveButtonClick = () => {
@@ -39,8 +46,8 @@ export default function DateRangePicker({
 
     // If no date range is selected, clear parameters and close the drawer
     if (!date?.from && !date?.to) {
-      params.delete('start_date');
-      params.delete('end_date');
+      params.delete('start_time');
+      params.delete('end_time');
       replace(`${pathname}?${params.toString()}`);
       setIsDrawerOpen(false);
       return;
@@ -58,13 +65,15 @@ export default function DateRangePicker({
     }
 
     // Set the parameters if the range is valid
-    params.set('start_date', date.from.toISOString());
-    params.set('end_date', date.to.toISOString());
+    params.set('start_time', date.from?.toLocaleString());
+    params.set('end_time', date.to?.toLocaleString());
+
     replace(`${pathname}?${params.toString()}`);
     setIsDrawerOpen(false);
   };
 
   const handleCancelButtonClick = () => {
+    setDate({ from: undefined, to: undefined });
     setIsDrawerOpen(false);
   };
 
@@ -73,7 +82,7 @@ export default function DateRangePicker({
     const now = new Date();
     setDate({
       from: startOfMonth(now),
-      to: endOfMonth(now),
+      to: new Date(endOfMonth(now).setHours(23, 59, 59, 999)),
     });
   };
 
@@ -81,8 +90,8 @@ export default function DateRangePicker({
     const now = new Date();
     const lastMonth = subMonths(now, 1);
     setDate({
-      from: startOfMonth(lastMonth),
-      to: endOfMonth(lastMonth),
+      from: new Date(startOfMonth(lastMonth).setHours(0, 0, 0, 0)),
+      to: new Date(endOfMonth(lastMonth).setHours(23, 59, 59, 999)),
     });
   };
 

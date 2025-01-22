@@ -29,6 +29,7 @@ export default async function Page({
 
   // 2. Fetch data (server-side)
   let data = null;
+  console.log(searchParams);
   try {
     data = await fetchReportDetails(
       query,

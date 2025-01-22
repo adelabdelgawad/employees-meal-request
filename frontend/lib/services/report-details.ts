@@ -2,8 +2,8 @@ export async function fetchReportDetails(
   query = '',
   currentPage = 1,
   pageSize = 20,
-  start_time = '',
-  end_time = '',
+  startTime = '',
+  endTime = '',
   download = false,
 ) {
   try {
@@ -14,8 +14,8 @@ export async function fetchReportDetails(
     url.searchParams.append('query', query);
     url.searchParams.append('page', currentPage.toString());
     url.searchParams.append('page_size', pageSize.toString());
-    url.searchParams.append('start_time', start_time);
-    url.searchParams.append('end_time', end_time);
+    url.searchParams.append('start_time', startTime);
+    url.searchParams.append('end_time', endTime);
 
     if (download) {
       url.searchParams.append('download', 'true');

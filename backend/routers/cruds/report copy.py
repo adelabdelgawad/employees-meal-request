@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, func, case
-from sqlalchemy.sql.functions import count
+from icecream import ic
 
 # Project-Specific Imports
 from db.models import Department, Request, RequestLine, Employee, Account, Meal
@@ -78,6 +78,9 @@ async def read_requests_data(
     return response_data
 
 
+# Id, Code 	Name 	Title 	Department 	Requester 	Requester Title 	Request Time 	Meal Type 	Attendance In 	Attendance Out 	Hours 	Notes
+
+
 async def read_request_lines_with_attendance(
     session: AsyncSession,
     start_time: Optional[str] = None,
@@ -98,28 +101,11 @@ async def read_request_lines_with_attendance(
     :param page_size: Number of rows per page.
     :return: A dictionary containing paginated data and metadata.
     """
-    # Parse start_time and end_time into datetime objects
-    if start_time and end_time:
-        try:
-            start_dt = (
-                datetime.strptime(start_time, "%m/%d/%Y, %I:%M:%S %p")
-                if start_time
-                else None
-            )
-            end_dt = (
-                datetime.strptime(end_time, "%m/%d/%Y, %I:%M:%S %p")
-                if end_time
-                else None
-            )
-        except ValueError:
-            raise ValueError(
-                "Invalid date format. Expected 'MM/DD/YYYY, HH:MM:SS AM/PM'."
-            )
 
     # Calculate offset for pagination
     offset = (page - 1) * page_size
 
-    # Base query for filtering
+    # Base query with joins
     statement = (
         select(func.count())
         .select_from(RequestLine)
@@ -130,17 +116,22 @@ async def read_request_lines_with_attendance(
         .join(Meal, RequestLine.meal_id == Meal.id)
     )
 
-    # Apply filters
+    # Add filters to the base query
     if start_time and end_time:
         statement = statement.where(
-            Request.created_time.between(start_dt, end_dt)
+            Request.created_time.between(start_time, end_time)
+        )
+
+    if start_time and end_time:
+        statement = statement.where(
+            Request.request_time.between(start_time, end_time)
         )
     if employee_name:
         statement = statement.where(Employee.name.ilike(f"%{employee_name}%"))
 
     # Execute the total count query
     total_rows_result = await session.execute(statement)
-    total_rows = total_rows_result.scalar() or 0
+    total_rows = total_rows_result.scalar()
 
     # Calculate total pages
     total_pages = (total_rows + page_size - 1) // page_size
@@ -169,15 +160,15 @@ async def read_request_lines_with_attendance(
         .join(Meal, RequestLine.meal_id == Meal.id)
     )
 
-    # Apply filters
+    # Add filters to the data query
+
     if start_time and end_time:
-        statement = statement.where(
-            Request.created_time.between(start_dt, end_dt)
-        )
+        ic(start_time, end_time)
+        # statement = statement.where(
+        #     Request.request_time.between(start_time, end_time)
+        # )
     if employee_name:
         statement = statement.where(Employee.name.ilike(f"%{employee_name}%"))
-
-    # Apply pagination
     if not download:
         # Apply pagination (offset and limit)
         statement = statement.offset(offset).limit(page_size)
@@ -191,6 +182,7 @@ async def read_request_lines_with_attendance(
         ReportDetailsResponse.model_validate(row).model_dump() for row in rows
     ]
 
+    # Return the paginated data along with metadata
     return {
         "data": items,
         "current_page": page,
