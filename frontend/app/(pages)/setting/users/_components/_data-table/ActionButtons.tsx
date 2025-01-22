@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useAlerts } from '@/components/alert/useAlerts';
-import { Pencil1Icon, TrashIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 import ConfirmationDialog from '@/components/data-table/ConfirmationDialog';
-import ActionEdit from './ActionEdit';
-import { useSettingUserContext } from '@/hooks/SettingUserContext';
+import { TrashIcon } from 'lucide-react';
+import { EditAction } from './EditAction';
 
 interface ActionButtonsProps {
   recordId: number;
@@ -28,7 +27,7 @@ export default function ActionButtons({ recordId }: ActionButtonsProps) {
   return (
     <div className="flex space-x-2 items-center">
       {/* Edit Button */}
-      <ActionEdit userId={recordId} />
+      <EditAction userId={recordId} />
       {/* Delete Button */}
       <Button
         onClick={() => setDeleteDialogOpen(true)}

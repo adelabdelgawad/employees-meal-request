@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_serializer, Field
 from datetime import datetime
 from typing import Optional, List, Dict
 
@@ -132,3 +132,9 @@ class ReportDetailsResponse(BaseModel):
     notes: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer("attendance_in", "attendance_out", "request_time")
+    def customize_datetime_format(self, value: datetime) -> str | None:
+        if value is None:
+            return None
+        return value.isoformat(sep=" ", timespec="seconds")

@@ -1,5 +1,5 @@
-import { Label } from "@/components/ui/label"; // Adjust the import path based on your project
-import { Meal } from "@/pages/definitions";
+import { Label } from '@/components/ui/label'; // Adjust the import path based on your project
+import { Meal } from '@/pages/definitions';
 
 interface MealProps {
   Meals: Meal[];
@@ -17,7 +17,7 @@ export default function MealOption({
 
     if (updatedSelectedMeals.some((Meal) => Meal.id === id)) {
       updatedSelectedMeals = updatedSelectedMeals.filter(
-        (Meal) => Meal.id !== id
+        (Meal) => Meal.id !== id,
       );
     } else {
       const selectedMeal = Meals.find((Meal) => Meal.id === id);
@@ -30,27 +30,33 @@ export default function MealOption({
   };
 
   return (
-    <div className="flex flex-wrap gap-4">
-      {Meals.map((Meal) => (
-        <div
-          key={Meal.id}
-          onClick={() => handleSelectionChange(Meal.id)}
-          className={`p-4 border rounded flex flex-grow items-center justify-center text-center cursor-pointer ${
-            selectedMeals.some(
-              (selectedMeal) => selectedMeal.id === Meal.id
-            )
-              ? "bg-blue-100 border-blue-500"
-              : "border-gray-300"
-          }`}
-        >
-          <Label
-            htmlFor={`Meal-${Meal.id}`}
-            className="text-sm font-medium"
+    <div className="flex flex-col gap-4">
+      {/* Line 1: Text */}
+      <div>
+        <h1 className="text-lg font-semibold text-gray-500 text-center">
+          Please Select one of the Meals
+        </h1>
+      </div>
+
+      {/* Line 2: Meals take full space */}
+      <div className="flex flex-row flex-wrap gap-2 w-full">
+        {Meals.map((Meal) => (
+          <div
+            key={Meal.id}
+            onClick={() => handleSelectionChange(Meal.id)}
+            className={`p-4 border rounded flex items-center justify-center cursor-pointer ${
+              selectedMeals.some((selectedMeal) => selectedMeal.id === Meal.id)
+                ? 'bg-blue-100 border-blue-500'
+                : 'border-gray-300'
+            }`}
+            style={{ flex: '1 1 calc(25% - 1rem)' }} // Adjust width for meals
           >
-            {Meal.name}
-          </Label>
-        </div>
-      ))}
+            <Label htmlFor={`Meal-${Meal.id}`} className="text-sm font-medium">
+              {Meal.name}
+            </Label>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

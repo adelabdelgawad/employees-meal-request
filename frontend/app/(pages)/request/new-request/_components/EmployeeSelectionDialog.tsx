@@ -1,5 +1,5 @@
 'use client';
-
+import { FixedSizeList as List } from 'react-window';
 import { FC, useState } from 'react';
 import * as ScrollArea from '@radix-ui/react-scroll-area';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { EmployeeType, Meal } from '@/pages/definitions';
 import { useAlerts } from '@/components/alert/useAlerts';
 import { Button } from '@/components/ui/button';
 import { Rubik } from 'next/font/google';
+import { Cross2Icon } from '@radix-ui/react-icons';
 
 const rubik = Rubik({ subsets: ['latin'], weight: ['400', '500', '700'] });
 interface EmployeeSelectionDialogProps {
@@ -112,12 +113,12 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
       <div
         className={`fixed top-0 right-0 h-full bg-white shadow-lg transform ${
           isDrawerOpen ? 'translate-x-0' : 'translate-x-full'
-        } transition-transform duration-500 ease-in-out w-96 z-50`}
+        } transition-transform duration-500 ease-in-out w-[30rem] z-50`}
       >
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-semibold">Selected Employees</h3>
           <Button variant="ghost" onClick={() => setIsDrawerOpen(false)}>
-            Close
+            <Cross2Icon className="w-5 h-5" />{' '}
           </Button>
         </div>
 
@@ -135,48 +136,60 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
           <div className="flex-grow overflow-y-auto border-t border-b border-gray-300 my-2">
             {selectedEmployees.length > 0 ? (
               <ScrollArea.Root className="h-[75vh] w-full rounded-lg overflow-hidden border border-gray-300 shadow-sm">
-                <ScrollArea.Viewport className="h-full w-full">
-                  {selectedEmployees.map((emp) => (
-                    <div
-                      key={emp.id}
-                      className="p-2 m-1 border-b border-gray-300 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white hover:shadow-md mb-2 last:mb-0"
-                    >
-                      {/* Employee Info */}
-                      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                        <div>
+                <List
+                  height={Math.floor(window.innerHeight * 0.75)} // Set height to 75% of viewport
+                  width="100%" // Full width
+                  itemCount={selectedEmployees.length} // Number of items
+                  itemSize={100} // Height of each item (adjust as needed)
+                >
+                  {({
+                    index,
+                    style,
+                  }: {
+                    index: number;
+                    style: React.CSSProperties;
+                  }) => {
+                    const emp = selectedEmployees[index];
+                    return (
+                      <div
+                        key={emp.id}
+                        style={style} // Apply styles for virtualization
+                        className="p-2 m-1 border-b border-gray-300 sm:flex-row sm:items-center bg-white"
+                      >
+                        {/* Employee Info */}
+                        <div className="flex flex-col space-y-2">
+                          {/* Line 1: Employee Name */}
                           <div
                             className={`text-s font-semibold ${rubik.className}`}
                           >
                             {emp.name}
                           </div>
-                          <div className="text-xs text-gray-500">
-                            {emp.title}
+
+                          {/* Line 2: Title and Code on Left, Notes on Right */}
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <div className="text-xs text-gray-500">
+                                {emp.title}
+                              </div>
+                              <span className="text-xs text-gray-500 font-bold">
+                                Code: {emp.code}
+                              </span>
+                            </div>
+                            <Input
+                              type="text"
+                              placeholder="Notes"
+                              value={employeeNotes[emp.id] || ''}
+                              onChange={(e) =>
+                                handleNoteChange(emp.id, e.target.value)
+                              }
+                              className="sm:w-1/2 w-full"
+                            />
                           </div>
-                          <span className="text-xs text-gray-500 font-bold">
-                            Code: {emp.code}
-                          </span>
                         </div>
                       </div>
-                      {/* Notes Input */}
-                      <Input
-                        type="text"
-                        placeholder="Notes"
-                        value={employeeNotes[emp.id] || ''}
-                        onChange={(e) =>
-                          handleNoteChange(emp.id, e.target.value)
-                        }
-                        className="mt-4 sm:mt-0 sm:w-1/2 w-full"
-                      />
-                    </div>
-                  ))}
-                </ScrollArea.Viewport>
-                <ScrollArea.Scrollbar
-                  orientation="vertical"
-                  className="w-2 bg-gray-200"
-                >
-                  <ScrollArea.Thumb className="bg-gray-400 rounded" />
-                </ScrollArea.Scrollbar>
-                <ScrollArea.Corner className="bg-gray-200" />
+                    );
+                  }}
+                </List>
               </ScrollArea.Root>
             ) : (
               <p className="text-center text-gray-500">
