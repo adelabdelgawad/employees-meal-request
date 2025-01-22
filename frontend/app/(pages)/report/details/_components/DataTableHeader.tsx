@@ -1,33 +1,22 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Download, Printer } from 'lucide-react';
-import TableSearchBar from './TableSearchBar';
 import ExportTable from './DataTableExport';
+import DataTableSearch from './DataTableSearch';
+import DataTableDateRange from './DataTableDateRange';
 
-interface DataTableHeaderProps {
-  searchParams?: { query?: string; page?: string; page_size?: string };
-}
-
-export default function DataTableHeader({
-  searchParams = {},
-}: DataTableHeaderProps) {
+export default function DataTableHeader() {
   return (
     <div>
+      {/* Top Section */}
       <div className="flex items-center justify-between bg-white mb-5">
         {/* Left Section */}
-        {/* Search Bar */}
         <div className="flex items-center gap-4">
-          <TableSearchBar placeholder="Search Employee Name..." />
+          <DataTableSearch placeholder="Search Employee Name..." />
+          <DataTableDateRange placeholder="Pick a Request date range" />
         </div>
 
         {/* Right Section */}
         <div className="flex items-center gap-4">
-          {/* Download */}
-          <ExportTable searchParams={searchParams} />
-          <Button variant="ghost" className="flex items-center gap-2">
-            <Printer className="w-4 h-4" />
-            <span>Print</span>
-          </Button>
+          <ExportTable />
         </div>
       </div>
     </div>

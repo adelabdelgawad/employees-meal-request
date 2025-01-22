@@ -53,9 +53,7 @@ async def read_requests_data(
 
     # Apply date filters if provided
     if from_date and to_date:
-        statement = statement.where(
-            Request.created_time.between(from_date, to_date)
-        )
+        statement = statement.where(Request.created_time.between(from_date, to_date))
 
     # Group by department
     statement = statement.group_by(Department.id, Department.name)
@@ -101,7 +99,7 @@ async def read_request_lines_with_attendance(
     :param page_size: Number of rows per page.
     :return: A dictionary containing paginated data and metadata.
     """
-    # Convert string dates to datetime objects if provided
+    # Convert string dates to datetime objects if
     start_date_dt = datetime.fromisoformat(start_date) if start_date else None
     end_date_dt = datetime.fromisoformat(end_date) if end_date else None
 
@@ -120,14 +118,19 @@ async def read_request_lines_with_attendance(
     )
 
     # Add filters to the base query
+    if start_date and end_date:
+        print(start_date, end_date)
+        # Convert start_date and end_date to datetime
+        start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        end_date = datetime.strptime(end_date, "%Y-%m-%d")
+        statement = statement.where(Request.created_time.between(start_date, end_date))
+
     if start_date:
         base_query = base_query.where(RequestLine.attendance >= start_date_dt)
     if end_date:
         base_query = base_query.where(RequestLine.attendance <= end_date_dt)
     if employee_name:
-        base_query = base_query.where(
-            Employee.name.ilike(f"%{employee_name}%")
-        )
+        base_query = base_query.where(Employee.name.ilike(f"%{employee_name}%"))
 
     # Execute the total count query
     total_rows_result = await session.execute(base_query)
@@ -166,9 +169,7 @@ async def read_request_lines_with_attendance(
     if end_date:
         data_query = data_query.where(RequestLine.attendance <= end_date_dt)
     if employee_name:
-        data_query = data_query.where(
-            Employee.name.ilike(f"%{employee_name}%")
-        )
+        data_query = data_query.where(Employee.name.ilike(f"%{employee_name}%"))
     if not download:
         # Apply pagination (offset and limit)
         data_query = data_query.offset(offset).limit(page_size)
@@ -178,9 +179,7 @@ async def read_request_lines_with_attendance(
     rows = result.fetchall()
 
     # Transform rows into the expected response format
-    items = [
-        ReportDetailsResponse.model_validate(row).model_dump() for row in rows
-    ]
+    items = [ReportDetailsResponse.model_validate(row).model_dump() for row in rows]
 
     # Return the paginated data along with metadata
     return {

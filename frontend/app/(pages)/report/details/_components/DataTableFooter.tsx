@@ -24,6 +24,7 @@ export default function DataTableFooter({
       <div>
         <ShowRowsPerPage rowsPerPage={rowsPerPage} />
       </div>
+
       <div>
         {/* Pagination Controls */}
         <TablePagination searchParams={searchParams} totalPages={totalPages} />

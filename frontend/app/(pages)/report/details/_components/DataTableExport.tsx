@@ -3,52 +3,76 @@
 import { useState } from 'react';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useSearchParams } from 'next/navigation';
 import { fetchReportDetails } from '@/lib/services/report-details';
 
-interface ExportTableProps {
-  excludedRows?: string[];
-  searchParams?: { query?: string; page?: string; page_size?: string };
-}
-
-interface ExportTableProps {
-  excludedRows?: string[];
-  searchParams?: { query?: string; page?: string; page_size?: string };
-}
-
-// Utility to sanitize query parameters
-const sanitizeParams = (params: Record<string, any>): string => {
-  return Object.entries(params)
-    .filter(([, value]) => value != null) // Exclude null or undefined values
-    .map(
-      ([key, value]) =>
-        `${encodeURIComponent(key)}=${encodeURIComponent(value)}`,
-    )
-    .join('&');
-};
-
 export default function ExportTable({
-  searchParams,
   excludedRows = [],
-}: ExportTableProps) {
+}: {
+  excludedRows?: string[];
+}) {
   const [isLoading, setIsLoading] = useState(false);
+  const searchParams = useSearchParams();
+
+  // Helper function to generate CSV
+  const generateCSV = (data: any[], excludedRows: string[]) => {
+    const filteredData = excludedRows.length
+      ? data.map((row) =>
+          Object.fromEntries(
+            Object.entries(row).filter(([key]) => !excludedRows.includes(key)),
+          ),
+        )
+      : data;
+
+    const headers = Object.keys(filteredData[0]).join(',');
+    const rows = filteredData.map((row) =>
+      Object.values(row)
+        .map(
+          (value) =>
+            // Escape double quotes and handle non-ASCII characters
+            `"${String(value).replace(/"/g, '""')}"`,
+        )
+        .join(','),
+    );
+
+    // Add BOM to ensure UTF-8 encoding
+    return `\uFEFF${[headers, ...rows].join('\n')}`;
+  };
+
+  // Helper function to download file
+  const downloadFile = (content: string, fileName: string) => {
+    const blob = new Blob([content], {
+      type: 'text/csv;charset=utf-8;',
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+  };
 
   // Handle export button click
   const handleExport = async () => {
-    setIsLoading(true);
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    const query = params.get('query') || '';
+    const currentPage = Number(params.get('page')) || 1;
+    const pageSize = Number(params.get('page_size')) || 20;
 
     try {
-      // Sanitize search parameters
-      const queryString = searchParams ? sanitizeParams(searchParams) : '';
+      setIsLoading(true);
 
-      // Fetch data
       const response = await fetchReportDetails(
-        queryString,
+        query,
         undefined,
         undefined,
         true,
       );
 
-      // Validate and check the response
       if (
         !response ||
         !Array.isArray(response.data) ||
@@ -58,42 +82,8 @@ export default function ExportTable({
         return;
       }
 
-      // Filter out excluded rows (if any)
-      const filteredData = excludedRows.length
-        ? response.data.map((row) =>
-            Object.fromEntries(
-              Object.entries(row).filter(
-                ([key]) => !excludedRows.includes(key),
-              ),
-            ),
-          )
-        : response.data;
-
-      // Generate CSV content
-      const headers = Object.keys(filteredData[0]).join(',');
-      const rows = filteredData.map((row) =>
-        Object.values(row)
-          .map((value) => `"${value}"`)
-          .join(','),
-      );
-      const csvContent = [headers, ...rows].join('\n');
-
-      // Create a Blob with UTF-8 encoding
-      const blob = new Blob([`\uFEFF${csvContent}`], {
-        type: 'text/csv;charset=utf-8;',
-      });
-
-      // Trigger file download
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', 'table_data.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Revoke URL
-      URL.revokeObjectURL(url);
+      const csvContent = generateCSV(response.data, excludedRows);
+      downloadFile(csvContent, 'table_data.csv');
     } catch (error) {
       console.error('Error exporting table:', error);
     } finally {
