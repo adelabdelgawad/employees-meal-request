@@ -169,69 +169,121 @@ async def update_request_lines(
 
 async def read_requests(
     session: AsyncSession,
-    request_id: Optional[int],
-    from_date: Optional[str],
-    to_date: Optional[str],
-) -> List[RequestPageRecordResponse]:
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
+    requester_id: Optional[str] = None,
+    page: int = 1,
+    page_size: int = 10,
+    download: Optional[bool] = False,
+) -> dict:
     """
-    read requests with filters.
+    Retrieves paginated request data with optional filters.
+
+    :param session: The async database session for MariaDB.
+    :param start_time: Start date for filtering data (inclusive, format: 'YYYY-MM-DD').
+    :param end_time: End date for filtering data (inclusive, format: 'YYYY-MM-DD').
+    :param employee_name: Filter by employee name (case-insensitive, partial match).
+    :param page: The current page number (1-based).
+    :param page_size: Number of rows per page.
+    :return: A dictionary containing paginated data and metadata.
     """
-    try:
-        statement = (
-            select(
-                Request.id,
-                RequestStatus.name.label("status_name"),
-                RequestStatus.id.label("status_id"),
-                Account.full_name.label("requester"),
-                Account.title.label("requester_title"),
-                Meal.name.label("meal"),
-                Request.created_time.label("request_time"),
-                Request.closed_time,
-                Request.notes,
-                func.count(RequestLine.id).label("total_lines"),
-                func.sum(
-                    case((RequestLine.is_accepted == True, 1), else_=0)
-                ).label("accepted_lines"),
+
+    # Parse start_time and end_time into datetime objects
+    if start_time and end_time:
+        date_format = "%m/%d/%Y, %I:%M:%S %p"
+        try:
+            # Parse input dates
+            start_dt = datetime.strptime(start_time, date_format)
+            end_dt = datetime.strptime(end_time, date_format)
+
+            # Adjust start_time to today's start and end_time to today's end
+            start_dt = start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_dt = end_dt.replace(hour=23, minute=59, second=59, microsecond=0)
+        except ValueError:
+            raise ValueError(
+                "Invalid date format. Expected 'MM/DD/YYYY, HH:MM:SS AM/PM'."
             )
-            .join(Account, Request.requester_id == Account.id)
-            .join(RequestStatus, Request.status_id == RequestStatus.id)
-            .outerjoin(RequestLine, Request.id == RequestLine.request_id)
-            .outerjoin(Meal, RequestLine.meal_id == Meal.id)
-            .group_by(
-                Request.id,
-                RequestStatus.name,
-                RequestStatus.id,
-                Account.full_name,
-                Account.title,
-                Meal.name,
-                Request.created_time,
-                Request.closed_time,
-                Request.notes,
-            )
-            .order_by(Request.id.desc())
+
+    # Calculate offset for pagination
+    offset = (page - 1) * page_size
+
+    statement = select(func.count()).select_from(Request)
+
+    # Apply filters
+    if start_time and end_time:
+        statement = statement.where(Request.request_time.between(start_dt, end_dt))
+    if requester_id:
+        statement = statement.where(Request.requester_id == int(requester_id))
+
+    # Execute the total count query
+    total_rows_result = await session.execute(statement)
+    total_rows = total_rows_result.scalar() or 0
+
+    # Calculate total pages
+    total_pages = (total_rows + page_size - 1) // page_size
+
+    # Query to fetch paginated data
+    statement = (
+        select(
+            Request.id,
+            RequestStatus.name.label("status_name"),
+            RequestStatus.id.label("status_id"),
+            Account.full_name.label("requester"),
+            Account.title.label("requester_title"),
+            Meal.name.label("meal"),
+            Request.created_time.label("request_time"),
+            Request.closed_time,
+            Request.notes,
+            func.count(RequestLine.id).label("total_lines"),
+            func.sum(case((RequestLine.is_accepted == True, 1), else_=0)).label(
+                "accepted_lines"
+            ),
         )
+        .join(Account, Request.requester_id == Account.id)
+        .join(RequestStatus, Request.status_id == RequestStatus.id)
+        .outerjoin(RequestLine, Request.id == RequestLine.request_id)
+        .outerjoin(Meal, RequestLine.meal_id == Meal.id)
+        .group_by(
+            Request.id,
+            RequestStatus.name,
+            RequestStatus.id,
+            Account.full_name,
+            Account.title,
+            Meal.name,
+            Request.created_time,
+            Request.closed_time,
+            Request.notes,
+        )
+        .order_by(Request.id.desc())
+    )
+    # Apply filters
+    if start_time and end_time:
+        statement = statement.where(Request.request_time.between(start_dt, end_dt))
+    if requester_id:
+        statement = statement.where(Request.requester_id == int(requester_id))
 
-        if request_id:
-            statement = statement.where(Request.id == request_id)
-        if from_date and to_date:
-            from_date = datetime.strptime(from_date, "%Y-%m-%d")
-            to_date = datetime.strptime(to_date, "%Y-%m-%d")
-            statement = statement.where(
-                Request.created_time.between(from_date, to_date)
-            )
+    # Apply pagination
+    if not download:
+        # Apply pagination (offset and limit)
+        statement = statement.offset(offset).limit(page_size)
 
-        result = await session.execute(statement)
-        return [
-            RequestPageRecordResponse(**row) for row in result.mappings().all()
-        ]
-    except Exception as e:
-        logger.error(f"Error reading requests: {e}")
-        raise e
+    # Execute query and fetch data
+    result = await session.execute(statement)
+    rows = result.fetchall()
+
+    # Transform rows into the expected response format
+    items = [RequestPageRecordResponse.model_validate(row).model_dump() for row in rows]
+
+    return {
+        "data": items,
+        "current_page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+        "total_rows": total_rows,
+    }
 
 
-async def update_request_status(
-    session: AsyncSession, request_id: int, status_id: int
-):
+async def update_request_status(session: AsyncSession, request_id: int, status_id: int):
     """
     Update the status of a request and related lines.
     """
@@ -263,9 +315,7 @@ async def update_request_lines_status(session: AsyncSession, request_id: int):
     Mark all lines of a request as not accepted.
     """
     try:
-        statement = select(RequestLine).where(
-            RequestLine.request_id == request_id
-        )
+        statement = select(RequestLine).where(RequestLine.request_id == request_id)
         result = await session.execute(statement)
         lines = result.scalars().all()
 

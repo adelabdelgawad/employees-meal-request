@@ -52,9 +52,7 @@ async def read_requests_data(
 
     # Apply date filters if provided
     if from_date and to_date:
-        statement = statement.where(
-            Request.created_time.between(from_date, to_date)
-        )
+        statement = statement.where(Request.created_time.between(from_date, to_date))
 
     # Group by department
     statement = statement.group_by(Department.id, Department.name)
@@ -97,8 +95,8 @@ async def read_request_lines_with_attendance(
     :param page_size: Number of rows per page.
     :return: A dictionary containing paginated data and metadata.
     """
-    # Parse start_time and end_time into datetime objects
 
+    # Parse start_time and end_time into datetime objects
     if start_time and end_time:
         date_format = "%m/%d/%Y, %I:%M:%S %p"
         try:
@@ -107,12 +105,8 @@ async def read_request_lines_with_attendance(
             end_dt = datetime.strptime(end_time, date_format)
 
             # Adjust start_time to today's start and end_time to today's end
-            start_dt = start_dt.replace(
-                hour=0, minute=0, second=0, microsecond=0
-            )
-            end_dt = end_dt.replace(
-                hour=23, minute=59, second=59, microsecond=0
-            )
+            start_dt = start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_dt = end_dt.replace(hour=23, minute=59, second=59, microsecond=0)
         except ValueError:
             raise ValueError(
                 "Invalid date format. Expected 'MM/DD/YYYY, HH:MM:SS AM/PM'."
@@ -133,10 +127,8 @@ async def read_request_lines_with_attendance(
     )
 
     # Apply filters
-    if start_time and end_time: 
-        statement = statement.where(
-            Request.request_time.between(start_dt, end_dt)
-        )
+    if start_time and end_time:
+        statement = statement.where(Request.request_time.between(start_dt, end_dt))
     if employee_name:
         statement = statement.where(Employee.name.ilike(f"%{employee_name}%"))
 
@@ -173,9 +165,7 @@ async def read_request_lines_with_attendance(
 
     # Apply filters
     if start_time and end_time:
-        statement = statement.where(
-            Request.request_time.between(start_dt, end_dt)
-        )
+        statement = statement.where(Request.request_time.between(start_dt, end_dt))
     if employee_name:
         statement = statement.where(Employee.name.ilike(f"%{employee_name}%"))
 
@@ -189,9 +179,7 @@ async def read_request_lines_with_attendance(
     rows = result.fetchall()
 
     # Transform rows into the expected response format
-    items = [
-        ReportDetailsResponse.model_validate(row).model_dump() for row in rows
-    ]
+    items = [ReportDetailsResponse.model_validate(row).model_dump() for row in rows]
 
     return {
         "data": items,

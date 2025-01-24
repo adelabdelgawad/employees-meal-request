@@ -76,6 +76,7 @@ const TablePagination = React.memo(({ totalPages }: TablePaginationProps) => {
 
   const createPageURL = (page: number | string) => {
     params.set("page", page.toString());
+    console.log(params.toString());
     return `${pathname}?${params.toString()}`;
   };
 

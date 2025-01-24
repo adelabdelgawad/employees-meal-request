@@ -1,30 +1,56 @@
-export async function getRequests(fromDate?: string, toDate?: string) {
+export interface RequestParams {
+  query?: string;
+  currentPage?: number;
+  pageSize?: number;
+  startTime?: string;
+  endTime?: string;
+}
+
+export interface RequestResponse {
+  data: any[]; // Update to a specific type if you know the data structure
+  total_pages: number;
+  total_rows: number;
+}
+
+export async function getRequests({
+  query = "",
+  currentPage = 1,
+  pageSize = 20,
+  startTime = "",
+  endTime = "",
+}: RequestParams = {}): Promise<RequestResponse> {
+  const baseUrl = "http://localhost:8000/requests"; // Moved outside the try block
+
   try {
-    const formatDate = (date: Date) => {
-      console.log('date', date);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is zero-based
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
+    const url = new URL(baseUrl);
 
-    const fromDateFormatted = fromDate ? formatDate(new Date(fromDate)) : '';
-    const toDateFormatted = toDate ? formatDate(new Date(toDate)) : '';
+    // Add query parameters
+    url.searchParams.append("query", query);
+    url.searchParams.append("page", currentPage.toString());
+    url.searchParams.append("page_size", pageSize.toString());
+    url.searchParams.append("start_time", startTime);
+    url.searchParams.append("end_time", endTime);
 
-    const response = await fetch(
-      `http://localhost:8000/requests?from_date=${fromDateFormatted}&to_date=${toDateFormatted}`,
-      {
-        cache: 'no-store',
-      },
-    );
+    console.log("Fetching data from:", url.toString());
+
+    const response = await fetch(url.toString(), { cache: "no-store" });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch requests');
+      throw new Error(`Failed to fetch data: ${response.statusText}`);
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Error fetching requests:', error);
-    return [];
+    console.error(
+      `Error fetching data from ${baseUrl} with params: ${JSON.stringify({
+        query,
+        currentPage,
+        pageSize,
+        startTime,
+        endTime,
+      })}`,
+      error
+    );
+    throw error;
   }
 }

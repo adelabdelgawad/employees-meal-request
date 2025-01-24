@@ -1,8 +1,8 @@
 import React, { Suspense } from "react";
 import DataTableHeader from "./_components/DataTableHeader";
-import { fetchReportRequestRecords } from "@/lib/services/report-request";
 import { DataTableFooter } from "./_components/DataTableFooter";
 import DataTable from "./_components/DataTable";
+import { getRequests } from "@/lib/services/request-requests";
 
 interface SearchParams {
   query?: string;
@@ -18,7 +18,7 @@ export default async function Page({
   searchParams?: Promise<SearchParams>;
 }) {
   // Await searchParams fully before accessing its properties
-  const searchParams = (await searchParamsPromise) || {};
+  const searchParams = (await Promise.resolve(searchParamsPromise)) || {};
 
   // 1. Parse search parameters
   const query = searchParams.query || ""; // Default to an empty search query
@@ -29,12 +29,20 @@ export default async function Page({
 
   // 2. Fetch data (server-side)
   let data = null;
+  let error = null;
 
   try {
-    data = await fetchReportRequestRecords();
+    data = await getRequests({
+      query,
+      currentPage,
+      pageSize,
+      startTime,
+      endTime,
+    });
     console.log(data);
-  } catch (error) {
-    console.error("Error fetching report details:", error);
+  } catch (err) {
+    console.error("Error fetching report details:", err);
+    error = err;
   }
 
   // 3. Use totalPages from fetched data if available
@@ -50,7 +58,15 @@ export default async function Page({
       {/* Table */}
       <div>
         <Suspense key={`${query}-${currentPage}-${pageSize}`}>
-          {data ? <DataTable data={data.data} /> : <div>No data available</div>}
+          {error ? (
+            <div className="error-message">
+              Failed to load data. Please try again later.
+            </div>
+          ) : data ? (
+            <DataTable data={data.data} />
+          ) : (
+            <div>No data available</div>
+          )}
         </Suspense>
       </div>
 

@@ -1,21 +1,11 @@
+import traceback
 import logging
 from typing import List, Optional, Dict
-from fastapi import (
-    APIRouter,
-    HTTPException,
-    status,
-    BackgroundTasks,
-)
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Query
 from routers.cruds import request as crud
-from routers.cruds.request_lines import (
-    read_request_lines,
-    update_request_lines,
-)
-
-
+from routers.cruds.request_lines import read_request_lines, update_request_lines
 from src.http_schema import (
     RequestBody,
-    RequestPageRecordResponse,
     RequestLineRespose,
     UpdateRequestStatus,
 )
@@ -78,28 +68,48 @@ async def create_request_endpoint(
 
 @router.get(
     "/requests",
-    response_model=List[RequestPageRecordResponse],
+    response_model=dict,
     status_code=status.HTTP_200_OK,
 )
 async def get_requests(
     maria_session: SessionDep,
-    from_date: Optional[str] = None,
-    to_date: Optional[str] = None,
-    request_id: Optional[int] = None,
+    start_time: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_time: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+    page: int = Query(1, ge=1, description="Page number (1-based)"),
+    page_size: int = Query(10, ge=1, le=100, description="Number of rows per page"),
+    query: str = Query(None, description="Search parameters"),
+    download: bool = Query(False, description="Download status"),
 ):
     """
-    read requests based on filters.
+    Retrieves paginated request data with optional date filtering.
+
+    :param maria_session: The async database session for MariaDB.
+    :param from_date: Filter requests from this date (inclusive, format: 'YYYY-MM-DD').
+    :param to_date: Filter requests up to this date (inclusive, format: 'YYYY-MM-DD').
+    :param page: The current page number (1-based).
+    :param page_size: The number of rows per page.
+    :return: A dictionary containing paginated data and metadata.
     """
     try:
         requests = await crud.read_requests(
-            maria_session, request_id, from_date, to_date
+            session=maria_session,
+            start_time=start_time,
+            end_time=end_time,
+            requester_id=query,
+            page=page,
+            page_size=page_size,
+            download=download,
         )
         return requests
-    except Exception as e:
-        logger.error(f"Error reading requests: {e}")
+    except HTTPException as http_exc:
+        logger.error(f"HTTP error occurred: {http_exc.detail}")
+        raise http_exc
+    except Exception as err:
+        logger.error(f"Unexpected error: {err}")
+        logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error while reading requests.",
+            detail="Internal server error while retrieving request details.",
         )
 
 
@@ -189,9 +199,7 @@ async def update_request_lines_endpoint(
         return {"message": "Request lines updated successfully"}
     except ValueError as ve:
         logger.error(f"Validation error: {ve}")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(ve)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
     except Exception as e:
         logger.error(f"Unexpected error while updating request lines: {e}")
         raise HTTPException(
