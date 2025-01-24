@@ -17,19 +17,21 @@ export async function getRequestLines(requestId: number) {
 }
 
 export async function updateRequestLines(
+  requestId: number,
   changedStatuses: ChangedStatus[]
 ): Promise<string> {
   if (changedStatuses.length === 0) {
     throw new Error("No changes to update.");
   }
-
-  const response = await fetch("http://localhost:8000/update-request-lines", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(changedStatuses),
-  });
+  const response = await fetch(
+    `http://localhost:8000/update-request-status?request_id=${requestId}&changed_statuses=${changedStatuses}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   if (!response.ok) {
     throw new Error("Failed to save changes.");

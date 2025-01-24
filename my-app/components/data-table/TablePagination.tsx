@@ -66,17 +66,13 @@ interface TablePaginationProps {
 const TablePagination = React.memo(({ totalPages }: TablePaginationProps) => {
   const searchParams = useSearchParams();
   const params = new URLSearchParams(searchParams?.toString() || "");
-
-  const { replace } = useRouter();
   const pathname = usePathname();
-
   const currentPage = Number(params.get("page")) || 1;
-
   const allPages = generatePagination(currentPage, totalPages);
 
   const createPageURL = (page: number | string) => {
     params.set("page", page.toString());
-    console.log(params.toString());
+
     return `${pathname}?${params.toString()}`;
   };
 

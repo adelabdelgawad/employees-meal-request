@@ -1,3 +1,6 @@
+"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -6,59 +9,102 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import React from "react";
+import Actions from "./Actions";
+import { updateRequestStatus } from "@/lib/services/request-requests";
 
-export default function DataTable({ data }: { data: any[] }) {
+interface Request {
+  id: number;
+  requester?: string;
+  requester_title?: string;
+  request_time?: string;
+  meal?: string;
+  status_name?: string;
+  status_id?: number;
+  closed_time?: string;
+  total_lines?: number;
+  accepted_lines?: number;
+  notes?: string;
+}
+
+const DataTable = ({ initialData }: { initialData: Request[] }) => {
+  const [data, setData] = useState<Request[]>(initialData);
+
+  useEffect(() => setData(initialData), [initialData]);
+
+  const handleAction = useCallback(
+    async (recordId: number, statusId: number) => {
+      try {
+        const updatedRecord = await updateRequestStatus(recordId, statusId);
+        setData((prevData) =>
+          prevData.map((request) =>
+            request.id === recordId ? updatedRecord.data : request
+          )
+        );
+      } catch (error) {
+        console.error("Failed to update request status:", error);
+      }
+    },
+    []
+  );
+
+  const handleRequestLinesChanges = useCallback(
+    async (recordId: number, updatedRecord: Request) => {
+      setData((prevData) =>
+        prevData.map((request) =>
+          request.id === recordId ? updatedRecord : request
+        )
+      );
+    },
+    []
+  );
+
   return (
     <div className="relative overflow-x-auto border border-neutral-200 bg-white">
       <Table className="w-full text-sm text-neutral-700 whitespace-nowrap">
         <TableHeader className="bg-neutral-100 text-xs font-semibold uppercase text-neutral-600">
           <TableRow>
-            <TableHead className="text-center">Requester</TableHead>
-            <TableHead className="text-center">Title</TableHead>
-            <TableHead className="text-center">Request Time</TableHead>
-            <TableHead className="text-center">Meal</TableHead>
-            <TableHead className="text-center">Status</TableHead>
-            <TableHead className="text-center">Closed Time</TableHead>
-            <TableHead className="text-center">Requests</TableHead>
-            <TableHead className="text-center">Accepted</TableHead>
-            <TableHead className="text-center">Notes</TableHead>
-            <TableHead className="text-center">Actions</TableHead>
+            <TableHead>Requester</TableHead>
+            <TableHead>Title</TableHead>
+            <TableHead>Request Time</TableHead>
+            <TableHead>Meal</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Closed Time</TableHead>
+            <TableHead>Requests</TableHead>
+            <TableHead>Accepted</TableHead>
+            <TableHead>Notes</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data && data.length > 0 ? (
+          {data.length > 0 ? (
             data.map((record) => (
-              <TableRow key={record.id} className="text-center">
-                <TableCell>{record?.requester ?? "-"}</TableCell>
-                <TableCell>{record?.requester_title ?? "-"}</TableCell>
+              <TableRow key={record.id}>
+                <TableCell>{record.requester ?? "-"}</TableCell>
+                <TableCell>{record.requester_title ?? "-"}</TableCell>
                 <TableCell>
-                  {record?.request_time
-                    ? record.request_time.replace("T", " ")
-                    : "-"}
+                  {record.request_time?.replace("T", " ") ?? "-"}
                 </TableCell>
-                <TableCell>{record?.meal ?? "-"}</TableCell>
-                <TableCell>{record?.status_name ?? "-"}</TableCell>
+                <TableCell>{record.meal ?? "-"}</TableCell>
+                <TableCell>{record.status_name ?? "-"}</TableCell>
                 <TableCell>
-                  {record?.closed_time
-                    ? record.closed_time.replace("T", " ")
-                    : "-"}
+                  {record.closed_time?.replace("T", " ") ?? "-"}
                 </TableCell>
-                <TableCell>{record?.total_lines ?? "-"}</TableCell>
-                <TableCell>{record?.accepted_lines ?? "-"}</TableCell>
-
-                <TableCell>{record?.notes ?? "-"}</TableCell>
+                <TableCell>{record.total_lines ?? "-"}</TableCell>
+                <TableCell>{record.accepted_lines ?? "-"}</TableCell>
+                <TableCell>{record.notes ?? "-"}</TableCell>
                 <TableCell>
-                  {/* <ActionButtons
-                    recordId={record?.id}
-                    requestStatusId={record?.status_id}
-                  /> */}
+                  <Actions
+                    handleRequestLinesChanges={handleRequestLinesChanges}
+                    handleAction={handleAction}
+                    recordId={record.id}
+                    currentStatusId={record.status_id ?? 0}
+                  />
                 </TableCell>
               </TableRow>
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={8} className="text-center">
+              <TableCell colSpan={10} className="text-center">
                 No results found.
               </TableCell>
             </TableRow>
@@ -67,4 +113,6 @@ export default function DataTable({ data }: { data: any[] }) {
       </Table>
     </div>
   );
-}
+};
+
+export default DataTable;

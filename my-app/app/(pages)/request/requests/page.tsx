@@ -1,4 +1,5 @@
-import React, { Suspense } from "react";
+// app/page.tsx
+import React from "react";
 import DataTableHeader from "./_components/DataTableHeader";
 import { DataTableFooter } from "./_components/DataTableFooter";
 import DataTable from "./_components/DataTable";
@@ -13,13 +14,10 @@ interface SearchParams {
 }
 
 export default async function Page({
-  searchParams: searchParamsPromise,
+  searchParams = {},
 }: {
-  searchParams?: Promise<SearchParams>;
+  searchParams?: SearchParams;
 }) {
-  // Await searchParams fully before accessing its properties
-  const searchParams = (await Promise.resolve(searchParamsPromise)) || {};
-
   // 1. Parse search parameters
   const query = searchParams.query || ""; // Default to an empty search query
   const currentPage = Number(searchParams.page) || 1; // Default to page 1
@@ -57,17 +55,15 @@ export default async function Page({
 
       {/* Table */}
       <div>
-        <Suspense key={`${query}-${currentPage}-${pageSize}`}>
-          {error ? (
-            <div className="error-message">
-              Failed to load data. Please try again later.
-            </div>
-          ) : data ? (
-            <DataTable data={data.data} />
-          ) : (
-            <div>No data available</div>
-          )}
-        </Suspense>
+        {error ? (
+          <div className="error-message">
+            Failed to load data. Please try again later.
+          </div>
+        ) : data ? (
+          <DataTable initialData={data.data} />
+        ) : (
+          <div>No data available</div>
+        )}
       </div>
 
       {/* Footer */}

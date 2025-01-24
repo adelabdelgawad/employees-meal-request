@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client";
+
+import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,15 +16,18 @@ import DialogTable from "./_request-lines/DialogTable";
 import { useAlerts } from "@/components/alert/useAlerts";
 import ConfirmationModal from "@/components/confirmation-dialog";
 import { updateRequestLines } from "@/lib/services/request-lines";
-import { useRequest } from "@/hooks/RequestContext"; // ✅ Import useRequest
 
 interface ViewActionProps {
-  id: number;
+  id?: number;
   disableStatus: boolean;
+  handleRequestLinesChanges: (id: number, updatedRecord: any) => Promise<void>;
 }
 
-const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
-  const { mutate } = useRequest(); // ✅ Destructure mutate function
+const ViewAction: React.FC<ViewActionProps> = ({
+  id,
+  disableStatus,
+  handleRequestLinesChanges,
+}) => {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<any[]>([]);
   const [originalData, setOriginalData] = useState<any[]>([]);
@@ -31,28 +36,19 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
     { id: number; is_accepted: boolean }[]
   >([]);
   const { addAlert } = useAlerts();
-
-  // For "Are you sure?" modal
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  // Fetch data from API
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(
         `http://localhost:8000/request-lines?request_id=${id}`,
-        {
-          cache: "no-store",
-        }
+        { cache: "no-store" }
       );
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch requests");
-      }
+      if (!res.ok) throw new Error("Failed to fetch requests");
 
       const result = await res.json();
-      console.log(result);
-
       if (result.length === 0) {
         console.error("No data found.");
         return;
@@ -65,51 +61,67 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  // Handle dialog open/close
-  const handleDialogChange = (isOpen: boolean) => {
-    if (isOpen) {
-      fetchData();
-      setChangedStatus([]);
-    }
-    setOpen(isOpen);
-  };
+  const handleDialogChange = useCallback(
+    (isOpen: boolean) => {
+      if (isOpen) {
+        fetchData();
+        setChangedStatus([]);
+      }
+      setOpen(isOpen);
+    },
+    [fetchData]
+  );
 
-  /**
-   * Actual API call to save changes
-   * Called ONLY if user confirms the action in the confirmation modal.
-   */
-  const confirmSave = async () => {
-    // Hide the confirmation modal
+  const confirmSave = useCallback(async () => {
     setShowConfirmModal(false);
 
     if (changedStatus.length > 0) {
       try {
-        // Call the API to update the request lines
-        const message = await updateRequestLines(changedStatus);
-        addAlert(message, "success");
+        // Payload with changed statuses
+        console.log(changedStatus);
+        const payload = {
+          request_id: id, // Include request_id in the payload
+          changed_statuses: changedStatus,
+        };
 
-        // ✅ Call mutate to refresh data
-        await mutate();
+        // Sending the PUT request with request_id as a query parameter
+        const response = await fetch(
+          `http://localhost:8000/update-request-lines`, // Pass request_id in query
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload), // Serialize changed statuses
+          }
+        );
 
-        setOpen(false); // Close the main dialog on success
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.detail || "Failed to update request lines."
+          );
+        }
+
+        const result = await response.json();
+        // Use the updated data returned by the API
+        await handleRequestLinesChanges(id!, result.data);
+
+        addAlert("Request lines updated successfully.", "success");
+        setOpen(false);
       } catch (error) {
+        console.error("Error saving changes:", error);
         addAlert("Error saving changes. Please try again.", "error");
       }
     } else {
       addAlert("No changes made.", "warning");
-      setOpen(false); // Close the main dialog if no changes were made
+      setOpen(false);
     }
-  };
+  }, [changedStatus, id, handleRequestLinesChanges, addAlert]);
 
-  /**
-   * Prompt user to confirm before saving
-   */
-  const handleSaveClick = () => {
-    // Show the confirmation modal
-    setShowConfirmModal(true);
-  };
+  const handleSaveClick = () => setShowConfirmModal(true);
 
   return (
     <>
@@ -118,7 +130,6 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
           <Button
             className="w-10 h-10 flex items-center justify-center rounded-full bg-green-200 hover:bg-green-300 text-black"
             title="View"
-            onClick={() => handleDialogChange(true)}
             disabled={loading}
           >
             {loading ? "Loading..." : <Eye width={20} height={20} />}
@@ -177,7 +188,6 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
           </div>
 
           <DialogFooter>
-            {/* Instead of calling handleSave directly, we open the confirmation modal first */}
             <Button
               onClick={handleSaveClick}
               disabled={disableStatus || changedStatus.length === 0}
@@ -191,7 +201,6 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
         </DialogContent>
       </Dialog>
 
-      {/* Confirmation modal for saving changes */}
       <ConfirmationModal
         isOpen={showConfirmModal}
         title="Confirm Save"

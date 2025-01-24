@@ -302,9 +302,12 @@ async def update_request_status(session: AsyncSession, request_id: int, status_i
         request.closed_time = datetime.now(cairo_tz)
         session.add(request)
         await session.commit()
+        await session.refresh(request)
 
         if status_id == 4:  # Additional logic for status 4
             await update_request_lines_status(session, request_id)
+
+        return await read_request_by_id(session, request_id)
     except Exception as e:
         logger.error(f"Error updating request status: {e}")
         raise e
@@ -327,3 +330,56 @@ async def update_request_lines_status(session: AsyncSession, request_id: int):
     except Exception as e:
         logger.error(f"Error updating request lines status: {e}")
         await session.rollback()
+
+
+async def read_request_by_id(
+    session: AsyncSession,
+    request_id: int,
+) -> RequestPageRecordResponse:
+    """
+    Retrieve a request by its ID.
+
+    :param session: The async database session for MariaDB.
+    :param request_id: The ID of the request to retrieve.
+    :return: The request data if found, else None.
+    """
+    stmt = (
+        select(
+            Request.id,
+            RequestStatus.name.label("status_name"),
+            RequestStatus.id.label("status_id"),
+            Account.full_name.label("requester"),
+            Account.title.label("requester_title"),
+            Meal.name.label("meal"),
+            Request.created_time.label("request_time"),
+            Request.closed_time,
+            Request.notes,
+            func.count(RequestLine.id).label("total_lines"),
+            func.sum(case((RequestLine.is_accepted == True, 1), else_=0)).label(
+                "accepted_lines"
+            ),
+        )
+        .join(Account, Request.requester_id == Account.id)
+        .join(RequestStatus, Request.status_id == RequestStatus.id)
+        .outerjoin(RequestLine, Request.id == RequestLine.request_id)
+        .outerjoin(Meal, RequestLine.meal_id == Meal.id)
+        .where(Request.id == request_id)
+        .group_by(
+            Request.id,
+            RequestStatus.name,
+            RequestStatus.id,
+            Account.full_name,
+            Account.title,
+            Meal.name,
+            Request.created_time,
+            Request.closed_time,
+            Request.notes,
+        )
+    )
+
+    result = await session.execute(stmt)
+    row = result.fetchone()
+
+    if row:
+        return RequestPageRecordResponse.model_validate(row).model_dump()
+    return None

@@ -138,3 +138,8 @@ class ReportDetailsResponse(BaseModel):
         if value is None:
             return None
         return value.isoformat(sep=" ", timespec="seconds")
+
+
+class UpdateRequestLinesPayload(BaseModel):
+    request_id: int
+    changed_statuses: List[UpdateRequestStatus]

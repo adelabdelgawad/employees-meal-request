@@ -1,3 +1,6 @@
+// app/actions.ts
+"use server";
+
 export interface RequestParams {
   query?: string;
   currentPage?: number;
@@ -52,5 +55,32 @@ export async function getRequests({
       error
     );
     throw error;
+  }
+}
+
+export async function updateRequestStatus(id: number, statusId: number) {
+  {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/update-request-status?request_id=${id}&status_id=${statusId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(
+          `Failed to update statusId request: ${response.statusText}`
+        );
+      }
+
+      // Update local state
+      const updatedRecord = await response.json();
+      return updatedRecord;
+    } catch (error) {
+      console.error(`Error updating request ${id}:`, error);
+    }
   }
 }

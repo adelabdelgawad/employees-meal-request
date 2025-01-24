@@ -10,7 +10,7 @@ from src.http_schema import (
     UpdateRequestStatus,
 )
 import pytz
-
+from src.http_schema import UpdateRequestLinesPayload
 from depandancies import HRISSessionDep, SessionDep
 from datetime import datetime
 
@@ -113,7 +113,7 @@ async def get_requests(
         )
 
 
-@router.put("/update-request-status", response_model=Dict[str, str])
+@router.put("/update-request-status")
 async def update_order_status_endpoint(
     request_id: int,
     status_id: int,
@@ -123,8 +123,12 @@ async def update_order_status_endpoint(
     Update the status of a request by its ID.
     """
     try:
-        await crud.update_request_status(maria_session, request_id, status_id)
-        return {"status": "success", "message": "Request updated successfully"}
+        result = await crud.update_request_status(maria_session, request_id, status_id)
+        return {
+            "status": "success",
+            "message": "Request updated successfully",
+            "data": result,
+        }
     except HTTPException as http_exc:
         raise http_exc
     except Exception as e:
@@ -175,31 +179,37 @@ async def get_request_lines_endpoint(
 
 @router.put("/update-request-lines", status_code=status.HTTP_200_OK)
 async def update_request_lines_endpoint(
-    maria_session: SessionDep, changes: List[UpdateRequestStatus]
+    maria_session: SessionDep,
+    payload: UpdateRequestLinesPayload,
 ):
     """
     API endpoint to update the status of request lines.
 
     Args:
         maria_session (Session): Database session for the application.
-        changes (List[UpdateRequestStatus]): List of changes to apply.
+        request_id (int): ID of the request to update.
+        changed_statuses (List[dict]): List of changes to apply.
 
     Returns:
         dict: Confirmation message upon successful update.
     """
-    if not changes:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No changes provided.",
+    try:
+        request_id = payload.request_id
+        changed_statuses = payload.changed_statuses
+
+        logger.info(
+            f"Updating {len(changed_statuses)} request lines for request_id {request_id}"
         )
 
-    logger.info(f"Updating {len(changes)} request lines.")
-    try:
-        await update_request_lines(maria_session, changes)
-        return {"message": "Request lines updated successfully"}
-    except ValueError as ve:
-        logger.error(f"Validation error: {ve}")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
+        # Validate and transform the data if needed
+        await update_request_lines(maria_session, changed_statuses)
+
+        # Fetch the updated request details
+        response = await crud.read_request_by_id(maria_session, request_id)
+        return {"message": "Request lines updated successfully", "data": response}
+
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
         logger.error(f"Unexpected error while updating request lines: {e}")
         raise HTTPException(

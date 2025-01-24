@@ -1,9 +1,6 @@
-import React from 'react';
-import SearchInput from '@/components/data-table/SearchInput';
-import ExportTable from '@/components/data-table/ExportTable';
-import PrintTable from '@/components/data-table/PrintTable';
-import { useReportRequest } from '@/hooks/ReportRequestContext';
-import { DateRangePicker } from '@/components/data-table/DateRangePicker';
+import DataTableRangePicker from "@/components/data-table/DataTableRangePicker";
+import { useReportRequest } from "@/hooks/ReportRequestContext";
+import React from "react";
 
 export default function TableOptions() {
   const { setFromDate, setToDate, requests, searchQuery, setSearchQuery } =
@@ -16,7 +13,7 @@ export default function TableOptions() {
   return (
     <>
       <div className="flex justify-end mb-2">
-        <DateRangePicker setFrom={setFromDate} setTo={setToDate} />
+        <DataTableRangePicker setFrom={setFromDate} setTo={setToDate} />
       </div>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
@@ -28,7 +25,7 @@ export default function TableOptions() {
         </div>
 
         <div className="flex items-center gap-4">
-          <ExportTable data={filteredData} excludedRows={['id']} />
+          <ExportTable data={filteredData} excludedRows={["id"]} />
           <PrintTable
             columns={Object.keys(filteredData[0] || {})}
             data={filteredData}

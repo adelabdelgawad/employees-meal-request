@@ -1,34 +1,35 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from '@/components/ui/select'; // Adjust path accordingly
+} from "@/components/ui/select"; // Adjust path accordingly
 
 interface ShowRowsPerPageProps {
   rowsPerPage: number;
 }
 
 export default function ShowRowsPerPage({ rowsPerPage }: ShowRowsPerPageProps) {
-  const router = useRouter();
+  const { replace } = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   // Fallback to default if searchParams is null
-  const currentSize = searchParams?.get('page_size') || rowsPerPage.toString();
+  const currentSize = searchParams?.get("page_size") || rowsPerPage.toString();
 
   const handleValueChange = (newSize: string) => {
     // Create URLSearchParams safely even if searchParams is null
-    const params = new URLSearchParams(
-      searchParams ? Array.from(searchParams.entries()) : [],
-    );
-    params.set('page_size', newSize);
-    params.set('page', '1'); // Reset to first page upon change
-    router.push(`/report/details?${params.toString()}`);
+    const params = new URLSearchParams(searchParams?.toString() || "");
+
+    params.set("page_size", newSize);
+    params.set("page", "1"); // Reset to first page upon change
+
+    replace(`${pathname}?${params.toString()}`);
   };
 
   return (
@@ -46,7 +47,7 @@ export default function ShowRowsPerPage({ rowsPerPage }: ShowRowsPerPageProps) {
           <SelectValue placeholder="Select rows" />
         </SelectTrigger>
         <SelectContent>
-          {['5', '10', '20', '50'].map((size) => (
+          {["5", "10", "20", "50"].map((size) => (
             <SelectItem key={size} value={size}>
               {size}
             </SelectItem>
