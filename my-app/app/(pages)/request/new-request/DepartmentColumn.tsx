@@ -1,26 +1,26 @@
-'use client';
-import { useState, useMemo } from 'react';
-import * as ScrollArea from '@radix-ui/react-scroll-area';
-import DepartmentItem from './_components/DepartmentItem';
-import { useNewRequest } from '@/hooks/NewRequestContext';
-import SelectionActions from './_components/SelectionActions';
-import DepartmentsFilter from './_components/DepartmentsFilter';
+"use client";
+import { useState, useMemo } from "react";
+import * as ScrollArea from "@radix-ui/react-scroll-area";
+import DepartmentItem from "./_components/DepartmentItem";
+import { useNewRequest } from "@/hooks/NewRequestContext";
+import SelectionActions from "./_components/SelectionActions";
+import DepartmentsFilter from "./_components/DepartmentsFilter";
 
 export default function DepartmentColumn() {
   const { departments, selectedDepartments, setSelectedDepartments } =
     useNewRequest();
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   const filteredDepartments = useMemo(() => {
     return departments.filter((dept) =>
-      dept.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      dept.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [departments, searchTerm]);
 
   const selectedSet = useMemo(
     () => new Set(selectedDepartments),
-    [selectedDepartments],
+    [selectedDepartments]
   );
 
   const toggleDepartment = (deptId: string) => {
@@ -37,7 +37,7 @@ export default function DepartmentColumn() {
 
   const addAllDepartments = () => {
     setSelectedDepartments(
-      filteredDepartments.map((dept) => dept.id.toString()),
+      filteredDepartments.map((dept) => dept.id.toString())
     );
   };
 

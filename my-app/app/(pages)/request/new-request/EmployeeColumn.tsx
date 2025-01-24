@@ -1,70 +1,48 @@
 "use client";
-
-import { useState, useMemo, useCallback } from "react";
+import { useRef, useState, useMemo, useCallback, useEffect } from "react";
 import { FixedSizeList as List } from "react-window";
 import * as Checkbox from "@radix-ui/react-checkbox";
 import { Rubik } from "next/font/google";
+import { CheckIcon } from "lucide-react";
 
 // Custom hooks or contexts
 import { useNewRequest } from "@/hooks/NewRequestContext";
 import FilterComponent from "./_components/Filter";
 import SelectionActions from "./_components/SelectionActions";
 import EmployeesSelectionDialog from "./_components/EmployeeSelectionDialog";
-import { CheckIcon } from "lucide-react";
-
-// Child components
 
 // Font setup
 const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
-// Types
-type EmployeeType = {
-  id: number;
-  name: string;
-  title: string;
-  code: string | number;
-  department_id: number;
-};
-
-type MealType = {
-  id: number;
-  name: string;
-};
-
 export default function EmployeeColumn() {
   const {
-    employees, // Array<EmployeeType>
-    selectedEmployees, // Array<EmployeeType>
-    setSelectedEmployees, // React.Dispatch<React.SetStateAction<EmployeeType[]>>
-    Meals, // Array<MealType>
-    selectedDepartments, // string[] of department IDs
-    submittedEmployees, // Array<EmployeeType> or similar
+    employees,
+    selectedEmployees,
+    setSelectedEmployees,
+    Meals,
+    selectedDepartments,
+    submittedEmployees,
   } = useNewRequest();
 
-  // Local search state
   const [search, setSearch] = useState("");
+  const listRef = useRef(null);
 
-  // Filter employees by department & meal submission status
   const departmentMealFilteredEmployees = useMemo(() => {
     return employees.filter((emp) => {
-      // Check if emp is already submitted for *all* Meals
       const isSubmittedForAllMeals = Meals.every((Meal) =>
         submittedEmployees.some(
           (submitted) =>
             submitted.id === emp.id && submitted.meal_id === Meal.id
         )
       );
-      if (isSubmittedForAllMeals) return false; // Exclude already-submitted
+      if (isSubmittedForAllMeals) return false;
 
-      // If no departments are selected, keep all non-submitted employees
       if (selectedDepartments.length === 0) return true;
 
-      // Otherwise, keep only if emp's dept is in `selectedDepartments`
       return selectedDepartments.includes(emp.department_id.toString());
     });
   }, [employees, Meals, submittedEmployees, selectedDepartments]);
 
-  // Filter employees by search term
   const finalFilteredEmployees = useMemo(() => {
     if (!search.trim()) return departmentMealFilteredEmployees;
 
@@ -76,16 +54,19 @@ export default function EmployeeColumn() {
     );
   }, [departmentMealFilteredEmployees, search]);
 
-  // Toggle employee selection
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollToItem(0);
+    }
+  }, [finalFilteredEmployees]);
+
   const toggleEmployee = useCallback(
-    (empId: number) => {
+    (empId) => {
       setSelectedEmployees((prev) => {
         const exists = prev.some((emp) => emp.id === empId);
         if (exists) {
-          // Remove from selected
           return prev.filter((emp) => emp.id !== empId);
         }
-        // Add to selected
         const newSelection = finalFilteredEmployees.find(
           (emp) => emp.id === empId
         );
@@ -95,12 +76,10 @@ export default function EmployeeColumn() {
     [setSelectedEmployees, finalFilteredEmployees]
   );
 
-  // Add all employees
   const addAllEmployees = useCallback(() => {
     setSelectedEmployees(finalFilteredEmployees);
   }, [setSelectedEmployees, finalFilteredEmployees]);
 
-  // Clear selectedEmployees
   const removeAllEmployees = useCallback(() => {
     setSelectedEmployees([]);
   }, [setSelectedEmployees]);
@@ -109,12 +88,10 @@ export default function EmployeeColumn() {
     <div className="flex flex-col h-full border rounded-lg shadow-md p-4">
       <h2 className="text-lg font-semibold mb-4">Employee List</h2>
 
-      {/* Display number of matching results */}
       <p className="text-sm text-gray-500 mb-2">
         Showing {finalFilteredEmployees.length} results
       </p>
 
-      {/* Filter Component */}
       <div className="mb-4">
         <FilterComponent
           search={search}
@@ -123,7 +100,6 @@ export default function EmployeeColumn() {
         />
       </div>
 
-      {/* Bulk Selection Actions */}
       <div className="mb-4">
         <SelectionActions
           onAddAll={addAllEmployees}
@@ -135,13 +111,15 @@ export default function EmployeeColumn() {
         />
       </div>
 
-      {/* Scrollable Employee List */}
       <div className="flex-1 overflow-hidden">
         {finalFilteredEmployees.length > 0 ? (
           <List
-            height={Math.floor(window.innerHeight * 0.75)} // 75% of viewport height            width="100%" // Adjust width
+            ref={listRef}
+            itemKey={(index) => finalFilteredEmployees[index]?.id ?? index}
+            height={Math.floor(window.innerHeight * 0.75)}
+            width="100%"
             itemCount={finalFilteredEmployees.length}
-            itemSize={80} // Adjust item height based on design
+            itemSize={80}
           >
             {({
               index,
@@ -158,7 +136,7 @@ export default function EmployeeColumn() {
               return (
                 <div
                   key={emp.id}
-                  style={style} // Virtualized styles
+                  style={style || {}}
                   className={`flex items-center justify-between border rounded-lg p-3 cursor-pointer ${
                     isSelected
                       ? "bg-blue-50 border-blue-500"
@@ -167,7 +145,7 @@ export default function EmployeeColumn() {
                   onClick={() => toggleEmployee(emp.id)}
                 >
                   <div>
-                    <div className={`text-s font-semibold ${rubik.className}`}>
+                    <div className={`text-sm font-semibold ${rubik.className}`}>
                       {emp.name}
                     </div>
                     <div className="text-xs text-gray-500">{emp.title}</div>
@@ -179,6 +157,7 @@ export default function EmployeeColumn() {
                     checked={isSelected}
                     className="w-5 h-5 border rounded flex items-center justify-center"
                     onCheckedChange={() => toggleEmployee(emp.id)}
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <Checkbox.Indicator>
                       <CheckIcon className="w-4 h-4 text-blue-500" />
@@ -195,7 +174,6 @@ export default function EmployeeColumn() {
         )}
       </div>
 
-      {/* Employee Dialog */}
       <EmployeesSelectionDialog
         selectedEmployees={selectedEmployees}
         setSelectedEmployees={setSelectedEmployees}
@@ -207,4 +185,3 @@ export default function EmployeeColumn() {
     </div>
   );
 }
-``;

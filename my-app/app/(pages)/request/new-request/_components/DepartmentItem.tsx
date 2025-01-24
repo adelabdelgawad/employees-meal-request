@@ -24,6 +24,7 @@ const DepartmentItem: React.FC<DepartmentItemProps> = ({
       <Checkbox.Root
         checked={isSelected}
         onCheckedChange={() => onToggle(dept.id.toString())}
+        onClick={(e) => e.stopPropagation()} // Stop propagation here
         className="w-5 h-5 border rounded flex items-center justify-center"
       >
         <Checkbox.Indicator>
