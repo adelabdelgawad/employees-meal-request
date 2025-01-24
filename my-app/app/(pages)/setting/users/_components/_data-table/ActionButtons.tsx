@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { useAlerts } from '@/components/alert/useAlerts';
-import { Button } from '@/components/ui/button';
-import ConfirmationDialog from '@/components/data-table/ConfirmationDialog';
-import { TrashIcon } from 'lucide-react';
-import { EditAction } from './EditAction';
+import { useState } from "react";
+import { useAlerts } from "@/components/alert/useAlerts";
+import { Button } from "@/components/ui/button";
+import ConfirmationDialog from "@/components/confirmation-dialog";
+import { TrashIcon } from "lucide-react";
+import { EditAction } from "./EditAction";
 
 interface ActionButtonsProps {
   recordId: number;
@@ -18,9 +18,9 @@ export default function ActionButtons({ recordId }: ActionButtonsProps) {
   // Delete action handler
   const handleDelete = async () => {
     try {
-      addAlert('Record deleted successfully!', 'success');
+      addAlert("Record deleted successfully!", "success");
     } catch (error) {
-      addAlert('Failed to delete the record', 'error');
+      addAlert("Failed to delete the record", "error");
     }
   };
 

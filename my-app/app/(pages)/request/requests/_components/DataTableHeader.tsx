@@ -1,7 +1,7 @@
-import ExportTable from "@/components/data-table/DataTableExport";
-import DataTableRangePicker from "@/components/data-table/DataTableRangePicker";
-import DataTableSearch from "@/components/data-table/DataTableSearch";
 import React from "react";
+import ExportTable from "@/components/data-table/DataTableExport";
+import DataTableSearch from "@/components/data-table/DataTableSearch";
+import DataTableDateRange from "@/components/data-table/DataTableRangePicker";
 
 export default function DataTableHeader() {
   return (
@@ -11,7 +11,7 @@ export default function DataTableHeader() {
         {/* Left Section */}
         <div className="flex items-center gap-4">
           <DataTableSearch placeholder="Search Employee Name..." />
-          <DataTableRangePicker placeholder="Pick a Request date range" />
+          <DataTableDateRange placeholder="Pick a Request date range" />
         </div>
 
         {/* Right Section */}

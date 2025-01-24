@@ -1,6 +1,6 @@
-import ShowRowsPerPage from "@/components/data-table/ShowRowsPerPage";
-import TablePagination from "@/components/data-table/TablePagination";
 import React from "react";
+import TablePagination from "../../../../../components/data-table/TablePagination";
+import ShowRowsPerPage from "../../../../../components/data-table/ShowRowsPerPage";
 
 interface DataTableFooterProps {
   rowsPerPage: number;

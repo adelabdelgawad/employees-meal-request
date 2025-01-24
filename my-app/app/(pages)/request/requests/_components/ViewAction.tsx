@@ -12,7 +12,7 @@ import {
 import { Eye } from "lucide-react";
 import DialogTable from "./_request-lines/DialogTable";
 import { useAlerts } from "@/components/alert/useAlerts";
-import ConfirmationModal from "@/components/data-table/ConfirmationDialog";
+import ConfirmationModal from "@/components/confirmation-dialog";
 import { updateRequestLines } from "@/lib/services/request-lines";
 import { useRequest } from "@/hooks/RequestContext"; // ✅ Import useRequest
 

@@ -1,13 +1,9 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { Table, TableHeader } from '@/components/ui/table';
-import Pagination from '@/components/data-table/Pagination';
-import { RequestRecord } from '@/pages/definitions';
-import { useRequest } from '@/hooks/RequestContext';
-import TableOptions from './_components/_data-table/TableOptions';
-import DataTableRowHeader from './_components/_data-table/DataTableRowHeader';
-import DataTableBody from './_components/_data-table/DataTableBody';
+import React, { useEffect, useState } from "react";
+import { Table, TableHeader } from "@/components/ui/table";
+import { RequestRecord } from "@/pages/definitions";
+import { useRequest } from "@/hooks/RequestContext";
 
 export function RequestsTable() {
   // State to store requests data
@@ -16,7 +12,7 @@ export function RequestsTable() {
   const [filteredData, setFilteredData] = useState<RequestRecord[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
 
   // Initialize date state to today's date
@@ -29,12 +25,12 @@ export function RequestsTable() {
   const startIndex = (currentPage - 1) * rowsPerPage;
   const currentPageData = filteredData.slice(
     startIndex,
-    startIndex + rowsPerPage,
+    startIndex + rowsPerPage
   );
 
   // Extract unique values for status_name filter
   const uniqueStatusOptions = Array.from(
-    new Set(requests.map((r) => r.status_name)),
+    new Set(requests.map((r) => r.status_name))
   ).map((status_name) => ({
     value: status_name,
     count: requests.filter((r) => r.status_name === status_name).length,
@@ -47,7 +43,7 @@ export function RequestsTable() {
     // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter((record) =>
-        record.requester.toLowerCase().includes(searchQuery.toLowerCase()),
+        record.requester.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -55,8 +51,8 @@ export function RequestsTable() {
     if (statusFilter.length > 0) {
       filtered = filtered.filter((record) =>
         statusFilter.some((status) =>
-          record.status_name.toLowerCase().includes(status.toLowerCase()),
-        ),
+          record.status_name.toLowerCase().includes(status.toLowerCase())
+        )
       );
     }
 
