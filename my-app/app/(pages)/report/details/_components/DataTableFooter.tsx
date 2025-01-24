@@ -1,8 +1,8 @@
-import React from 'react';
-import TablePagination from './TablePagination';
-import ShowRowsPerPage from './ShowRowsPerPage';
+import React from "react";
+import TablePagination from "./TablePagination";
+import ShowRowsPerPage from "./ShowRowsPerPage";
 
-interface TablePaginationProps {
+interface DataTableFooterProps {
   searchParams?: { query?: string; page?: string; page_size?: string };
   rowsPerPage: number;
   pageSize: number;
@@ -11,13 +11,12 @@ interface TablePaginationProps {
   totalRows: number;
 }
 
-export default function DataTableFooter({
-  searchParams = {},
-  currentPage,
-  totalPages,
-  rowsPerPage,
+export function DataTableFooter({
+  currentPage = 1,
+  totalPages = 1,
+  rowsPerPage = 10,
   totalRows,
-}: TablePaginationProps) {
+}: DataTableFooterProps) {
   return (
     <div className="flex justify-between items-center">
       {/* Rows per page selector */}
@@ -25,11 +24,12 @@ export default function DataTableFooter({
         <ShowRowsPerPage rowsPerPage={rowsPerPage} />
       </div>
 
+      {/* Pagination Controls */}
       <div>
-        {/* Pagination Controls */}
-        <TablePagination searchParams={searchParams} totalPages={totalPages} />
+        <TablePagination totalPages={totalPages} />
       </div>
 
+      {/* Page and Total Rows Info */}
       <div>
         <span className="text-sm">
           Page {currentPage} of {totalPages} — Total rows: {totalRows}

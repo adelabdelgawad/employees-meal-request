@@ -1,8 +1,8 @@
-import React, { Suspense } from 'react';
-import DataTable from './_components/DataTable';
-import DataTableHeader from './_components/DataTableHeader';
-import { fetchReportDetails } from '@/lib/services/report-details';
-import DataTableFooter from './_components/DataTableFooter';
+import React, { Suspense } from "react";
+import DataTable from "./_components/DataTable";
+import DataTableHeader from "./_components/DataTableHeader";
+import { fetchReportDetails } from "@/lib/services/report-details";
+import { DataTableFooter } from "./_components/DataTableFooter";
 
 interface SearchParams {
   query?: string;
@@ -21,11 +21,11 @@ export default async function Page({
   const searchParams = (await searchParamsPromise) || {};
 
   // 1. Parse search parameters
-  const query = searchParams.query || ''; // Default to an empty search query
+  const query = searchParams.query || ""; // Default to an empty search query
   const currentPage = Number(searchParams.page) || 1; // Default to page 1
   const pageSize = Number(searchParams.page_size) || 20; // Default rows per page
-  const startTime = searchParams.start_time || '';
-  const endTime = searchParams.end_time || '';
+  const startTime = searchParams.start_time || "";
+  const endTime = searchParams.end_time || "";
 
   // 2. Fetch data (server-side)
   let data = null;
@@ -40,7 +40,7 @@ export default async function Page({
     });
     console.log(data);
   } catch (error) {
-    console.error('Error fetching report details:', error);
+    console.error("Error fetching report details:", error);
   }
 
   // 3. Use totalPages from fetched data if available
@@ -63,7 +63,6 @@ export default async function Page({
       {/* Footer */}
       <div className="mt-2">
         <DataTableFooter
-          searchParams={searchParams}
           pageSize={pageSize}
           currentPage={currentPage}
           totalPages={totalPages}
