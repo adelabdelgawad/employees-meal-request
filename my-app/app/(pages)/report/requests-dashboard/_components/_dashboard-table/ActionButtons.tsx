@@ -2,10 +2,9 @@ import React, { useState, useTransition } from "react";
 import { CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { updateRequestStatus } from "@/pages/api/actions";
 import { useDataTable } from "@/app/(pages)/request/requests/_components/_data-table/DataTableContext";
-import { useAlerts } from "@/components/alert/useAlerts";
 import ConfirmationModal from "./ConfirmationDialog";
-import ViewAction from "@/app/(pages)/request/requests/_components/ViewAction";
-
+import ViewAction from "@/app/(pages)/request/requests/_components/_actions/ViewAction";
+import { toast } from "react-hot-toast";
 interface ActionsProps {
   recordId: number;
   requestStatusId: number;
@@ -15,7 +14,6 @@ export const ActionButtons: React.FC<ActionsProps> = ({
   recordId,
   requestStatusId,
 }) => {
-  const { addAlert } = useAlerts();
   const [isPending, startTransition] = useTransition();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [actionType, setActionType] = useState<"accept" | "reject" | null>(
@@ -42,10 +40,10 @@ export const ActionButtons: React.FC<ActionsProps> = ({
     startTransition(async () => {
       try {
         const result = await updateRequestStatus(recordId, 4);
-        addAlert(result.message, "success");
+        toast.success(result.message);
         await mutate();
       } catch (error) {
-        addAlert("Failed to update request status.", "error");
+        toast.error("Failed to update request status.");
       }
     });
   };
@@ -56,10 +54,10 @@ export const ActionButtons: React.FC<ActionsProps> = ({
     startTransition(async () => {
       try {
         const result = await updateRequestStatus(recordId, 3);
-        addAlert(result.message, "success");
+        toast.success(result.message);
         await mutate();
       } catch (error) {
-        addAlert("Failed to update request status.", "error");
+        toast.error("Failed to update request status.");
       }
     });
   };

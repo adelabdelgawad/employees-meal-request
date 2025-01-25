@@ -1,8 +1,5 @@
-"use client";
 import "./globals.css";
-import { AlertsProvider } from "@/components/alert/useAlerts";
-import AlertStack from "@/components/alert/AlertStack";
-
+import { Toaster } from "react-hot-toast";
 export default function RootLayout({
   children,
 }: {
@@ -11,10 +8,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AlertsProvider>
-          <AlertStack />
-          {children}
-        </AlertsProvider>
+        <Toaster position="bottom-center" />
+        {children}
       </body>
     </html>
   );

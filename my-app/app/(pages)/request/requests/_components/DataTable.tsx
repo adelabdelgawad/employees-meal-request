@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Actions from "./Actions";
+import Actions from "./_actions/Actions";
 import { updateRequestStatus } from "@/lib/services/request-requests";
 
 interface Request {

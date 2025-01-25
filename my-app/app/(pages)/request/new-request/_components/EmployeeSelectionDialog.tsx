@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import MealOption from "./MealOption";
 import { useNewRequest } from "@/hooks/NewRequestContext";
 import { EmployeeType, Meal } from "@/pages/definitions";
-import { useAlerts } from "@/components/alert/useAlerts";
 import { Button } from "@/components/ui/button";
 import { Rubik } from "next/font/google";
 import { CrossIcon } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { toastWarning } from "@/lib/utils/toast";
 
 const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
 interface EmployeeSelectionDialogProps {
@@ -31,7 +32,6 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
   );
   const [selectedMeals, setSelectedMeals] = useState<Meal[]>([]);
   const { submittedEmployees, setSubmittedEmployees } = useNewRequest();
-  const { addAlert } = useAlerts();
 
   const handleNoteChange = (employeeId: number, note: string) => {
     setEmployeeNotes((prev) => ({
@@ -47,10 +47,6 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
 
   const handleSubmit = () => {
     if (selectedMeals.length === 0) {
-      addAlert(
-        "Please select at least one meal type before submitting.",
-        "warning"
-      );
       return;
     }
 
@@ -77,10 +73,7 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
 
     if (duplicateEntries.length > 0) {
       duplicateEntries.forEach((entry) => {
-        addAlert(
-          `${entry.name} already has Meal Type "${entry.meal_name}" submitted.`,
-          "warning"
-        );
+        toastWarning(`Duplicate entry for ${entry.name}`);
       });
       return;
     }

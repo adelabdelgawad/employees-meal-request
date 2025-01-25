@@ -4,10 +4,9 @@ import * as React from "react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-
+import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { useAlerts } from "@/components/alert/useAlerts";
 
 // Define types for the date range
 interface DateRange {
@@ -40,7 +39,6 @@ export default function DataTableRangePicker({
   });
 
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
-  const { addAlert } = useAlerts();
 
   const handleDateSelect = (newDateRange: DateRange | undefined) => {
     if (newDateRange?.from && newDateRange?.to) {
@@ -64,12 +62,12 @@ export default function DataTableRangePicker({
 
     // Ensure both start and end dates are present
     if (!date?.from) {
-      addAlert("Please select a start date.", "error");
+      toast.error("Please select a start date.");
       return;
     }
 
     if (!date?.to) {
-      addAlert("Please select an end date.", "error");
+      toast.error("Please select an end date.");
       return;
     }
 

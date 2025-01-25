@@ -84,3 +84,46 @@ export async function updateRequestStatus(id: number, statusId: number) {
     }
   }
 }
+
+export const getRequestLineById = async (id: number) => {
+  const res = await fetch(
+    `http://localhost:8000/request-lines?request_id=${id}`,
+    { cache: "no-store" }
+  );
+
+  if (!res.ok) throw new Error("Failed to fetch requests");
+
+  const result = await res.json();
+  if (result.length === 0) {
+    console.error("No data found.");
+    return [];
+  }
+
+  return result;
+};
+
+export const updateRequestLine = async (
+  id: number,
+  changedStatus: { id: number; is_accepted: boolean }[]
+) => {
+  const payload = {
+    request_id: id,
+    changed_statuses: changedStatus,
+  };
+
+  const response = await fetch(`http://localhost:8000/update-request-lines`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || "Failed to update request lines.");
+  }
+
+  const result = await response.json();
+  return result.data;
+};

@@ -8,13 +8,12 @@ import { SkeletonContent } from "./SkeletonContent";
 import { UserSelection } from "./UserSelection";
 import { RoleSelection } from "./RoleSelection";
 import { useSettingUserContext } from "@/hooks/SettingUserContext";
-import { useAlerts } from "@/components/alert/useAlerts";
 import { submitAddUser, fetchDomainUsers } from "@/lib/services/setting-user";
-
+import { toastWarning } from "@/lib/utils/toast";
+import { toast } from "react-hot-toast";
 export function AddUserDialog() {
   const { domainUsers, setDomainUsers, roles, mutate } =
     useSettingUserContext();
-  const { addAlert } = useAlerts();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
@@ -26,19 +25,20 @@ export function AddUserDialog() {
     e.preventDefault();
 
     if (!selectedUserId) {
-      addAlert("Please select a user.", "warning");
+      toastWarning("Please select a user.");
       return;
     }
 
     if (selectedRoles.length === 0) {
-      addAlert("Please select at least one role.", "warning");
+      toastWarning("Please select at least one role.");
+
       return;
     }
 
     const selectedUser = domainUsers.find((user) => user.id === selectedUserId);
 
     if (!selectedUser) {
-      addAlert("Failed to find the selected user.", "error");
+      toast.error("Failed to find the selected user.");
       return;
     }
 
@@ -50,11 +50,11 @@ export function AddUserDialog() {
     );
 
     if (response.success) {
-      addAlert(response.message, "success");
+      toast.success("response.message");
       await mutate();
       resetForm();
     } else {
-      addAlert("Failed to add user.", "error");
+      toast.error("Failed to add user.");
     }
   };
 

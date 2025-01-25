@@ -3,6 +3,7 @@
 import { useState, useEffect, startTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { toast } from "react-hot-toast";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +12,6 @@ import {
   DialogPortal,
   DialogClose,
 } from "@radix-ui/react-dialog";
-import { useAlerts } from "@/components/alert/useAlerts";
 import {
   fetchUsers,
   fetchRoles,
@@ -37,7 +37,6 @@ export function EditUserDialog({
   const [originalRoles, setOriginalRoles] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { addAlert } = useAlerts();
   const { mutate } = useSettingUserContext();
 
   useEffect(() => {
@@ -59,14 +58,14 @@ export function EditUserDialog({
           setOriginalRoles(roleIds);
         }
       } catch {
-        addAlert("Error fetching user data.", "error");
+        toast.error("Error fetching user data.");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [isOpen, userId, addAlert]);
+  }, [isOpen, userId]);
 
   const handleRoleToggle = (roleId: number) => {
     setSelectedRoles((prev) =>
@@ -99,12 +98,12 @@ export function EditUserDialog({
     startTransition(async () => {
       try {
         await updateUserRoles(userId, addedRoles, removedRoles);
-        addAlert("User roles updated successfully!", "success");
+        toast.success("User roles updated successfully!");
         setOriginalRoles(selectedRoles);
         onOpenChange(false);
         await mutate();
       } catch {
-        addAlert("Failed to update user roles. Please try again.", "error");
+        toast.error("Failed to update user roles. Please try again.");
       }
     });
   };

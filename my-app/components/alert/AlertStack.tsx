@@ -1,10 +1,10 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useAlerts } from "./useAlerts";
+import { s } from "./s";
 
 export default function AlertStack() {
-  const { alerts, removeAlert } = useAlerts();
+  const { alerts, removeAlert } = s();
 
   if (!alerts || alerts.length === 0) {
     return null; // ✅ Return null if there are no alerts

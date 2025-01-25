@@ -41,10 +41,10 @@ export function AlertsProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAlerts() {
+export function s() {
   const context = useContext(AlertsContext);
   if (!context) {
-    throw new Error("useAlerts must be used within an AlertsProvider");
+    throw new Error("s must be used within an AlertsProvider");
   }
   return context;
 }

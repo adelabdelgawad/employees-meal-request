@@ -1,26 +1,23 @@
 import { useState } from "react";
-import { useAlerts } from "@/components/alert/useAlerts";
 import { Button } from "@/components/ui/button";
 import ConfirmationDialog from "@/components/confirmation-dialog";
 import { TrashIcon } from "lucide-react";
 import { EditAction } from "./EditAction";
-
+import { toast } from "react-hot-toast";
 interface ActionButtonsProps {
   recordId: number;
 }
 
 export default function ActionButtons({ recordId }: ActionButtonsProps) {
-  const { addAlert } = useAlerts();
-
   // State for managing confirmation dialog visibility
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Delete action handler
   const handleDelete = async () => {
     try {
-      addAlert("Record deleted successfully!", "success");
+      toast.success("Record deleted successfully!");
     } catch (error) {
-      addAlert("Failed to delete the record", "error");
+      toast.error("Failed to delete the record");
     }
   };
 
