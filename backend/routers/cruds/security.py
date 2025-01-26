@@ -1,5 +1,5 @@
 import logging
-from sqlmodel import select, func, case
+from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from db.models import (
@@ -26,33 +26,14 @@ logger = logging.getLogger(__name__)
 
 
 async def read_user(
-    session: AsyncSession,
-    username: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 10,
-    download: Optional[bool] = False,
+    session: AsyncSession, user_id: Optional[int] = None
 ) -> Union[SettingUserResponse, List[SettingUserResponse]]:
 
-    # Calculate offset for pagination
-    offset = (page - 1) * page_size
-
-    statement = select(func.count()).select_from(Account)
-    if username:
-        statement = statement.where(Account.username.ilike(f"%{username}%"))
-
-    # Execute the total count query
-    total_rows_result = await session.execute(statement)
-    total_rows = total_rows_result.scalar() or 0
-
-    # Calculate total pages
-    total_pages = (total_rows + page_size - 1) // page_size
-
     # Fetch all users
-    statement = select(Account)
-    if username:
-        statement = statement.where(Account.username.ilike(f"%{username}%"))
-
-    users_result = await session.execute(statement)
+    users_stmt = select(Account)
+    if user_id:
+        users_stmt = users_stmt.where(Account.id == user_id)
+    users_result = await session.execute(users_stmt)
     users = users_result.scalars().all()
 
     # Fetch roles for each user
@@ -72,38 +53,30 @@ async def read_user(
                 fullName=user.full_name,
                 username=user.username,
                 title=user.title,
-                roles=[RoleResponse(id=role.id, name=role.name) for role in roles],
+                roles=[
+                    RoleResponse(id=role.id, name=role.name) for role in roles
+                ],
             )
         )
 
-    # Apply pagination
-    if not download:
-        # Apply pagination (offset and limit)
-        statement = statement.offset(offset).limit(page_size)
-
-    return {
-        "data": user_list,
-        "current_page": page,
-        "page_size": page_size,
-        "total_pages": total_pages,
-        "total_rows": total_rows,
-    }
+    return user_list
 
 
-async def create_user(session: AsyncSession, request: UserCreateRequest) -> Account:
+async def create_user(
+    session: AsyncSession, request: UserCreateRequest
+) -> Account:
     """
-    Checks if the user already exists, updates the user if it exists, or creates a new user if it doesn't.
-    Also assigns default roles to the new user.
+    Checks if the user already exists, creates a new user, and assigns default roles to the new user.
 
     Args:
     - session (AsyncSession): The database session to use for the operation.
     - request (UserCreateRequest): The request object containing the user's details.
 
     Returns:
-    - Account: The newly created or updated user object.
+    - Account: The newly created user object.
 
     Raises:
-    - ValueError: If there is an integrity constraint error during user creation/update or role assignment.
+    - ValueError: If there is an integrity constraint error during user creation or role assignment.
     """
     # Check if the user already exists
     statement = select(Account).where(Account.username == request.username)
@@ -111,29 +84,27 @@ async def create_user(session: AsyncSession, request: UserCreateRequest) -> Acco
     user = result.scalar_one_or_none()
 
     if user:
-        # Update the existing user's details
-        user.full_name = request.full_name
-        user.title = request.title
-        logger.info(f"Updated existing user: {user.username} (ID: {user.id})")
-    else:
-        # Create a new user
-        user = Account(
-            full_name=request.full_name,
-            username=request.username,
-            title=request.title,
-        )
-        session.add(user)
-        logger.info(f"Created new user: {user.username} (ID: {user.id})")
+        logger.info(f"User {request.username} already exists.")
+        return user
+
+    # Create the new user
+    user = Account(
+        full_name=request.full_name,
+        username=request.username,
+        title=request.title,
+    )
+    session.add(user)
 
     try:
         await session.commit()
         await session.refresh(user)
+        logger.info(f"Created new user: {user.username} (ID: {user.id})")
     except IntegrityError as e:
         await session.rollback()
-        logger.error(f"IntegrityError during user creation/update: {e}")
-        raise ValueError("Failed to create/update user due to integrity constraints.")
+        logger.error(f"IntegrityError during user creation: {e}")
+        raise ValueError("Failed to create user due to integrity constraints.")
 
-    # Assign default roles to the user
+    # Assign default roles to the new user
     for role_id in request.roles:
         logger.info(f"Assigning role ID {role_id} to user ID {user.id}")
         role_permission = RolePermission(
@@ -148,7 +119,9 @@ async def create_user(session: AsyncSession, request: UserCreateRequest) -> Acco
     except IntegrityError as e:
         await session.rollback()
         logger.error(f"IntegrityError during role assignment: {e}")
-        raise ValueError("Failed to assign roles due to integrity constraints.")
+        raise ValueError(
+            "Failed to assign roles due to integrity constraints."
+        )
 
     return user
 
@@ -165,7 +138,9 @@ async def add_roles_to_user(
     - session (AsyncSession): The database session to use for the operation.
     """
     # Fetch existing role permissions for the user
-    statement = select(RolePermission).where(RolePermission.account_id == account_id)
+    statement = select(RolePermission).where(
+        RolePermission.account_id == account_id
+    )
     existing_roles = await session.execute(statement)
     existing_role_ids = {rp.role_id for rp in existing_roles.scalars().all()}
 
@@ -180,11 +155,15 @@ async def add_roles_to_user(
         session.add_all(new_roles)
         try:
             await session.commit()
-            logger.info(f"Assigned roles {new_role_ids} to user ID {account_id}")
+            logger.info(
+                f"Assigned roles {new_role_ids} to user ID {account_id}"
+            )
         except IntegrityError as e:
             await session.rollback()
             logger.error(f"IntegrityError during role assignment: {e}")
-            raise ValueError("Failed to assign roles due to integrity constraints.")
+            raise ValueError(
+                "Failed to assign roles due to integrity constraints."
+            )
 
     return new_roles
 
@@ -216,4 +195,6 @@ async def remove_roles_from_user(
         except IntegrityError as e:
             await session.rollback()
             logger.error(f"IntegrityError during role removal: {e}")
-            raise ValueError("Failed to remove roles due to integrity constraints.")
+            raise ValueError(
+                "Failed to remove roles due to integrity constraints."
+            )

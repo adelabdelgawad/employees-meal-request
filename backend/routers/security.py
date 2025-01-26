@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Annotated
 from icecream import ic
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
 from sqlmodel import select
 from db.models import Account, Role
@@ -40,24 +40,10 @@ async def get_domain_users():
         return users
     except Exception as err:
         logger.error(f"Error fetching users: {err}")
-        return [
-            DomainUser(
-                id=1,
-                username="adel.ali",
-                fullName="Adel Farrag Ahmed Ali",
-                title="Acting as IT Sectionhead",
-            ),
-            DomainUser(
-                id=2,
-                username="Moustafa-ElAbd",
-                fullName="Moustafa Ramdan ElAbd",
-                title="System Administrator",
-            ),
-        ]
-        # raise HTTPException(
-        #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        #     detail="An error occurred while fetching users.",
-        # )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while fetching users.",
+        )
 
 
 @router.get(
@@ -97,28 +83,20 @@ async def get_roles(maria_session: SessionDep):
 
 
 @router.get(
-    "/users",
+    "/user",
+    response_model=List[SettingUserResponse],
     status_code=status.HTTP_200_OK,
 )
-async def get_users(
-    maria_session: SessionDep,
-    page: int = Query(1, ge=1, description="Page number (1-based)"),
-    page_size: int = Query(10, ge=1, le=100, description="Number of rows per page"),
-    query: str = Query(None, description="Search parameters"),
-    download: bool = Query(False, description="Download status"),
-):
+async def get_users(maria_session: SessionDep, user_id: Optional[int] = None):
     """
     Retrieve users from the database. If user_id is provided, retrieve the specific user.
     """
     try:
-        if query is not None:
-            users = await crud.read_user(
-                session=maria_session,
-                username=query,
-                page=page,
-                page_size=page_size,
-                download=download,
-            )
+        if user_id is not None:
+            users = await crud.read_user(maria_session, user_id)
+            return [users[0]] if users else []
+        else:
+            users = await crud.read_user(maria_session)
             return users
     except IntegrityError as e:
         logger.error(f"IntegrityError in create_user endpoint: {e}")

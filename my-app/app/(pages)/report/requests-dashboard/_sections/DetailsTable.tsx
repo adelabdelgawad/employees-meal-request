@@ -4,7 +4,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { Table, TableHeader } from '@/components/ui/table';
 import DataTableRowHeader from '../_components/_dashboard-table/DataTableRowHeader';
 import DataTableBody from '../_components/_dashboard-table/DataTableBody';
-import Pagination from '@/components/data-table/Pagination';
+import TablePagination from '@/components/data-table/TablePagination';
 
 interface DetailsTableProps {
   records: ReportRequestRecord[];
@@ -61,7 +61,7 @@ const DetailsTableContent: React.FC<DetailsTableProps> = ({ records }) => {
       )}
 
       {/* Pagination */}
-      <Pagination
+      <TablePagination
         currentPage={currentPage}
         totalPages={totalPages}
         totalRows={totalRows}

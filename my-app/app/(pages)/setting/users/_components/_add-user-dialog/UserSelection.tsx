@@ -1,12 +1,11 @@
-"use client";
+import { useState, useEffect, useRef } from 'react';
+import { ChevronsUpDown, Check } from 'lucide-react';
 
-import { useState, useEffect, useRef } from "react";
-import { ChevronsUpDown, Check } from "lucide-react";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from "@/components/ui/popover";
+} from '@/components/ui/popover';
 import {
   Command,
   CommandInput,
@@ -14,41 +13,27 @@ import {
   CommandItem,
   CommandGroup,
   CommandEmpty,
-} from "@/components/ui/command";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/command';
+import { Button } from '@/components/ui/button';
 
-interface User {
-  id: number;
-  fullName: string;
-  username: string;
-  title: string;
-}
-
-interface UserSelectionProps {
-  filteredUsers: User[];
-  selectedUserId: number | null;
-  setSelectedUserId: (id: number | null) => void;
-  setSelectedUser: (user: User | null) => void;
-}
-
-import React from "react";
-
-export default function UserSelection({
+export function UserSelection({
   filteredUsers,
+  selectedUser,
   selectedUserId,
   setSelectedUserId,
-  setSelectedUser,
-}: UserSelectionProps) {
+}: {
+  filteredUsers: any[];
+  selectedUser: any;
+  selectedUserId: number | null;
+  setSelectedUserId: (id: number | null) => void;
+}) {
   const [open, setOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
-
-  const selectedUser = filteredUsers.find((user) => user.id === selectedUserId);
-  console.log(selectedUser);
 
   // Scroll to the top of the CommandList whenever the filteredUsers array changes
   useEffect(() => {
     if (listRef.current) {
-      listRef.current.scrollTo({ top: 0, behavior: "smooth" });
+      listRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [filteredUsers]);
 
@@ -73,7 +58,7 @@ export default function UserSelection({
         >
           {selectedUser
             ? `${selectedUser.fullName} - ${selectedUser.title}`
-            : "Select User..."}
+            : 'Select User...'}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -96,7 +81,6 @@ export default function UserSelection({
                   onSelect={() => {
                     if (user.id) {
                       setSelectedUserId(user.id);
-                      setSelectedUser(user);
                       setOpen(false);
                     }
                   }}

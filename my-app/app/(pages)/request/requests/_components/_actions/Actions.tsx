@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react";
 import ViewAction from "./ViewAction";
 import { Check, X } from "lucide-react";
 import ConfirmationDialog from "@/components/confirmation-dialog";
+import toast from "react-hot-toast";
 
 interface ActionsProps {
   handleAction: (id: number, statusId: number) => Promise<void>;
@@ -35,6 +36,7 @@ const Actions: React.FC<ActionsProps> = ({
     if (statusToChange !== null) {
       try {
         await handleAction(recordId, statusToChange);
+        toast.success("Action completed successfully!");
       } catch (error) {
         console.error(
           `Failed to handle action for statusId ${statusToChange}:`,
@@ -42,6 +44,7 @@ const Actions: React.FC<ActionsProps> = ({
         );
       } finally {
         closeConfirmationDialog();
+
       }
     }
   }, [handleAction, recordId, statusToChange, closeConfirmationDialog]);
