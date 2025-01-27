@@ -1,10 +1,9 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, Suspense } from 'react';
-import { Table, TableHeader } from '@/components/ui/table';
-import DataTableRowHeader from '../_components/_dashboard-table/DataTableRowHeader';
-import DataTableBody from '../_components/_dashboard-table/DataTableBody';
-import TablePagination from '@/components/data-table/TablePagination';
+import React, { useEffect, useState, Suspense } from "react";
+import { Table, TableHeader } from "@/components/ui/table";
+
+import TablePagination from "@/components/data-table/TablePagination";
 
 interface DetailsTableProps {
   records: ReportRequestRecord[];
@@ -14,7 +13,7 @@ const DetailsTableContent: React.FC<DetailsTableProps> = ({ records }) => {
   // Initialize filteredData with records or an empty array
   const [filteredData, setFilteredData] = useState<ReportRequestRecord[]>([]);
   const [currentPageData, setCurrentPageData] = useState<ReportRequestRecord[]>(
-    [],
+    []
   );
 
   // Update filteredData when records change
@@ -34,46 +33,19 @@ const DetailsTableContent: React.FC<DetailsTableProps> = ({ records }) => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const newPageData = filteredData.slice(
       startIndex,
-      startIndex + rowsPerPage,
+      startIndex + rowsPerPage
     );
     setCurrentPageData(newPageData);
   }, [filteredData, currentPage, rowsPerPage]);
 
-  console.log('Filtered Data:', filteredData);
-  console.log('Current Page Data:', currentPageData);
+  console.log("Filtered Data:", filteredData);
+  console.log("Current Page Data:", currentPageData);
 
   // Total Rows and Pages Calculation
   const totalRows = filteredData.length;
   const totalPages = Math.ceil(totalRows / rowsPerPage);
 
-  return (
-    <div className="w-full overflow-x-auto">
-      {/* Data Table */}
-      {currentPageData.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <DataTableRowHeader />
-          </TableHeader>
-          <DataTableBody records={currentPageData} />
-        </Table>
-      ) : (
-        <div className="p-4 text-center">Loading data...</div>
-      )}
-
-      {/* Pagination */}
-      <TablePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalRows={totalRows}
-        rowsPerPage={rowsPerPage}
-        onPageChange={setCurrentPage}
-        onRowsPerPageChange={(rows) => {
-          setRowsPerPage(rows);
-          setCurrentPage(1);
-        }}
-      />
-    </div>
-  );
+  return <div className="w-full overflow-x-auto">{/* Data Table */}</div>;
 };
 
 const DetailsTable: React.FC<DetailsTableProps> = ({ records }) => {

@@ -23,7 +23,7 @@ const data = {
     {
       title: "Request",
       role: "admin, requester, approver",
-      icon: FaTasks,
+      icon: null,
       items: [
         {
           title: "New Request",
@@ -42,7 +42,7 @@ const data = {
     {
       title: "Report",
       role: "admin",
-      icon: FaChartPie,
+      icon: null,
       items: [
         {
           title: "Requests Dashboard",
@@ -67,7 +67,7 @@ const data = {
     {
       title: "Settings",
       role: "admin, moderator",
-      icon: FaCogs,
+      icon: null,
       items: [
         {
           title: "Users",
@@ -121,6 +121,7 @@ const Sidebar = () => {
           onClick={toggleSidebar}
           className="p-2 rounded-md hover:bg-gray-200 transition"
         >
+          {/* Menu Toggle Icon */}
           <FaBars
             className={`w-6 h-6 transform ${
               isCollapsed ? "rotate-180" : ""
@@ -141,7 +142,9 @@ const Sidebar = () => {
                 className="flex items-center justify-between p-2 hover:bg-gray-200 transition rounded-md cursor-pointer"
               >
                 <div className="flex items-center gap-4">
-                  <section.icon className="w-5 h-5 text-gray-600" />
+                  {section.icon && (
+                    <section.icon className="w-5 h-5 text-gray-600" />
+                  )}
                   {!isCollapsed && (
                     <span className="text-gray-700 font-semibold">
                       {section.title}
@@ -166,7 +169,9 @@ const Sidebar = () => {
                           href={item.url}
                           className="flex items-center gap-4 p-2 hover:bg-gray-200 transition rounded-md"
                         >
-                          <item.icon className="w-4 h-4 text-gray-500" />
+                          {item.icon && (
+                            <item.icon className="w-4 h-4 text-gray-500" />
+                          )}
                           <span className="text-gray-700">{item.title}</span>
                         </Link>
                       </li>

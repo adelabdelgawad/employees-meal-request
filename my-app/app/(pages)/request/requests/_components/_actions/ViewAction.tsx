@@ -98,21 +98,7 @@ const ViewAction: React.FC<ViewActionProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-4 p-4">
-          <Button
-            onClick={() => setShowConfirmModal(true)}
-            disabled={disableStatus || changedStatus.length === 0}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Save Changes
-          </Button>
-          <Button
-            onClick={handleDrawerClose}
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
-            Cancel
-          </Button>
-        </div>
+        <div className="flex justify-end gap-4 p-4"></div>
       </div>
 
       {/* Confirmation Modal */}

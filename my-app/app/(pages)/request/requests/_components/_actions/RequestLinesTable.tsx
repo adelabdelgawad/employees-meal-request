@@ -2,6 +2,15 @@ import React from "react";
 import { format } from "date-fns";
 import { Rubik } from "next/font/google";
 import { Switch } from "@/components/ui/switch"; // Adjust the path based on your setup
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"; // Import shadcn table components
+import { Button } from "@/components/ui/button";
 
 const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
@@ -24,26 +33,34 @@ const RequestLinesTable: React.FC<RequestLinesTableProps> = ({
     <div className="flex flex-col h-full border border-gray-300 rounded-lg shadow">
       {/* Table Header */}
       <div className="bg-gray-100 border-b border-gray-300">
-        <table className="min-w-full border-collapse text-sm text-left">
-          <thead>
-            <tr>
-              <th className="px-4 py-2">Employee</th>
-              <th className="px-4 py-2">Attendance</th>
-              <th className="px-4 py-2">Shift Hours</th>
-              <th className="px-4 py-2">Accepted</th>
-            </tr>
-          </thead>
-        </table>
+        <Table className="w-full table-fixed">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-1/4 text-center px-4 py-2">
+                Employee
+              </TableHead>
+              <TableHead className="w-1/4 text-center px-4 py-2">
+                Attendance
+              </TableHead>
+              <TableHead className="w-1/4 text-center px-4 py-2">
+                Shift Hours
+              </TableHead>
+              <TableHead className="w-1/4 text-center px-4 py-2">
+                Accepted
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+        </Table>
       </div>
 
       {/* Table Body (Scrollable) */}
-      <div className="flex-grow overflow-y-auto h-[calc(100vh-12rem)]">
-        <table className="min-w-full border-collapse text-sm text-left">
-          <tbody>
+      <div className="flex-grow overflow-y-auto h-[calc(100vh-16rem)]">
+        <Table className="w-full table-fixed">
+          <TableBody>
             {data.map((line) => (
-              <tr
+              <TableRow
                 key={line.id}
-                className={`border-b border-gray-300 hover:bg-gray-50 ${
+                className={`hover:bg-gray-50 ${
                   !line.is_accepted
                     ? "bg-red-100"
                     : !line.attendance
@@ -52,32 +69,30 @@ const RequestLinesTable: React.FC<RequestLinesTableProps> = ({
                 }`}
               >
                 {/* Employee Info */}
-                <td className="px-4 py-2">
-                  <div className="text-left">
-                    <div className={`text-sm font-semibold ${rubik.className}`}>
-                      {line.name}
-                    </div>
-                    <div className="text-xs text-gray-500">{line.title}</div>
-                    <span className="text-xs text-gray-500 font-bold">
-                      Code: {line.code}
-                    </span>
+                <TableCell className="text-center px-4 py-2">
+                  <div className={`text-sm font-semibold ${rubik.className}`}>
+                    {line.name}
                   </div>
-                </td>
+                  <div className="text-xs text-gray-500">{line.title}</div>
+                  <span className="text-xs text-gray-500 font-bold">
+                    Code: {line.code}
+                  </span>
+                </TableCell>
 
                 {/* Attendance */}
-                <td className="px-4 py-2 text-center">
+                <TableCell className="text-center px-4 py-2">
                   {line.attendance
                     ? format(new Date(line.attendance), "yyyy-MM-dd HH:mm:ss")
                     : "N/A"}
-                </td>
+                </TableCell>
 
                 {/* Shift */}
-                <td className="px-4 py-2 text-center">
+                <TableCell className="text-center px-4 py-2">
                   {line.shift_hours ? line.shift_hours : "N/A"}
-                </td>
+                </TableCell>
 
                 {/* Accepted Switch */}
-                <td className="px-4 py-2 text-center">
+                <TableCell className="text-center px-4 py-2">
                   <Switch
                     checked={line.is_accepted}
                     onCheckedChange={(checked) =>
@@ -86,28 +101,29 @@ const RequestLinesTable: React.FC<RequestLinesTableProps> = ({
                     disabled={disableStatus}
                     className="focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Footer Buttons */}
+
       <div className="bg-gray-100 border-t border-gray-300 p-4 flex justify-end space-x-4">
-        <button
+        <Button
           onClick={onSave}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-          disabled={disableStatus}
+          // disabled={disableStatus || changedStatus.length === 0}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
         >
-          Save
-        </button>
-        <button
+          Save Changes
+        </Button>
+        <Button
           onClick={onCancel}
-          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+          className="bg-red-600 hover:bg-red-700 text-white"
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );
