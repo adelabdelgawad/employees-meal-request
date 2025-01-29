@@ -1,22 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { IconType } from "react-icons";
-import {
-  FaTasks,
-  FaPlusSquare,
-  FaClipboardList,
-  FaChartPie,
-  FaTachometerAlt,
-  FaFileAlt,
-  FaUtensils,
-  FaCogs,
-  FaUsers,
-  FaUserShield,
-  FaTools,
-  FaBars,
-} from "react-icons/fa";
+import { FaBars } from "react-icons/fa";
 
 const data = {
   navMain: [
@@ -29,13 +15,13 @@ const data = {
           title: "New Request",
           url: "/request/new-request",
           role: "admin, requester",
-          icon: FaPlusSquare,
+          icon: null,
         },
         {
           title: "Requests",
           url: "/request/requests",
           role: "admin, approver",
-          icon: FaClipboardList,
+          icon: null,
         },
       ],
     },
@@ -48,19 +34,19 @@ const data = {
           title: "Requests Dashboard",
           url: "/report/requests-dashboard",
           role: "admin",
-          icon: FaTachometerAlt,
+          icon: null,
         },
         {
           title: "Requests Details",
           url: "/report/details",
           role: "admin",
-          icon: FaFileAlt,
+          icon: null,
         },
         {
           title: "Meal Plans",
           url: "/data-management/meal-plans",
           role: "admin",
-          icon: FaUtensils,
+          icon: null,
         },
       ],
     },
@@ -73,30 +59,44 @@ const data = {
           title: "Users",
           url: "/setting/users",
           role: "admin, moderator",
-          icon: FaUsers,
+          icon: null,
         },
         {
           title: "Roles",
           url: "/security/roles",
           role: "admin, moderator",
-          icon: FaUserShield,
+          icon: null,
         },
       ],
     },
   ],
 };
 
-const currentRole = "admin"; // Current user's role
-
-// Helper function to check role permissions
-const isRoleAllowed = (roles: string) =>
-  roles.split(", ").includes(currentRole);
-
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>(
     {}
   );
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session");
+        const session = await response.json();
+        if (session?.user?.userRoles) {
+          setUserRoles(session.user.userRoles);
+        }
+      } catch (error) {
+        console.error("Error fetching session:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSession();
+  }, []);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -106,6 +106,19 @@ const Sidebar = () => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
+  // Function to check if the user's roles match the required roles
+  const isRoleAllowed = (allowedRoles: string) => {
+    if (!userRoles.length) return false;
+    const allowedRolesArray = allowedRoles
+      .split(", ")
+      .map((role) => role.trim());
+    return userRoles.some((role) => allowedRolesArray.includes(role));
+  };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <aside
       className={`h-screen bg-gray-100 border-r transition-all duration-300 ${
@@ -114,12 +127,9 @@ const Sidebar = () => {
     >
       {/* Sidebar Header */}
       <div className="flex items-center justify-between p-4 border-b">
-        {!isCollapsed && (
-          <span className="text-xl font-bold text-gray-700">Menu</span>
-        )}
         <button
           onClick={toggleSidebar}
-          className="p-2 rounded-md hover:bg-gray-200 transition"
+          className="p-1 rounded-md hover:bg-gray-100 transition"
         >
           {/* Menu Toggle Icon */}
           <FaBars
@@ -167,11 +177,8 @@ const Sidebar = () => {
                       <li key={item.title}>
                         <Link
                           href={item.url}
-                          className="flex items-center gap-4 p-2 hover:bg-gray-200 transition rounded-md"
+                          className="flex items-center gap-2 p-1 hover:bg-gray-200 transition rounded-md"
                         >
-                          {item.icon && (
-                            <item.icon className="w-4 h-4 text-gray-500" />
-                          )}
                           <span className="text-gray-700">{item.title}</span>
                         </Link>
                       </li>

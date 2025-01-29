@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import data, report, security
+from routers import data, report, security, sec_login
 from dotenv import load_dotenv
 from routers import request
 from src.startup import lifespan
@@ -44,3 +44,4 @@ app.include_router(data.router, tags=["Data"])
 app.include_router(request.router, tags=["Request"])
 app.include_router(report.router, tags=["Report"])
 app.include_router(security.router, tags=["Security Settings"])
+app.include_router(sec_login.router, tags=["Authentication"])
