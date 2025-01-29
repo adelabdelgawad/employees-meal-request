@@ -1,25 +1,11 @@
-import NextAuth, { NextAuthConfig } from "next-auth";
+// auth.ts
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { jwtVerify } from "jose";
+import { jwtVerify } from "jose"; // Ensure this import is present
 
-interface User {
-  userId: string;
-  username: string;
-  fullName: string;
-  userTitle: string;
-  userRoles: string[];
-  token: string;
-}
-
-// Environment Variables
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 
-/**
- * Decodes and verifies a JWT using `jose`
- * @param token The JWT token string
- * @returns Decoded JWT payload
- */
 const decodeJWT = async (token: string) => {
   try {
     const secret = new TextEncoder().encode(NEXTAUTH_SECRET);
@@ -31,29 +17,7 @@ const decodeJWT = async (token: string) => {
   }
 };
 
-declare module "next-auth" {
-  interface JWT {
-    userId: string;
-    username: string;
-    fullName: string;
-    userTitle: string;
-    userRoles: string[];
-    accessToken: string;
-  }
-
-  interface Session {
-    user: {
-      userId: string;
-      username: string;
-      fullName: string;
-      userTitle: string;
-      userRoles: string[];
-    };
-    accessToken: string;
-  }
-}
-
-const authOptions: NextAuthConfig = {
+export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -82,7 +46,6 @@ const authOptions: NextAuthConfig = {
             throw new Error(data?.detail || "Invalid credentials");
           }
 
-          // Decode the JWT
           const decoded = await decodeJWT(data.access_token);
           if (!decoded) throw new Error("Failed to decode token");
 
@@ -92,8 +55,8 @@ const authOptions: NextAuthConfig = {
             fullName: decoded.fullName as string,
             userTitle: decoded.userTitle as string,
             userRoles: (decoded.userRoles as string[]) || [],
-            token: data.access_token,
-          } as User;
+            accessToken: data.access_token,
+          };
         } catch (error) {
           console.error("Authentication error:", error);
           throw new Error("Login failed");
@@ -101,16 +64,18 @@ const authOptions: NextAuthConfig = {
       },
     }),
   ],
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        const userData = user as User;
-        token.userId = userData.userId;
-        token.username = userData.username;
-        token.fullName = userData.fullName;
-        token.userTitle = userData.userTitle;
-        token.userRoles = userData.userRoles;
-        token.accessToken = userData.token;
+        token.userId = user.userId;
+        token.username = user.username;
+        token.fullName = user.fullName;
+        token.userTitle = user.userTitle;
+        token.userRoles = user.userRoles;
+        token.accessToken = user.accessToken;
       }
       return token;
     },
@@ -131,10 +96,5 @@ const authOptions: NextAuthConfig = {
   pages: {
     signIn: "/auth/signin",
   },
-  session: {
-    strategy: "jwt",
-  },
   secret: NEXTAUTH_SECRET,
-};
-
-export const { handlers, signIn, signOut, auth } = NextAuth(authOptions);
+});

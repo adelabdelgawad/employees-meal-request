@@ -1,13 +1,3 @@
-from datetime import datetime, timedelta, timezone
-from typing import Annotated
-
-import jwt
-from fastapi import Depends, FastAPI, HTTPException, status, APIRouter
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jwt.exceptions import InvalidTokenError
-from passlib.context import CryptContext
-from pydantic import BaseModel
-from typing import Optional
 import traceback
 import logging
 from typing import List, Optional, Dict
@@ -30,70 +20,9 @@ cairo_tz = pytz.timezone("Africa/Cairo")
 
 # Logger setup
 logger = logging.getLogger(__name__)
-# openssl rand -hex 32
-SECRET_KEY = "3w+4FPNsWEO4/sEpS6BEua3RSHrvhgeK72Su9lpmn94="
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    user_id: int | None = None
-
-
-class User(BaseModel):
-    userId: int
-    username: str
-    fullName: Optional[str] = None
-    userTitle: Optional[str] = None
-    email: str
-    userRoles: list[str] = []
-
-
-class UserInDB(User):
-    hashed_password: str
-
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
+# API Router instance
 router = APIRouter()
-
-
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("userId")
-        ic(user_id)
-        print("Payload", payload)
-        if user_id is None:
-            raise credentials_exception
-        token_data = TokenData(user_id=user_id)
-    except InvalidTokenError:
-        raise credentials_exception
-
-    return token_data
 
 
 @router.post("/request")
@@ -102,12 +31,13 @@ async def create_request_endpoint(
     request_lines: List[RequestBody],
     background_tasks: BackgroundTasks,
     hris_session: HRISSessionDep,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
     request_time: Optional[datetime] = datetime.now(cairo_tz),
 ):
     """
     Create requests and process them in the background.
     """
+    ic(current_user)
     if not request_lines:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

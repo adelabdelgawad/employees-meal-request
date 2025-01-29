@@ -1,62 +1,70 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+// pages/api/submit-request.ts
+import { getToken } from "next-auth/jwt";
+import type { NextApiRequest, NextApiResponse } from "next";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method Not Allowed' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "Method Not Allowed" });
   }
 
   try {
-    const { requests } = req.body;
-    console.log('Received requests:', requests);
-
-    // Validate that requests exist
-    if (!requests || !Array.isArray(requests) || requests.length === 0) {
-      return res.status(400).json({ message: 'No requests provided' });
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized - No session" });
     }
 
-    // Transform the request keys to match your FastAPI backend requirements
-    const transformedRequests = requests.map((request: any) => ({
-      employee_id: request.id,
-      employee_code: request.code,
-      department_id: request.department_id,
-      meal_id: request.meal_id,
-    }));
+    const accessToken = token.accessToken;
+    if (!accessToken) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized - No access token" });
+    }
 
-    console.log('Transformed Requests:', transformedRequests);
+    const { requests } = req.body;
 
-    // Send transformed requests to the FastAPI backend
-    const fastApiResponse = await fetch('http://localhost:8000/request', {
-      method: 'POST',
+    if (!requests || !Array.isArray(requests) || requests.length === 0) {
+      return res.status(400).json({ message: "No requests provided" });
+    }
+
+    const transformedRequests = {
+      request_lines: requests.map((request) => ({
+        employee_id: request.id,
+        employee_code: request.code,
+        department_id: request.department_id,
+        meal_id: request.meal_id,
+      })),
+    };
+
+    const fastApiResponse = await fetch(`${API_URL}/request`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(transformedRequests),
     });
 
+    const result = await fastApiResponse.json();
+
     if (!fastApiResponse.ok) {
-      const errorData = await fastApiResponse.json();
-      throw new Error(
-        errorData.detail || 'Failed to process requests at FastAPI',
-      );
+      return res.status(fastApiResponse.status).json({
+        message: "FastAPI request failed",
+        fastApiError: result,
+      });
     }
 
-    // Parse FastAPI response
-    const result = await fastApiResponse.json();
-    console.log('FastAPI Response:', result);
-
-    // ✅ Return the created meal request IDs directly from the result
-    return res.status(200).json({
-      message: 'Requests submitted successfully!',
-      created_request_id: result.created_request_id,
-    });
-  } catch (error: any) {
-    console.error('Error handling requests:', error);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Error handling requests:", error);
     return res.status(500).json({
       message:
-        error.message || 'An error occurred while processing the request',
+        error.message || "An error occurred while processing the request",
+      errorDetails: error,
     });
   }
 }

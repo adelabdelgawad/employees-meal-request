@@ -49,7 +49,7 @@ fake_users_db = {
         "userTitle": "Admin",
         "email": "johndoe@example.com",
         "hashed_password": pwd_context.hash("secret"),
-        "userRoles": ["requester"],
+        "userRoles": ["requester", "moderator"],
     }
 }
 

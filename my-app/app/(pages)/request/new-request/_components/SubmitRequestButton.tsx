@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useNewRequest } from "@/hooks/NewRequestContext";
 import { toast } from "react-hot-toast";
-import { debounce } from "@/lib/utils";
+import { debounce } from "@/lib/utils"; // Adjust import to your actual utils
+import { useNewRequest } from "@/hooks/NewRequestContext";
 import { toastWarning } from "@/lib/utils/toast";
+
 export default function SubmitRequestButton() {
-  const { submittedEmployees, resetSubmittedEmployees } = useNewRequest(); // ✅ Added reset function
+  const { submittedEmployees, resetSubmittedEmployees } = useNewRequest();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // Handles the actual request
   const handleRequestSubmission = async () => {
     if (submittedEmployees.length === 0) {
       toastWarning("No requests to submit!");
@@ -17,13 +19,14 @@ export default function SubmitRequestButton() {
     }
 
     setLoading(true);
-
     try {
+      // Use fetch with credentials so cookies (session token) are sent
       const response = await fetch("/api/submit-request", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // <--- Ensures the session cookie is included
         body: JSON.stringify({ requests: submittedEmployees }),
       });
 
@@ -32,11 +35,11 @@ export default function SubmitRequestButton() {
       }
 
       const result = await response.json();
-      toast.success(result.message);
+      toast.success(result.message || "Requests submitted successfully!");
 
-      // ✅ Reset the form after successful submission
+      // Reset state after successful submission
       resetSubmittedEmployees();
-      setSubmitted(false); // Reset the button state
+      setSubmitted(false);
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
     } finally {
@@ -44,7 +47,7 @@ export default function SubmitRequestButton() {
     }
   };
 
-  // ✅ Debounced submission handler
+  // Debounce the submission to avoid rapid clicks
   const debouncedHandleRequestSubmission = debounce(
     handleRequestSubmission,
     300

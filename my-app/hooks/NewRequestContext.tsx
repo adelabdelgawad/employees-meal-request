@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from "react";
 
-import { DepartmentType, EmployeeType, Meal } from '@/pages/definitions';
-import { getDepartments, getEmployees, getMeals } from '@/lib/services/data';
+import { DepartmentType, EmployeeType, Meal } from "@/pages/definitions";
+import { getDepartments, getEmployees, getMeals } from "@/lib/services/data";
 
 interface NewRequestContextType {
   departments: DepartmentType[];
@@ -21,7 +21,7 @@ interface NewRequestContextType {
 }
 
 const NewRequestContext = createContext<NewRequestContextType | undefined>(
-  undefined,
+  undefined
 );
 
 export function NewRequestProvider({
@@ -34,7 +34,7 @@ export function NewRequestProvider({
   const [Meals, setMeals] = useState<Meal[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<EmployeeType[]>(
-    [],
+    []
   );
   const [submittedEmployees, setSubmittedEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,6 +43,7 @@ export function NewRequestProvider({
   // ✅ Function to reset submitted employees
   const resetSubmittedEmployees = () => {
     setSubmittedEmployees([]);
+    setSelectedDepartments([]);
   };
 
   useEffect(() => {
@@ -58,7 +59,7 @@ export function NewRequestProvider({
         const fetchedMeals = await getMeals();
         setMeals(fetchedMeals);
       } catch (err: any) {
-        setError(err.message || 'An error occurred while fetching data.');
+        setError(err.message || "An error occurred while fetching data.");
       } finally {
         setLoading(false);
       }
@@ -92,7 +93,7 @@ export function NewRequestProvider({
 export function useNewRequest() {
   const context = useContext(NewRequestContext);
   if (!context) {
-    throw new Error('useNewRequest must be used within a NewRequestProvider');
+    throw new Error("useNewRequest must be used within a NewRequestProvider");
   }
   return context;
 }

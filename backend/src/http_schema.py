@@ -18,7 +18,7 @@ class RequestBody(BaseModel):
     employee_code: int
     department_id: int
     meal_id: int
-    notes: Optional[str] = Field(default="")
+    notes: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
