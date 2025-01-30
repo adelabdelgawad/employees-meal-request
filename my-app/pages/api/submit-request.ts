@@ -31,14 +31,13 @@ export default async function handler(
       return res.status(400).json({ message: "No requests provided" });
     }
 
-    const transformedRequests = {
-      request_lines: requests.map((request) => ({
-        employee_id: request.id,
-        employee_code: request.code,
-        department_id: request.department_id,
-        meal_id: request.meal_id,
-      })),
-    };
+    // Transform the request keys to match your FastAPI backend requirements
+    const transformedRequests = requests.map((request: any) => ({
+      employee_id: request.id,
+      employee_code: request.code,
+      department_id: request.department_id,
+      meal_id: request.meal_id,
+    }));
 
     const fastApiResponse = await fetch(`${API_URL}/request`, {
       method: "POST",
@@ -61,9 +60,12 @@ export default async function handler(
     return res.status(200).json(result);
   } catch (error) {
     console.error("Error handling requests:", error);
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "An error occurred while processing the request";
     return res.status(500).json({
-      message:
-        error.message || "An error occurred while processing the request",
+      message: errorMessage,
       errorDetails: error,
     });
   }

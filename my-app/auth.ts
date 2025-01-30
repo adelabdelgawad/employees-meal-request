@@ -1,11 +1,15 @@
-// auth.ts
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { jwtVerify } from "jose"; // Ensure this import is present
+import { jwtVerify } from "jose";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 
+/**
+ * Decodes and verifies a JWT token using `jose`.
+ * @param token - JWT access token
+ * @returns Decoded JWT payload or null if verification fails.
+ */
 const decodeJWT = async (token: string) => {
   try {
     const secret = new TextEncoder().encode(NEXTAUTH_SECRET);
@@ -56,6 +60,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             userTitle: decoded.userTitle as string,
             userRoles: (decoded.userRoles as string[]) || [],
             accessToken: data.access_token,
+            expiresAt: Math.floor(Date.now() / 1000) + 30 * 60, // Set expiration (30 min)
           };
         } catch (error) {
           console.error("Authentication error:", error);
@@ -66,30 +71,49 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   ],
   session: {
     strategy: "jwt",
+    maxAge: 30 * 60, // 30 minutes (in seconds)
+  },
+  jwt: {
+    maxAge: 30 * 60, // 30 minutes
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.userId = user.userId;
-        token.username = user.username;
-        token.fullName = user.fullName;
-        token.userTitle = user.userTitle;
-        token.userRoles = user.userRoles;
-        token.accessToken = user.accessToken;
+        return {
+          ...token,
+          userId: user.userId,
+          username: user.username,
+          fullName: user.fullName,
+          userTitle: user.userTitle,
+          userRoles: user.userRoles,
+          accessToken: user.accessToken,
+          expiresAt: user.expiresAt, // Store expiration time
+        };
       }
+
+      // Check if token is expired
+      const now = Math.floor(Date.now() / 1000);
+      if (token.expiresAt && now >= token.expiresAt) {
+        console.warn("Session expired - clearing token");
+        return {}; // Force logout by clearing token
+      }
+
       return token;
     },
+
     async session({ session, token }) {
-      if (token) {
-        session.user = {
-          userId: token.userId,
-          username: token.username,
-          fullName: token.fullName,
-          userTitle: token.userTitle,
-          userRoles: token.userRoles,
-        };
-        session.accessToken = token.accessToken;
+      if (!token.accessToken) {
+        return null; // Force logout if token is missing
       }
+
+      session.user = {
+        userId: token.userId,
+        username: token.username,
+        fullName: token.fullName,
+        userTitle: token.userTitle,
+        userRoles: token.userRoles,
+      };
+      session.accessToken = token.accessToken;
       return session;
     },
   },

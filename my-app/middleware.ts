@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import type { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
+
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 
 // Define role-based access control
 const roleBasedAccess = {
@@ -23,6 +25,21 @@ const roleBasedAccess = {
 const publicPages = ["/access-denied", "/auth/signin"];
 
 export async function middleware(req: NextRequest) {
+  // Session expiry handling
+  const token = await getToken({ req, secret: NEXTAUTH_SECRET });
+
+  if (!token) {
+    return NextResponse.next();
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  if (token.exp && token.exp < now) {
+    console.warn("Session expired - clearing token");
+    return NextResponse.redirect("/auth/signin");
+  }
+
+  // Role-based access control];
+  console.log(token);
   const session = await auth();
   const { pathname } = req.nextUrl;
 
@@ -62,8 +79,11 @@ export async function middleware(req: NextRequest) {
   }
 
   // ✅ Check role-based access
-  const userRoles = session.user.userRoles || [];
-  const allowedPaths = userRoles.flatMap((role) => roleBasedAccess[role] || []);
+  const userRoles: (keyof typeof roleBasedAccess)[] =
+    session.user.userRoles || [];
+  const allowedPaths = userRoles.flatMap(
+    (role: keyof typeof roleBasedAccess) => roleBasedAccess[role] || []
+  );
 
   // 🚫 If user lacks permission for the requested page, redirect to `/access-denied`
   if (!allowedPaths.includes(pathname)) {
