@@ -8,7 +8,7 @@ import { useNewRequest } from "@/hooks/NewRequestContext";
 import { EmployeeType, Meal } from "@/pages/definitions";
 import { Button } from "@/components/ui/button";
 import { Rubik } from "next/font/google";
-import { CrossIcon } from "lucide-react";
+import { CrossIcon, X } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { toastWarning } from "@/lib/utils/toast";
 
@@ -111,7 +111,7 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-semibold">Selected Employees</h3>
           <Button variant="ghost" onClick={() => setIsDrawerOpen(false)}>
-            <CrossIcon className="w-5 h-5" />{" "}
+            <X className="w-5 h-5" />{" "}
           </Button>
         </div>
 

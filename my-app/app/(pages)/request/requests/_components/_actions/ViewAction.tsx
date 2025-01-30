@@ -76,7 +76,7 @@ const ViewAction: React.FC<ViewActionProps> = ({
       <div
         className={`fixed top-0 right-0 h-full bg-white shadow-lg transform ${
           isDrawerOpen ? "translate-x-0" : "translate-x-full"
-        } transition-transform duration-500 ease-in-out w-[40rem] z-50`}
+        } transition-transform duration-500 ease-in-out w-[60rem] z-50`}
       >
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b">

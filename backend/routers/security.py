@@ -70,12 +70,12 @@ async def get_roles(maria_session: SessionDep):
 
     except HTTPException as http_exc:
         logger.error(f"HTTP error: {http_exc.detail}")
-        logger.debug(f"Traceback: {traceback.format_exc()}")
+        logger.info(f"Traceback: {traceback.format_exc()}")
         raise http_exc
 
     except Exception as err:
         logger.error(f"Unexpected error while reading roles: {err}")
-        logger.debug(f"Traceback: {traceback.format_exc()}")
+        logger.info(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while reading roles.",

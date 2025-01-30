@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
+import os
 
 import jwt
 from fastapi import Depends, FastAPI, HTTPException, status, APIRouter
@@ -13,7 +14,10 @@ import logging
 from typing import List, Optional, Dict
 from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Query
 from routers.cruds import request as crud
-from routers.cruds.request_lines import read_request_lines, update_request_lines
+from routers.cruds.request_lines import (
+    read_request_lines,
+    update_request_lines,
+)
 from src.http_schema import (
     RequestBody,
     RequestLineRespose,
@@ -31,7 +35,7 @@ cairo_tz = pytz.timezone("Africa/Cairo")
 # Logger setup
 logger = logging.getLogger(__name__)
 # openssl rand -hex 32
-SECRET_KEY = "3w+4FPNsWEO4/sEpS6BEua3RSHrvhgeK72Su9lpmn94="
+SECRET_KEY = os.getenv("AUTH_SECRET", "your_secret_key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
@@ -146,10 +150,14 @@ async def create_request_endpoint(
 )
 async def get_requests(
     maria_session: SessionDep,
-    start_time: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    start_time: Optional[str] = Query(
+        None, description="Start date (YYYY-MM-DD)"
+    ),
     end_time: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     page: int = Query(1, ge=1, description="Page number (1-based)"),
-    page_size: int = Query(10, ge=1, le=100, description="Number of rows per page"),
+    page_size: int = Query(
+        10, ge=1, le=100, description="Number of rows per page"
+    ),
     query: str = Query(None, description="Search parameters"),
     download: bool = Query(False, description="Download status"),
 ):
@@ -196,7 +204,9 @@ async def update_order_status_endpoint(
     Update the status of a request by its ID.
     """
     try:
-        result = await crud.update_request_status(maria_session, request_id, status_id)
+        result = await crud.update_request_status(
+            maria_session, request_id, status_id
+        )
         return {
             "status": "success",
             "message": "Request updated successfully",
@@ -279,7 +289,10 @@ async def update_request_lines_endpoint(
 
         # Fetch the updated request details
         response = await crud.read_request_by_id(maria_session, request_id)
-        return {"message": "Request lines updated successfully", "data": response}
+        return {
+            "message": "Request lines updated successfully",
+            "data": response,
+        }
 
     except HTTPException as http_exc:
         raise http_exc

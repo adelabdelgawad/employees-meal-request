@@ -3,7 +3,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { jwtVerify } from "jose";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
+const AUTH_SECRET = process.env.AUTH_SECRET;
+const TOKEN_REFRESH_INTERVAL = 5 * 60; // 5 minutes (in seconds)
 
 /**
  * Decodes and verifies a JWT token using `jose`.
@@ -12,12 +13,45 @@ const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
  */
 const decodeJWT = async (token: string) => {
   try {
-    const secret = new TextEncoder().encode(NEXTAUTH_SECRET);
+    const secret = new TextEncoder().encode(AUTH_SECRET);
     const { payload } = await jwtVerify(token, secret);
     return payload;
   } catch (error) {
     console.error("JWT verification failed:", error);
     return null;
+  }
+};
+
+/**
+ * Requests a new access token using the refresh token.
+ * @param oldToken - The current JWT token object
+ * @returns A new token object or null if refresh fails
+ */
+const refreshAccessToken = async (oldToken: any) => {
+  try {
+    const response = await fetch(`${API_URL}/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accessToken: oldToken.accessToken }), // Send current access token
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.detail || "Token refresh failed");
+    }
+
+    const decoded = await decodeJWT(data.access_token);
+    if (!decoded) throw new Error("Failed to decode refreshed token");
+
+    return {
+      ...oldToken,
+      accessToken: data.access_token,
+      expiresAt: Math.floor(Date.now() / 1000) + 30 * 60, // Reset expiration time (30 min)
+    };
+  } catch (error) {
+    console.error("Token refresh error:", error);
+    return null; // Force logout on refresh failure
   }
 };
 
@@ -91,10 +125,13 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         };
       }
 
-      // Check if token is expired
+      // Check if token is close to expiring (within 5 minutes)
       const now = Math.floor(Date.now() / 1000);
-      if (token.expiresAt && now >= token.expiresAt) {
-        console.warn("Session expired - clearing token");
+      if (token.expiresAt && now >= token.expiresAt - TOKEN_REFRESH_INTERVAL) {
+        console.log("Refreshing access token...");
+        const refreshedToken = await refreshAccessToken(token);
+        if (refreshedToken) return refreshedToken;
+        console.warn("Failed to refresh token - forcing logout");
         return {}; // Force logout by clearing token
       }
 
@@ -120,5 +157,5 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   pages: {
     signIn: "/auth/signin",
   },
-  secret: NEXTAUTH_SECRET,
+  secret: AUTH_SECRET,
 });

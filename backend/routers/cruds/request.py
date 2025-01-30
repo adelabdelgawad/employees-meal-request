@@ -116,6 +116,7 @@ async def update_request_lines(
     """
     Update request lines with attendance details.
     """
+    ic("request_lines")
     try:
         employee_codes = [line.employee_code for line in request_lines]
         employee_ids = [line.employee_id for line in request_lines]
@@ -126,8 +127,9 @@ async def update_request_lines(
         )
         today_shifts = await read_shifts_from_hris(hris_session, employee_ids)
 
-        logger.debug(f"Today Shifts: {today_shifts}")
-        logger.debug(f"Recent Attendances: {recent_attendances}")
+        ic(today_shifts)
+        logger.info(f"Today Shifts: {today_shifts}")
+        logger.info(f"Recent Attendances: {recent_attendances}")
 
         for line in request_lines:
             # Find attendance
@@ -149,7 +151,7 @@ async def update_request_lines(
                 ),
                 None,
             )
-            logger.debug(
+            logger.info(
                 f"Line {line.id} -> Attendance: {attendance}, Shift Hours: {shift_hours}"
             )
 
@@ -197,8 +199,12 @@ async def read_requests(
             end_dt = datetime.strptime(end_time, date_format)
 
             # Adjust start_time to today's start and end_time to today's end
-            start_dt = start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_dt = end_dt.replace(hour=23, minute=59, second=59, microsecond=0)
+            start_dt = start_dt.replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            end_dt = end_dt.replace(
+                hour=23, minute=59, second=59, microsecond=0
+            )
         except ValueError:
             raise ValueError(
                 "Invalid date format. Expected 'MM/DD/YYYY, HH:MM:SS AM/PM'."
@@ -211,7 +217,9 @@ async def read_requests(
 
     # Apply filters
     if start_time and end_time:
-        statement = statement.where(Request.request_time.between(start_dt, end_dt))
+        statement = statement.where(
+            Request.request_time.between(start_dt, end_dt)
+        )
     if requester_id:
         statement = statement.where(Request.requester_id == int(requester_id))
 
@@ -235,9 +243,9 @@ async def read_requests(
             Request.closed_time,
             Request.notes,
             func.count(RequestLine.id).label("total_lines"),
-            func.sum(case((RequestLine.is_accepted == True, 1), else_=0)).label(
-                "accepted_lines"
-            ),
+            func.sum(
+                case((RequestLine.is_accepted == True, 1), else_=0)
+            ).label("accepted_lines"),
         )
         .join(Account, Request.requester_id == Account.id)
         .join(RequestStatus, Request.status_id == RequestStatus.id)
@@ -258,7 +266,9 @@ async def read_requests(
     )
     # Apply filters
     if start_time and end_time:
-        statement = statement.where(Request.request_time.between(start_dt, end_dt))
+        statement = statement.where(
+            Request.request_time.between(start_dt, end_dt)
+        )
     if requester_id:
         statement = statement.where(Request.requester_id == int(requester_id))
 
@@ -272,7 +282,10 @@ async def read_requests(
     rows = result.fetchall()
 
     # Transform rows into the expected response format
-    items = [RequestPageRecordResponse.model_validate(row).model_dump() for row in rows]
+    items = [
+        RequestPageRecordResponse.model_validate(row).model_dump()
+        for row in rows
+    ]
 
     return {
         "data": items,
@@ -283,7 +296,9 @@ async def read_requests(
     }
 
 
-async def update_request_status(session: AsyncSession, request_id: int, status_id: int):
+async def update_request_status(
+    session: AsyncSession, request_id: int, status_id: int
+):
     """
     Update the status of a request and related lines.
     """
@@ -318,7 +333,9 @@ async def update_request_lines_status(session: AsyncSession, request_id: int):
     Mark all lines of a request as not accepted.
     """
     try:
-        statement = select(RequestLine).where(RequestLine.request_id == request_id)
+        statement = select(RequestLine).where(
+            RequestLine.request_id == request_id
+        )
         result = await session.execute(statement)
         lines = result.scalars().all()
 
@@ -355,9 +372,9 @@ async def read_request_by_id(
             Request.closed_time,
             Request.notes,
             func.count(RequestLine.id).label("total_lines"),
-            func.sum(case((RequestLine.is_accepted == True, 1), else_=0)).label(
-                "accepted_lines"
-            ),
+            func.sum(
+                case((RequestLine.is_accepted == True, 1), else_=0)
+            ).label("accepted_lines"),
         )
         .join(Account, Request.requester_id == Account.id)
         .join(RequestStatus, Request.status_id == RequestStatus.id)

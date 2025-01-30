@@ -18,7 +18,10 @@ class Login:
     """
 
     def __init__(
-        self, session: AsyncSession, username: str, password: Optional[str] = None
+        self,
+        session: AsyncSession,
+        username: str,
+        password: Optional[str] = None,
     ) -> None:
         """
         Initializes the Login class.
@@ -60,13 +63,15 @@ class Login:
             )
 
         except AuthorizationError as auth_err:
-            logger.error(f"Authorization error for user '{self.username}': {auth_err}")
+            logger.error(
+                f"Authorization error for user '{self.username}': {auth_err}"
+            )
             raise
         except Exception as e:
             logger.error(
                 f"Unexpected error during authentication for user '{self.username}': {e}"
             )
-            logger.debug(traceback.format_exc())
+            logger.info(traceback.format_exc())
             raise AuthenticationError(
                 f"Unexpected error during authentication for {self.username}."
             )
@@ -79,11 +84,15 @@ class Login:
             bool: True if authentication is successful, False otherwise.
         """
         try:
-            logger.info(f"Attempting domain authentication for user: {self.username}")
+            logger.info(
+                f"Attempting domain authentication for user: {self.username}"
+            )
             domain_user = await authenticate(self.username, self.password)
 
             if not domain_user:
-                logger.warning(f"LDAP authentication failed for user: {self.username}")
+                logger.warning(
+                    f"LDAP authentication failed for user: {self.username}"
+                )
                 return False
 
             # Check or create a local account for the domain user
@@ -97,7 +106,7 @@ class Login:
             logger.error(
                 f"Error in domain authentication for user '{self.username}': {e}"
             )
-            logger.debug(traceback.format_exc())
+            logger.info(traceback.format_exc())
             return False
 
     async def _get_local_account(self) -> Optional[Account]:
@@ -111,7 +120,9 @@ class Login:
         results = await self.session.execute(statement)
         return results.scalars().first()
 
-    async def _create_local_account(self, domain_user: UserAttributes) -> Account:
+    async def _create_local_account(
+        self, domain_user: UserAttributes
+    ) -> Account:
         """
         Creates a local account for the domain user.
 
@@ -134,8 +145,12 @@ class Login:
         hris_security_user = results.scalars().first()
 
         if not hris_security_user:
-            logger.warning(f"No security user found for domain user: {self.username}")
-            raise AuthorizationError("User lacks necessary security permissions.")
+            logger.warning(
+                f"No security user found for domain user: {self.username}"
+            )
+            raise AuthorizationError(
+                "User lacks necessary security permissions."
+            )
 
         # Create the new account
         new_account = Account(
@@ -167,7 +182,9 @@ class Login:
             List[str]: A list of role names assigned to the user.
         """
         if not self.account:
-            raise ValueError("Account is not set. Authenticate the user first.")
+            raise ValueError(
+                "Account is not set. Authenticate the user first."
+            )
 
         statement = (
             select(Role.name)

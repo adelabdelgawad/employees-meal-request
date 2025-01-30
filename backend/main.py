@@ -24,7 +24,7 @@ app = FastAPI(lifespan=lifespan)
 
 
 # Configure CORS middleware
-# Middleware for CORS and debugging
+# Middleware for CORS and infoging
 origins = [
     "http://localhost:3000",  # Frontend URL
 ]

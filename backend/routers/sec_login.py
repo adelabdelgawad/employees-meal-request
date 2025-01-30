@@ -9,7 +9,7 @@ import os
 router = APIRouter()
 
 # Secret key to encode the JWT
-SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key")
+SECRET_KEY = os.getenv("AUTH_SECRET", "your_secret_key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Updated to 60 minutes
 
@@ -42,14 +42,14 @@ class LoginRequest(BaseModel):
 
 # Fake user database
 fake_users_db = {
-    "johndoe": {
+    "admin": {
         "userId": 1,
-        "username": "johndoe",
-        "fullName": "John Doe",
+        "username": "admin",
+        "fullName": "Administrator",
         "userTitle": "Admin",
-        "email": "johndoe@example.com",
-        "hashed_password": pwd_context.hash("secret"),
-        "userRoles": ["requester", "moderator"],
+        "email": "admin@example.com",
+        "hashed_password": pwd_context.hash("admin"),
+        "userRoles": ["admin"],
     }
 }
 
@@ -84,7 +84,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 @router.post("/login", response_model=Token)
 async def login_for_access_token(form_data: LoginRequest):
-    user = authenticate_user(fake_users_db, form_data.username, form_data.password)
+    user = authenticate_user(
+        fake_users_db, form_data.username, form_data.password
+    )
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

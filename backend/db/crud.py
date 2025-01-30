@@ -85,7 +85,7 @@ def read_requests(session: Session) -> List[RequestSummary]:
         ]
     except Exception as e:
         logger.error(f"An error occurred while retrieving requests: {e}")
-        logger.debug(f"Traceback: {traceback.format_exc()}")
+        logger.info(f"Traceback: {traceback.format_exc()}")
         return []
 
 
@@ -152,5 +152,5 @@ async def read_request_line_for_requests_page(
         logger.error(
             f"Failed to read request lines for request ID {request_id}: {e}"
         )
-        logger.debug(f"Traceback: {traceback.format_exc()}")
+        logger.info(f"Traceback: {traceback.format_exc()}")
         return []
