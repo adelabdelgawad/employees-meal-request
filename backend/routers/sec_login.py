@@ -15,6 +15,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Updated to 60 minutes
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+REFRESH_TOKEN_EXPIRE_DAYS = 7  # Refresh token validity
 
 
 # Pydantic models
@@ -33,6 +34,7 @@ class UserInDB(User):
 
 class Token(BaseModel):
     access_token: str
+    refresh_token: str
 
 
 class LoginRequest(BaseModel):
@@ -52,6 +54,17 @@ fake_users_db = {
         "userRoles": ["admin"],
     }
 }
+
+
+def create_refresh_token(
+    data: dict, expires_delta: Optional[timedelta] = None
+):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (
+        expires_delta or timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    )
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
 def verify_password(plain_password, hashed_password):
@@ -103,4 +116,46 @@ async def login_for_access_token(form_data: LoginRequest):
         },
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
-    return {"access_token": access_token}
+
+    refresh_token = create_refresh_token(
+        data={"userId": user.userId, "username": user.username}
+    )
+
+    return {"access_token": access_token, "refresh_token": refresh_token}
+
+
+@router.post("/refresh", response_model=Token)
+async def refresh_access_token(refresh_token: str):
+    try:
+        # Decode refresh token
+        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("userId")
+        username = payload.get("username")
+
+        if not user_id or not username:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token",
+            )
+
+        # Generate a new access token
+        new_access_token = create_access_token(
+            data={"userId": user_id, "username": username},
+            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        )
+
+        return {
+            "access_token": new_access_token,
+            "refresh_token": refresh_token,
+        }
+
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token expired",
+        )
+    except jwt.JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+        )
