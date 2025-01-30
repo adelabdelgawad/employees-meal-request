@@ -33,6 +33,9 @@ class Login:
         """
         self.session: AsyncSession = session
         self.username: str = username
+        self.user_id: int = 0
+        self.full_name: Optional[str] = None
+        self.title: Optional[str] = None
         self.password: Optional[str] = password
         self.is_authenticated: bool = False
         self.account: Optional[Account] = None
@@ -49,18 +52,60 @@ class Login:
 
         try:
             # Authenticate the user
+            statement = select(Account).where(
+                Account.username == self.username
+            )
+            result = await self.session.exec(statement)
+            account = result.scalars().first()
+            if account:
+                if not await self._authenticate_domain_user():
+                    raise AuthenticationError(
+                        f"Authentication failed for user: {self.username}"
+                    )
+                self.user_id = account.id
+                self.full_name = account.full_name
+                self.title = account.title
+                self.is_authenticated = True
+                self.roles = await self._get_user_roles()
+                self.is_authenticated = True
+
+                logger.info(
+                    f"User '{self.username}' authenticated successfully with ID: {self.user_id}"
+                )
+                return
+            else:
+                statement = select(HRISSecurityUser).where(
+                    HRISSecurityUser.username == self.username
+                )
+            result = await self.session.exec(statement)
+            account = result.scalars().first()
+            if account:
+                if not await self._authenticate_domain_user():
+                    raise AuthenticationError(
+                        f"Authentication failed for user: {self.username}"
+                    )
+                self.user_id = account.id
+                self.full_name = account.full_name
+                self.title = account.title
+                self.is_authenticated = True
+                self.roles = await self._get_user_roles()
+                self.is_authenticated = True
+
+                logger.info(
+                    f"User '{self.username}' authenticated successfully with ID: {self.user_id}"
+                )
+                return
+
+            if not account:
+                raise AuthenticationError(f"User '{self.username}' not found.")
+            stmt = select(Account)
+            stmt = stmt.where(Account.username == username)
+
             if not await self._authenticate_domain_user():
                 raise AuthenticationError(
                     f"Authentication failed for user: {self.username}"
                 )
 
-            # Fetch user roles
-            self.roles = await self._get_user_roles()
-            self.is_authenticated = True
-
-            logger.info(
-                f"User '{self.username}' authenticated successfully with roles: {self.roles}"
-            )
 
         except AuthorizationError as auth_err:
             logger.error(
@@ -108,17 +153,6 @@ class Login:
             )
             logger.info(traceback.format_exc())
             return False
-
-    async def _get_local_account(self) -> Optional[Account]:
-        """
-        Fetches the local account for the user, if it exists.
-
-        Returns:
-            Optional[Account]: The local account object or None if not found.
-        """
-        statement = select(Account).where(Account.username == self.username)
-        results = await self.session.execute(statement)
-        return results.scalars().first()
 
     async def _create_local_account(
         self, domain_user: UserAttributes
@@ -174,22 +208,3 @@ class Login:
         logger.info(f"Local account created for domain user: {self.username}")
         return new_account
 
-    async def _get_user_roles(self) -> List[str]:
-        """
-        Fetch the role names assigned to the current user.
-
-        Returns:
-            List[str]: A list of role names assigned to the user.
-        """
-        if not self.account:
-            raise ValueError(
-                "Account is not set. Authenticate the user first."
-            )
-
-        statement = (
-            select(Role.name)
-            .join(RolePermission, Role.id == RolePermission.role_id)
-            .where(RolePermission.account_id == self.account.id)
-        )
-        results = await self.session.execute(statement)
-        return [row for row in results.scalars()]

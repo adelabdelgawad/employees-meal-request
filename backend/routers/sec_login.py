@@ -5,6 +5,8 @@ from jose import jwt
 from datetime import datetime, timedelta
 from typing import Optional
 import os
+from depandancies import SessionDep
+from src.login import Login
 
 router = APIRouter()
 
@@ -42,20 +44,6 @@ class LoginRequest(BaseModel):
     password: str
 
 
-# Fake user database
-fake_users_db = {
-    "admin": {
-        "userId": 1,
-        "username": "admin",
-        "fullName": "Administrator",
-        "userTitle": "Admin",
-        "email": "admin@example.com",
-        "hashed_password": pwd_context.hash("admin"),
-        "userRoles": ["admin"],
-    }
-}
-
-
 def create_refresh_token(
     data: dict, expires_delta: Optional[timedelta] = None
 ):
@@ -71,21 +59,6 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
-
-
-def authenticate_user(db, username: str, password: str):
-    user = get_user(db, username)
-    if not user:
-        return False
-    if not verify_password(password, user.hashed_password):
-        return False
-    return user
-
-
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     expire = datetime.utcnow() + (
@@ -96,10 +69,30 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 
 @router.post("/login", response_model=Token)
-async def login_for_access_token(form_data: LoginRequest):
-    user = authenticate_user(
-        fake_users_db, form_data.username, form_data.password
+async def login_for_access_token(
+    maria_session: SessionDep, form_data: LoginRequest
+):
+    """
+    Handles the user login process. Authenticates the user and generates a JWT access token.
+
+    Args:
+        request (LoginRequest): Contains the username, password, and optional domain scope.
+        session (AsyncSession): The database session provided by FastAPI's dependency injection.
+
+    Returns:
+        Dict[str, Any]: Dictionary containing the access token, token type, account details, and optional pages information.
+
+    Raises:
+        HTTPException: Raised when authentication fails or when an internal server error occurs.
+    """
+    # Authenticate the user
+    user = Login(
+        session=maria_session,
+        username=form_data.username,
+        password=form_data.password,
     )
+    await user.authenticate()
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -108,17 +101,17 @@ async def login_for_access_token(form_data: LoginRequest):
 
     access_token = create_access_token(
         data={
-            "userId": user.userId,
+            "userId": user.user_id,
             "username": user.username,
-            "fullName": user.fullName,
-            "userTitle": user.userTitle,
-            "userRoles": user.userRoles,
+            "fullName": user.full_name,
+            "userTitle": user.title,
+            "userRoles": user.roles,
         },
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 
     refresh_token = create_refresh_token(
-        data={"userId": user.userId, "username": user.username}
+        data={"userId": user.user_id, "username": user.username}
     )
 
     return {"access_token": access_token, "refresh_token": refresh_token}
