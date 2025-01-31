@@ -1,5 +1,6 @@
-import { Label } from '@/components/ui/label'; // Adjust the import path based on your project
-import { Meal } from '@/pages/definitions';
+import { useEffect, useState } from "react";
+import { Label } from "@/components/ui/label"; // Adjust the import path based on your project
+import { Meal } from "@/pages/definitions";
 
 interface MealProps {
   Meals: Meal[];
@@ -12,15 +13,27 @@ export default function MealOption({
   selectedMeals,
   onSelectMeal,
 }: MealProps) {
+  const [initialized, setInitialized] = useState(false);
+
+  // Set the first meal as selected by default when the component mounts
+  useEffect(() => {
+    if (Meals.length > 0 && !initialized) {
+      onSelectMeal([Meals[0]]);
+      setInitialized(true);
+    }
+  }, [Meals, initialized, onSelectMeal]);
+
   const handleSelectionChange = (id: number) => {
     let updatedSelectedMeals = [...selectedMeals];
 
-    if (updatedSelectedMeals.some((Meal) => Meal.id === id)) {
+    if (updatedSelectedMeals.some((meal) => meal.id === id)) {
+      // Remove meal from selection
       updatedSelectedMeals = updatedSelectedMeals.filter(
-        (Meal) => Meal.id !== id,
+        (meal) => meal.id !== id
       );
     } else {
-      const selectedMeal = Meals.find((Meal) => Meal.id === id);
+      // Add meal to selection
+      const selectedMeal = Meals.find((meal) => meal.id === id);
       if (selectedMeal) {
         updatedSelectedMeals.push(selectedMeal);
       }
@@ -31,28 +44,21 @@ export default function MealOption({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Line 1: Text */}
-      <div>
-        <h1 className="text-lg font-semibold text-gray-500 text-center">
-          Please Select one of the Meals
-        </h1>
-      </div>
-
       {/* Line 2: Meals take full space */}
       <div className="flex flex-row flex-wrap gap-2 w-full">
-        {Meals.map((Meal) => (
+        {Meals.map((meal) => (
           <div
-            key={Meal.id}
-            onClick={() => handleSelectionChange(Meal.id)}
+            key={meal.id}
+            onClick={() => handleSelectionChange(meal.id)}
             className={`p-4 border rounded flex items-center justify-center cursor-pointer ${
-              selectedMeals.some((selectedMeal) => selectedMeal.id === Meal.id)
-                ? 'bg-blue-100 border-blue-500'
-                : 'border-gray-300'
+              selectedMeals.some((selectedMeal) => selectedMeal.id === meal.id)
+                ? "bg-blue-100 border-blue-500"
+                : "border-gray-300"
             }`}
-            style={{ flex: '1 1 calc(25% - 1rem)' }} // Adjust width for meals
+            style={{ flex: "1 1 calc(25% - 1rem)" }} // Adjust width for meals
           >
-            <Label htmlFor={`Meal-${Meal.id}`} className="text-sm font-medium">
-              {Meal.name}
+            <Label htmlFor={`Meal-${meal.id}`} className="text-sm font-medium">
+              {meal.name}
             </Label>
           </div>
         ))}

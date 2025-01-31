@@ -1,11 +1,10 @@
-import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 
-// Define role-based access control
-const roleBasedAccess = {
+// ✅ Define role-based access control mapping
+const roleBasedAccess: Record<string, string[]> = {
   Admin: [
     "/",
     "/request/new-request",
@@ -21,18 +20,18 @@ const roleBasedAccess = {
   Manager: ["/", "/setting/users", "/security/roles"],
 };
 
-// ✅ List of pages that anyone can access
+// ✅ List of public pages that anyone can access
 const publicPages = ["/access-denied", "/auth/signin"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // ✅ Allow access to public pages immediately
+  // ✅ Allow public pages
   if (publicPages.includes(pathname)) {
     return NextResponse.next();
   }
 
-  // ✅ Allow static assets, API routes, and Next.js internals
+  // ✅ Allow API calls, static assets, and Next.js internals
   if (
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next") ||
@@ -41,7 +40,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 🔒 Enforce authentication first
+  // 🔒 Enforce authentication using `getToken()`
   const token = await getToken({ req, secret: NEXTAUTH_SECRET });
 
   if (!token) {
@@ -51,7 +50,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 🔒 Check if the session is valid
+  // 🔒 Check if the token has expired
   const now = Math.floor(Date.now() / 1000);
   if (token.exp && token.exp < now) {
     console.warn("Session expired - redirecting to login");
@@ -65,21 +64,17 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // ✅ Role-based access control
-  const session = await auth();
-  if (!session?.user) {
-    console.warn("No session found - redirecting to login");
-    const loginUrl = new URL("/auth/signin", req.url);
-    loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
-  }
+  // ✅ Extract user roles from token (ensure it's an array)
+  const userRoles: string[] = token.userRoles
+    ? Array.isArray(token.userRoles)
+      ? token.userRoles
+      : [token.userRoles]
+    : [];
 
-  const userRoles: (keyof typeof roleBasedAccess)[] =
-    session.user.userRoles || [];
-  const allowedPaths = userRoles.flatMap(
-    (role: keyof typeof roleBasedAccess) => roleBasedAccess[role] || []
-  );
+  // ✅ Determine allowed paths based on user roles
+  const allowedPaths = userRoles.flatMap((role) => roleBasedAccess[role] || []);
 
+  // 🔒 Restrict access if the user is not authorized
   if (!allowedPaths.includes(pathname)) {
     console.warn(`Access denied for user - Redirecting to /access-denied`);
     return NextResponse.redirect(new URL("/access-denied", req.url));

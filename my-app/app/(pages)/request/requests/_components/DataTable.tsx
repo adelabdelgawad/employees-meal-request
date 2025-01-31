@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Actions from "./_actions/Actions";
-import { updateRequestStatus } from "@/lib/services/request-requests";
+import toast from "react-hot-toast";
 
 interface Request {
   id: number;
@@ -34,10 +34,38 @@ const DataTable = ({ initialData }: { initialData: Request[] }) => {
   const handleAction = useCallback(
     async (recordId: number, statusId: number) => {
       try {
-        const updatedRecord = await updateRequestStatus(recordId, statusId);
+        const response = await fetch("/api/update-request-status", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ id: recordId, statusId }),
+        });
+
+        if (!response.ok) {
+          toast.error(
+            `Failed to update request status: ${response.statusText}`
+          );
+          throw new Error(
+            `Failed to update request status: ${response.statusText}`
+          );
+        }
+
+        const updatedRecord = await response.json();
+
+        if (updatedRecord.status == "error") {
+          toast.error(
+            `Failed to update request status: ${updatedRecord.message}`
+          );
+        } else {
+          toast.success(updatedRecord.message);
+        }
+
         setData((prevData) =>
           prevData.map((request) =>
-            request.id === recordId ? updatedRecord.data : request
+            request.id === recordId
+              ? { ...request, ...updatedRecord.data }
+              : request
           )
         );
       } catch (error) {
@@ -48,10 +76,10 @@ const DataTable = ({ initialData }: { initialData: Request[] }) => {
   );
 
   const handleRequestLinesChanges = useCallback(
-    async (recordId: number, updatedRecord: Request) => {
+    async (recordId: number, updatedRecord: Partial<Request>) => {
       setData((prevData) =>
         prevData.map((request) =>
-          request.id === recordId ? updatedRecord : request
+          request.id === recordId ? { ...request, ...updatedRecord } : request
         )
       );
     },

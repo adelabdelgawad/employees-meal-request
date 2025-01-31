@@ -4,7 +4,7 @@ import * as ScrollArea from "@radix-ui/react-scroll-area";
 import DepartmentItem from "./_components/DepartmentItem";
 import { useNewRequest } from "@/hooks/NewRequestContext";
 import SelectionActions from "./_components/SelectionActions";
-import DepartmentsFilter from "./_components/DepartmentsFilter";
+import FilterComponent from "./_components/Filter";
 
 export default function DepartmentColumn() {
   const { departments, selectedDepartments, setSelectedDepartments } =
@@ -46,13 +46,11 @@ export default function DepartmentColumn() {
   };
 
   return (
-    <div className="flex flex-col h-full border rounded-lg shadow-md p-4">
-      <h2 className="text-lg font-semibold mb-4">Department List</h2>
-
+    <div className="flex flex-col h-full">
       <div className="mb-4">
-        <DepartmentsFilter
-          searchTerm={searchTerm}
-          onSearchTermChange={setSearchTerm}
+        <FilterComponent
+          search={searchTerm}
+          setSearch={setSearchTerm}
           placeholder="Search Departments..."
         />
       </div>

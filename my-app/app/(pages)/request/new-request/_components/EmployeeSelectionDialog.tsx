@@ -1,6 +1,7 @@
 "use client";
+
 import { FixedSizeList as List } from "react-window";
-import { FC, useState } from "react";
+import { FC, useRef, useState } from "react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import { Input } from "@/components/ui/input";
 import MealOption from "./MealOption";
@@ -8,11 +9,11 @@ import { useNewRequest } from "@/hooks/NewRequestContext";
 import { EmployeeType, Meal } from "@/pages/definitions";
 import { Button } from "@/components/ui/button";
 import { Rubik } from "next/font/google";
-import { CrossIcon, X } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { X } from "lucide-react";
 import { toastWarning } from "@/lib/utils/toast";
 
 const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
+
 interface EmployeeSelectionDialogProps {
   selectedEmployees: EmployeeType[];
   setSelectedEmployees: (employees: EmployeeType[]) => void;
@@ -30,14 +31,25 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
   const [employeeNotes, setEmployeeNotes] = useState<Record<number, string>>(
     {}
   );
+  const tempEmployeeNotes = useRef<Record<number, string>>({}); // Use `useRef` to persist changes
+
   const [selectedMeals, setSelectedMeals] = useState<Meal[]>([]);
   const { submittedEmployees, setSubmittedEmployees } = useNewRequest();
 
+  // Open drawer and sync notes
+  const handleOpenDrawer = () => {
+    tempEmployeeNotes.current = { ...employeeNotes }; // Preserve existing notes without triggering re-render
+    setIsDrawerOpen(true);
+  };
+
+  // Handle input change (Temporary Notes)
   const handleNoteChange = (employeeId: number, note: string) => {
-    setEmployeeNotes((prev) => ({
-      ...prev,
-      [employeeId]: note,
-    }));
+    tempEmployeeNotes.current[employeeId] = note;
+  };
+
+  // Confirm Notes on final submission
+  const handleConfirmNotes = () => {
+    setEmployeeNotes({ ...tempEmployeeNotes.current }); // Save only on confirm
   };
 
   const handleMealChange = (selectedMeals: Meal[]) => {
@@ -50,6 +62,8 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
       return;
     }
 
+    handleConfirmNotes(); // Confirm notes before submitting
+
     const finalData = selectedEmployees.flatMap((employee) =>
       selectedMeals.map((Meal) => ({
         id: employee.id,
@@ -58,7 +72,7 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
         department_id: employee.department_id,
         meal_id: Meal.id,
         meal_name: Meal.name,
-        notes: employeeNotes[employee.id] || "",
+        notes: tempEmployeeNotes.current[employee.id] || "", // Use ref-based notes
       }))
     );
 
@@ -95,7 +109,7 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
     <div>
       {/* Trigger Button */}
       <Button
-        onClick={() => setIsDrawerOpen(true)}
+        onClick={handleOpenDrawer}
         className="w-full p-2 mt-2 bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-300 disabled:text-gray-500"
         disabled={selectedEmployees.length === 0}
       >
@@ -111,7 +125,7 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-semibold">Selected Employees</h3>
           <Button variant="ghost" onClick={() => setIsDrawerOpen(false)}>
-            <X className="w-5 h-5" />{" "}
+            <X className="w-5 h-5" />
           </Button>
         </div>
 
@@ -126,7 +140,7 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
           </div>
 
           {/* Selected Employees List */}
-          <div className="flex-grow overflow-y-auto border-t border-b border-gray-300 my-2">
+          <div className="flex-grow overflow-y-auto border-gray-300 my-2">
             {selectedEmployees.length > 0 ? (
               <ScrollArea.Root className="h-[75vh] w-full rounded-lg overflow-hidden border border-gray-300 shadow-sm">
                 <List
@@ -151,14 +165,14 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
                       >
                         {/* Employee Info */}
                         <div className="flex flex-col space-y-2">
-                          {/* Line 1: Employee Name */}
+                          {/* Employee Name */}
                           <div
-                            className={`text-s font-semibold ${rubik.className}`}
+                            className={`text-sm font-semibold ${rubik.className}`}
                           >
                             {emp.name}
                           </div>
 
-                          {/* Line 2: Title and Code on Left, Notes on Right */}
+                          {/* Title, Code, and Notes */}
                           <div className="flex justify-between items-center">
                             <div>
                               <div className="text-xs text-gray-500">
@@ -168,14 +182,22 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
                                 Code: {emp.code}
                               </span>
                             </div>
+
+                            {/* Notes Input (Uses `useRef` for smooth typing) */}
                             <Input
                               type="text"
                               placeholder="Notes"
-                              value={employeeNotes[emp.id] || ""}
+                              defaultValue={
+                                tempEmployeeNotes.current[emp.id] || ""
+                              }
                               onChange={(e) =>
                                 handleNoteChange(emp.id, e.target.value)
                               }
-                              className="sm:w-1/2 w-full"
+                              className="w-full min-h-[40px] text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              style={{
+                                whiteSpace: "normal",
+                                wordWrap: "break-word",
+                              }}
                             />
                           </div>
                         </div>

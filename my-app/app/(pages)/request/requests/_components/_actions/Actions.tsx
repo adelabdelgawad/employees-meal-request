@@ -36,7 +36,6 @@ const Actions: React.FC<ActionsProps> = ({
     if (statusToChange !== null) {
       try {
         await handleAction(recordId, statusToChange);
-        toast.success("Action completed successfully!");
       } catch (error) {
         console.error(
           `Failed to handle action for statusId ${statusToChange}:`,
@@ -44,7 +43,6 @@ const Actions: React.FC<ActionsProps> = ({
         );
       } finally {
         closeConfirmationDialog();
-
       }
     }
   }, [handleAction, recordId, statusToChange, closeConfirmationDialog]);

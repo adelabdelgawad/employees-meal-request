@@ -1,47 +1,38 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { signOut } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { signOut, useSession } from "next-auth/react";
 
-interface User {
+// ✅ Define TypeScript types for user data
+interface UserSession {
+  userId: number;
   username: string;
   fullName: string;
   userTitle: string;
+  userRoles: string[];
 }
 
 export default function UserAvatar() {
-  const [user, setUser] = useState<User | null>(null);
+  const { data: session, update } = useSession();
   const [isOpen, setIsOpen] = useState(false);
 
+  // ✅ Ensure session and user data exist
+  console.log(session);
+
+  if (!session?.user) return null;
+
+  const user: UserSession = session.user as UserSession; // ✅ Type assertion
+
   useEffect(() => {
-    const fetchSession = async () => {
-      try {
-        const response = await fetch("/api/auth/session");
-        const session = await response.json();
-        if (session?.user) {
-          setUser({
-            username: session.user.username,
-            fullName: session.user.fullName,
-            userTitle: session.user.userTitle,
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching session:", error);
-      }
-    };
-
-    fetchSession();
+    update();
   }, []);
-
-  if (!user) return null; // Hide avatar if no user is found
-
-  // Generate initials from full name
+  // ✅ Generate initials from full name safely
   const getInitials = (name: string) => {
     const words = name.trim().split(" ");
     if (words.length > 1) {
-      return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase(); // First & Last word initials
+      return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
     }
-    return words[0][0].toUpperCase(); // Single name case
+    return words[0][0].toUpperCase();
   };
 
   return (

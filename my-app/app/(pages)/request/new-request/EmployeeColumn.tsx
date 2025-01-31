@@ -85,18 +85,12 @@ export default function EmployeeColumn() {
   }, [setSelectedEmployees]);
 
   return (
-    <div className="flex flex-col h-full border rounded-lg shadow-md p-4">
-      <h2 className="text-lg font-semibold mb-4">Employee List</h2>
-
-      <p className="text-sm text-gray-500 mb-2">
-        Showing {finalFilteredEmployees.length} results
-      </p>
-
+    <div className="flex flex-col h-full ">
       <div className="mb-4">
         <FilterComponent
           search={search}
           setSearch={setSearch}
-          placeholder="Search Employees by Name..."
+          placeholder="Search Employees..."
         />
       </div>
 

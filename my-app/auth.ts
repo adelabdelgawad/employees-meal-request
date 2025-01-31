@@ -32,7 +32,7 @@ const refreshAccessToken = async (oldToken: any) => {
     const response = await fetch(`${API_URL}/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accessToken: oldToken.accessToken }), // Send current access token
+      body: JSON.stringify({ refresh_token: oldToken.refreshToken }), // ✅ Use correct field name
     });
 
     const data = await response.json();
@@ -41,13 +41,16 @@ const refreshAccessToken = async (oldToken: any) => {
       throw new Error(data?.detail || "Token refresh failed");
     }
 
-    const decoded = await decodeJWT(data.access_token);
-    if (!decoded) throw new Error("Failed to decode refreshed token");
-
     return {
       ...oldToken,
       accessToken: data.access_token,
-      expiresAt: Math.floor(Date.now() / 1000) + 30 * 60, // Reset expiration time (30 min)
+      refreshToken: data.refresh_token, // ✅ Keep the same refresh token
+      userId: data.userId, // ✅ Ensure this is updated
+      username: data.username,
+      fullName: data.fullName,
+      userTitle: data.userTitle,
+      userRoles: data.userRoles, // ✅ Preserve roles
+      expiresAt: Math.floor(Date.now() / 1000) + 30 * 60, // Reset expiration (30 min)
     };
   } catch (error) {
     console.error("Token refresh error:", error);
@@ -88,13 +91,14 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           if (!decoded) throw new Error("Failed to decode token");
 
           return {
-            userId: decoded.userId as string,
-            username: decoded.username as string,
-            fullName: decoded.fullName as string,
-            userTitle: decoded.userTitle as string,
-            userRoles: (decoded.userRoles as string[]) || [],
+            userId: decoded.userId,
+            username: decoded.username,
+            fullName: decoded.fullName,
+            userTitle: decoded.userTitle,
+            userRoles: decoded.userRoles,
             accessToken: data.access_token,
-            expiresAt: Math.floor(Date.now() / 1000) + 30 * 60, // Set expiration (30 min)
+            refreshToken: data.refresh_token, // ✅ Store refresh token
+            expiresAt: Math.floor(Date.now() / 1000) + 30 * 60,
           };
         } catch (error) {
           console.error("Authentication error:", error);
@@ -121,7 +125,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           userTitle: user.userTitle,
           userRoles: user.userRoles,
           accessToken: user.accessToken,
-          expiresAt: user.expiresAt, // Store expiration time
+          refreshToken: user.refreshToken, // ✅ Ensure refresh token is kept
+          expiresAt: user.expiresAt,
         };
       }
 
@@ -148,12 +153,15 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         username: token.username,
         fullName: token.fullName,
         userTitle: token.userTitle,
-        userRoles: token.userRoles,
+        userRoles: token.userRoles, // ✅ Ensure roles are included
       };
       session.accessToken = token.accessToken;
+      session.refreshToken = token.refreshToken; // ✅ Ensure refresh token is included
+
       return session;
     },
   },
+
   pages: {
     signIn: "/auth/signin",
   },
