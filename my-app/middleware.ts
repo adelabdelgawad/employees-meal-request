@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { auth } from "./auth";
 
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 
@@ -41,19 +42,10 @@ export async function middleware(req: NextRequest) {
   }
 
   // 🔒 Enforce authentication using `getToken()`
-  const token = await getToken({ req, secret: NEXTAUTH_SECRET });
+  const session = await auth();
 
-  if (!token) {
+  if (!session) {
     console.warn("No token found - redirecting to login");
-    const loginUrl = new URL("/auth/signin", req.url);
-    loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // 🔒 Check if the token has expired
-  const now = Math.floor(Date.now() / 1000);
-  if (token.exp && token.exp < now) {
-    console.warn("Session expired - redirecting to login");
     const loginUrl = new URL("/auth/signin", req.url);
     loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
@@ -65,10 +57,10 @@ export async function middleware(req: NextRequest) {
   }
 
   // ✅ Extract user roles from token (ensure it's an array)
-  const userRoles: string[] = token.userRoles
-    ? Array.isArray(token.userRoles)
-      ? token.userRoles
-      : [token.userRoles]
+  const userRoles: string[] = session.user.roles
+    ? Array.isArray(session.user.roles)
+      ? session.user.roles
+      : [session.user.roles]
     : [];
 
   // ✅ Determine allowed paths based on user roles

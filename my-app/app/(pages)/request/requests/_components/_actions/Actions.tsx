@@ -70,7 +70,7 @@ const Actions: React.FC<ActionsProps> = ({
       <ViewAction
         handleRequestLinesChanges={handleRequestLinesChanges}
         id={recordId}
-        disableStatus={false}
+        disableStatus={isActionDisabled}
       />
 
       {/* Action Buttons */}

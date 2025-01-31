@@ -4,29 +4,16 @@ import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 
 // ✅ Define TypeScript types for user data
-interface UserSession {
-  userId: number;
-  username: string;
-  fullName: string;
-  userTitle: string;
-  userRoles: string[];
-}
 
 export default function UserAvatar() {
-  const { data: session, update } = useSession();
+  const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
 
   // ✅ Ensure session and user data exist
-  console.log(session);
-
   if (!session?.user) return null;
 
-  const user: UserSession = session.user as UserSession; // ✅ Type assertion
+  const user: User = session.user as unknown as User; // ✅ Type assertion
 
-  useEffect(() => {
-    update();
-  }, []);
-  // ✅ Generate initials from full name safely
   const getInitials = (name: string) => {
     const words = name.trim().split(" ");
     if (words.length > 1) {
@@ -50,7 +37,7 @@ export default function UserAvatar() {
         <div className="absolute bottom-14 left-0 w-56 bg-white shadow-md rounded-lg p-3 text-center border">
           <p className="text-sm font-bold text-gray-900">{user.fullName}</p>
           <p className="text-xs text-gray-500">@{user.username}</p>
-          <p className="text-xs text-gray-600 mt-1">{user.userTitle}</p>
+          <p className="text-xs text-gray-600 mt-1">{user.title}</p>
           <hr className="my-2" />
           <button
             onClick={() => signOut({ callbackUrl: "/auth/signin" })}

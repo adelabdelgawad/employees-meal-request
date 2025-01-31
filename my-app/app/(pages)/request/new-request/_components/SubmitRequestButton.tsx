@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 export default function SubmitRequestButton() {
   const { submittedEmployees, resetSubmittedEmployees } = useNewRequest();
   const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
 
   // Handles the actual request submission
   const handleRequestSubmission = async () => {
@@ -39,7 +38,6 @@ export default function SubmitRequestButton() {
 
       // Reset state after successful submission
       resetSubmittedEmployees();
-      setSubmitted(true);
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
     } finally {
@@ -54,7 +52,7 @@ export default function SubmitRequestButton() {
   );
 
   // Determine if button should be disabled
-  const isDisabled = submitted || submittedEmployees.length === 0 || loading;
+  const isDisabled = submittedEmployees.length === 0 || loading;
 
   return (
     <Button

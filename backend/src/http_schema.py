@@ -92,15 +92,6 @@ class SettingUserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class User(BaseModel):
-    userId: int
-    username: str
-    fullName: Optional[str] = None
-    userTitle: Optional[str] = None
-    email: str
-    userRoles: list[str] = []
-
-
 class UserCreateRequest(BaseModel):
     username: str
     full_name: str
@@ -164,12 +155,12 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class UserResponse(BaseModel):
-    userId: int
-    username: str
-    fullName: str | None = None
-    userTitle: str | None = None
-    email: str
-    userRoles: list[str] = []
+class User(BaseModel):
+    id: int
+    username: str | None = None
+    full_name: str | None = None
+    title: str | None = None
+    email: str | None = None
+    roles: list[str] = []
 
     model_config = ConfigDict(from_attributes=True)

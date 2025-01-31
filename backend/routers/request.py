@@ -45,13 +45,13 @@ async def create_request_endpoint(
             detail="No request lines provided",
         )
     request_time = request_time if request_time else datetime.now(cairo_tz)
-
+    ic(current_user)
     try:
         logger.info(f"Received {len(request_lines)} request(s)")
 
         # Create requests and background task
         response_data = await crud.create_requests_with_background_task(
-            current_user["user_id"],
+            current_user.id,
             request_lines,
             request_time,
             background_tasks,
@@ -85,16 +85,6 @@ async def get_requests(
     query: str = Query(None, description="Search parameters"),
     download: bool = Query(False, description="Download status"),
 ):
-    """
-    Retrieves paginated request data with optional date filtering.
-
-    :param maria_session: The async database session for MariaDB.
-    :param from_date: Filter requests from this date (inclusive, format: 'YYYY-MM-DD').
-    :param to_date: Filter requests up to this date (inclusive, format: 'YYYY-MM-DD').
-    :param page: The current page number (1-based).
-    :param page_size: The number of rows per page.
-    :return: A dictionary containing paginated data and metadata.
-    """
     try:
         requests = await crud.read_requests(
             session=maria_session,
@@ -130,7 +120,7 @@ async def update_order_status_endpoint(
     """
     try:
         result = await crud.update_request_status(
-            maria_session, current_user["user_id"], request_id, status_id
+            maria_session, current_user.id, request_id, status_id
         )
         return {
             "status": "success",

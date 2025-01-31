@@ -20,10 +20,12 @@ declare global {
 
   type User = {
     id: number;
-    fullName: string;
     username: string;
+    fullName: string;
     title: string;
-    roles: { id: number; name: string }[] | string[];
+    email: string;
+    roles: string[];
+    accessToken: string;
   };
   type ReportDetailRecord = {
     id: number;

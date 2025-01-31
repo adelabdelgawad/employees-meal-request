@@ -85,18 +85,11 @@ const sidebarData: SidebarSection[] = [
 ];
 
 // ✅ Define TypeScript type for user session
-interface UserSession {
-  userId: number;
-  username: string;
-  fullName: string;
-  userTitle: string;
-  userRoles: string[];
-}
 
 export default async function Sidebar() {
   // ✅ Fetch session safely
   const session = await auth();
-  const userRoles: string[] = session?.user?.userRoles ?? [];
+  const userRoles: string[] = session?.user?.roles ?? [];
 
   // ✅ Ensure roles are properly formatted as an array
   const normalizeRoles = (roles: string): string[] =>
