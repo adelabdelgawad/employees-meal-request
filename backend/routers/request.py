@@ -5,7 +5,7 @@ import traceback
 import logging
 from typing import List, Optional, Dict
 from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Query
-from routers.utils import request as crud
+from routers.cruds import request as crud
 from routers.utils.request_lines import (
     read_request_lines,
     update_request_lines,
@@ -14,8 +14,10 @@ from src.http_schema import RequestBody, RequestLineRespose
 import pytz
 from src.http_schema import UpdateRequestLinesPayload
 from depandancies import HRISSessionDep, SessionDep, CurrentUserDep
-from datetime import datetime
 from icecream import ic
+from collections import defaultdict
+from routers.utils.request import continue_processing_meal_request
+from db.models import RequestLine
 
 # Default timezone
 cairo_tz = pytz.timezone("Africa/Cairo")
@@ -29,46 +31,59 @@ router = APIRouter()
 
 @router.post("/request")
 async def create_request_endpoint(
-    maria_session: SessionDep,  # type: ignore
+    maria_session: SessionDep,
     request_lines: List[RequestBody],
     background_tasks: BackgroundTasks,
     hris_session: HRISSessionDep,
     current_user: CurrentUserDep,
-    request_time: Optional[datetime] = datetime.now(cairo_tz),
+    notes: Optional[str] = None,
 ):
     """
-    Create requests and process them in the background.
+    Create requests grouped by meal_id and process them in separate background tasks
     """
     if not request_lines:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No request lines provided",
         )
-    request_time = request_time if request_time else datetime.now(cairo_tz)
-    ic(current_user)
-    try:
-        logger.info(f"Received {len(request_lines)} request(s)")
 
-        # Create requests and background task
-        response_data = await crud.create_requests_with_background_task(
-            current_user.id,
-            request_lines,
-            request_time,
-            background_tasks,
-            maria_session,
-            hris_session,
-        )
+    # Group requests by meal_id
+    meal_groups = defaultdict(list)
+    for request in request_lines:
+        meal_groups[request.meal_id].append(request.model_dump())
+
+    try:
+        logger.info(f"Processing {len(meal_groups)} meal groups")
+
+        # Create a background task for each meal group
+        for meal_id, request_lines in meal_groups.items():
+            # Create a request in the database
+            request = await crud.create_request(
+                maria_session, current_user.id, meal_id, notes
+            )
+
+            background_tasks.add_task(
+                continue_processing_meal_request,
+                maria_session=maria_session,
+                hris_session=hris_session,
+                request=request,
+                request_lines=request_lines,
+            )
 
         return {
-            "message": "Request created successfully",
-            **response_data,
+            "message": f"{len(request_lines)* len(meal_groups)} Request(s) created successfully",
+            "meal_groups": {
+                meal_id: {"count": len(requests)}
+                for meal_id, requests in meal_groups.items()
+            },
         }
+
     except Exception as e:
-        logger.error(f"Error in create_request_endpoint: {e}")
+        logger.error(f"Error processing meal groups: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error",
-        )
+            detail="Error processing meal groups",
+        ) from e
 
 
 @router.get(

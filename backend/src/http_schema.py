@@ -33,7 +33,7 @@ class RequestPageRecordResponse(BaseModel):
     meal: Optional[str] = None
     request_time: datetime
     closed_time: Optional[datetime] = None
-    notes: str
+    notes: str | None = None
     total_lines: int
     accepted_lines: int
 
