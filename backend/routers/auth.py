@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Request
 from passlib.context import CryptContext
 from jose import jwt
 from datetime import datetime, timedelta
@@ -107,7 +107,6 @@ async def login_for_access_token(maria_session: SessionDep, form_data: LoginRequ
 
     # Retrieve user roles
     roles = await read_roles_by_account_id(maria_session, user.id)
-    ic(roles)
 
     # Generate JWT access and refresh tokens
     access_token = create_access_token(
@@ -121,17 +120,32 @@ async def login_for_access_token(maria_session: SessionDep, form_data: LoginRequ
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 
-    refresh_token = create_refresh_token(
-        data={"userId": user.id, "username": user.username}
+    refresh_token = create_access_token(
+        data={
+            "userId": user.id,
+            "username": user.username,
+            "fullName": user.full_name,  # ✅ Include fullName
+            "userTitle": user.title,  # ✅ Include userTitle
+            "userRoles": roles,  # ✅ Include roles
+        },
+        expires_delta=timedelta(days=7),  # Refresh token valid for 7 days
     )
 
     return {"access_token": access_token, "refresh_token": refresh_token}
 
 
 @router.post("/refresh", response_model=Token)
-async def refresh_access_token(refresh_token: str):
+async def refresh_access_token(request: Request, maria_session: SessionDep):
+    body = await request.json()
+    refresh_token = body.get("refresh_token")  # ✅ Read from JSON body
+
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing refresh token",
+        )
+
     try:
-        # Decode refresh token
         payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("userId")
         username = payload.get("username")
@@ -142,16 +156,30 @@ async def refresh_access_token(refresh_token: str):
                 detail="Invalid refresh token",
             )
 
-        # Generate a new access token
+        # ✅ Fetch full user details from the database
+        user = await read_account_by_username(maria_session, username)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+            )
+
+        # ✅ Retrieve user roles
+        roles = await read_roles_by_account_id(maria_session, user_id)
+
+        # Generate JWT access and refresh tokens
         new_access_token = create_access_token(
-            data={"userId": user_id, "username": username},
+            data={
+                "userId": user.id,
+                "username": user.username,
+                "fullName": user.full_name,
+                "userTitle": user.title,
+                "userRoles": roles,
+            },
             expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
         )
 
-        return {
-            "access_token": new_access_token,
-            "refresh_token": refresh_token,
-        }
+        return {"access_token": new_access_token, "refresh_token": refresh_token}
 
     except jwt.ExpiredSignatureError:
         raise HTTPException(

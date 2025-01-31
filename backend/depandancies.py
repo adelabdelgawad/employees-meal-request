@@ -15,7 +15,7 @@ from src.http_schema import UserResponse
 from fastapi import Depends
 
 # Define your secret key and algorithm
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("AUTH_SECRET")
 
 ALGORITHM = "HS256"
 
@@ -24,17 +24,22 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> dict:
-
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
+        user_id: str = payload.get("sub") or payload.get(
+            "userId"
+        )  # Use `userId` if `sub` is missing
         if user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token: subject missing",
+                detail="Invalid token: subject or userId missing",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        return {"user_id": user_id}
+        return {
+            "user_id": user_id,
+            "username": payload.get("username"),
+            "roles": payload.get("userRoles"),
+        }
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

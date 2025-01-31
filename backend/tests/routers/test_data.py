@@ -5,6 +5,7 @@ from icecream import ic
 
 # Ensure this imports your read_employees function
 from routers.data import read_employees
+
 # Ensure this imports your Employee model
 from db.models import Employee
 from db.database import engine
@@ -38,4 +39,3 @@ async def test_read_employees_against_live_db(session):
     # We'll fetch directly from the DB to compare
     db_employees = session.exec(select(Employee)).all()
     assert db_employees is not None
-    ic(db_employees)

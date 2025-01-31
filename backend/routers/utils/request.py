@@ -35,6 +35,7 @@ def group_requests_by_meal_id(request_lines: List[RequestBody]) -> List:
 
 
 async def create_requests_with_background_task(
+    requester_id: int,
     request_lines: List[RequestBody],
     request_time: datetime,
     background_tasks,
@@ -52,7 +53,7 @@ async def create_requests_with_background_task(
     for meal_id, lines in grouped_lines:
         lines_list = list(lines)
         created_lines_batch = await create_meal_request_lines(
-            meal_id, request_time, lines_list, maria_session
+            requester_id, meal_id, request_time, lines_list, maria_session
         )
         created_request_ids.append(meal_id)
         created_lines.extend(created_lines_batch)
@@ -69,6 +70,7 @@ async def create_requests_with_background_task(
 
 
 async def create_meal_request_lines(
+    requester_id: int,
     meal_id: int,
     request_time: datetime,
     request_lines: List[RequestBody],
@@ -80,7 +82,7 @@ async def create_meal_request_lines(
 
     try:
         new_request = Request(
-            requester_id=1,
+            requester_id=requester_id,
             meal_id=meal_id,
             notes="",
             request_time=request_time,
@@ -116,7 +118,6 @@ async def update_request_lines(
     """
     Update request lines with attendance details.
     """
-    ic("request_lines")
     try:
         employee_codes = [line.employee_code for line in request_lines]
         employee_ids = [line.employee_id for line in request_lines]
@@ -127,9 +128,8 @@ async def update_request_lines(
         )
         today_shifts = await read_shifts_from_hris(hris_session, employee_ids)
 
-        ic(today_shifts)
-        logger.info(f"Today Shifts: {today_shifts}")
-        logger.info(f"Recent Attendances: {recent_attendances}")
+        logger.info(f"Today Shifts: {len(today_shifts)}")
+        logger.info(f"Recent Attendances: {len(recent_attendances)}")
 
         for line in request_lines:
             # Find attendance
@@ -285,7 +285,9 @@ async def read_requests(
     }
 
 
-async def update_request_status(session: AsyncSession, request_id: int, status_id: int):
+async def update_request_status(
+    session: AsyncSession, auditor_id: int, request_id: int, status_id: int
+):
     """
     Update the status of a request and related lines.
     """
@@ -302,6 +304,7 @@ async def update_request_status(session: AsyncSession, request_id: int, status_i
 
         request.status_id = status_id
         request.closed_time = datetime.now(cairo_tz)
+        request.auditor_id = auditor_id
         session.add(request)
         await session.commit()
         await session.refresh(request)

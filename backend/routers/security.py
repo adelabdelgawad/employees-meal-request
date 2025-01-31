@@ -117,8 +117,6 @@ async def update_user_roles(
     user_id: int,
     update_roles_request: UpdateRolesRequest,
 ):
-    ic(user_id, update_roles_request)
-
     try:
         # Handle added roles
         if update_roles_request.added_roles:

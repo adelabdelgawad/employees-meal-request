@@ -1,6 +1,5 @@
-from datetime import datetime, timedelta, timezone
-from typing import Annotated
-from fastapi import Depends, HTTPException, status, APIRouter
+from datetime import datetime
+from fastapi import HTTPException, status, APIRouter
 from typing import Optional
 import traceback
 import logging
@@ -40,7 +39,6 @@ async def create_request_endpoint(
     """
     Create requests and process them in the background.
     """
-    ic(current_user)
     if not request_lines:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -53,6 +51,7 @@ async def create_request_endpoint(
 
         # Create requests and background task
         response_data = await crud.create_requests_with_background_task(
+            current_user["user_id"],
             request_lines,
             request_time,
             background_tasks,
@@ -124,12 +123,15 @@ async def update_order_status_endpoint(
     request_id: int,
     status_id: int,
     maria_session: SessionDep,
+    current_user: CurrentUserDep,
 ):
     """
     Update the status of a request by its ID.
     """
     try:
-        result = await crud.update_request_status(maria_session, request_id, status_id)
+        result = await crud.update_request_status(
+            maria_session, current_user["user_id"], request_id, status_id
+        )
         return {
             "status": "success",
             "message": "Request updated successfully",
