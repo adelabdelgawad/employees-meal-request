@@ -10,6 +10,7 @@ from jose import JWTError, jwt
 
 from db.database import get_application_session
 from hris_db.database import get_hris_session
+from src.http_schema import UserResponse
 
 from fastapi import Depends
 
@@ -44,4 +45,4 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> dict:
 
 SessionDep = Annotated[AsyncSession, Depends(get_application_session)]
 HRISSessionDep = Annotated[AsyncSession, Depends(get_hris_session)]
-CurrentUserDep = Annotated[dict, Depends(get_current_user)]
+CurrentUserDep = Annotated[UserResponse, Depends(get_current_user)]

@@ -32,9 +32,6 @@ class HRISSecurityUser(SQLModel, table=True):
     is_deleted: bool = Field(default=False)
     is_locked: bool = Field(default=False)
 
-    # Relationships
-    accounts: List["Account"] = Relationship(back_populates="security_user")
-
 
 class Department(SQLModel, table=True):
     """
@@ -111,12 +108,7 @@ class Account(SQLModel, table=True):
     password: Optional[str] = Field(default=None, max_length=64)
     title: Optional[str] = Field(default=None, max_length=64)
     is_domain_user: bool = Field(default=False)
-    hris_security_user_id: Optional[int] = Field(foreign_key="hris_security_user.id")
 
-    # Relationships
-    security_user: Optional["HRISSecurityUser"] = Relationship(
-        back_populates="accounts"
-    )
     role_permissions: List["RolePermission"] = Relationship(back_populates="account")
     request_line_logs: List["LogRequestLine"] = Relationship(back_populates="account")
     # Relationship: One Account can have many Requests they initiated

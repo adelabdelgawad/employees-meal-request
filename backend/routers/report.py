@@ -1,12 +1,10 @@
 import traceback
 import logging
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query
 from src.http_schema import ReportDashboardResponse
-from routers.cruds import report as crud
-from depandancies import SessionDep, HRISSessionDep
-
-from icecream import ic
+from routers.utils import report as crud
+from depandancies import SessionDep
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

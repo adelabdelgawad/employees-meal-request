@@ -2,11 +2,11 @@ import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const AUTH_SECRET = process.env.AUTH_SECRET;
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 
 // Define role-based access control
 const roleBasedAccess = {
-  admin: [
+  Admin: [
     "/",
     "/request/new-request",
     "/request/requests",
@@ -16,9 +16,9 @@ const roleBasedAccess = {
     "/setting/users",
     "/security/roles",
   ],
-  requester: ["/", "/request/new-request"],
-  approver: ["/", "/request/requests"],
-  moderator: ["/", "/setting/users", "/security/roles"],
+  User: ["/", "/request/new-request"],
+  Ordertaker: ["/", "/request/requests"],
+  Manager: ["/", "/setting/users", "/security/roles"],
 };
 
 // ✅ List of pages that anyone can access
@@ -42,7 +42,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // 🔒 Enforce authentication first
-  const token = await getToken({ req, secret: AUTH_SECRET });
+  const token = await getToken({ req, secret: NEXTAUTH_SECRET });
 
   if (!token) {
     console.warn("No token found - redirecting to login");

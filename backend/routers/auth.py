@@ -1,12 +1,23 @@
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
 from passlib.context import CryptContext
 from jose import jwt
 from datetime import datetime, timedelta
 from typing import Optional
 import os
 from depandancies import SessionDep
-from src.login import Login
+from src.schema import LoginRequest, Token
+from typing import List, Optional
+from sqlmodel import select
+from routers.utils.auth import (
+    read_account_by_username,
+    read_hirs_account_by_username,
+    create_or_update_user,
+    read_roles_by_account_id,
+)
+from src.active_directory import authenticate_and_get_user
+from src.http_schema import DomainUser
+from icecream import ic
+
 
 router = APIRouter()
 
@@ -20,33 +31,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 REFRESH_TOKEN_EXPIRE_DAYS = 7  # Refresh token validity
 
 
-# Pydantic models
-class User(BaseModel):
-    userId: int
-    username: str
-    fullName: Optional[str] = None
-    userTitle: Optional[str] = None
-    email: str
-    userRoles: list[str] = []
-
-
-class UserInDB(User):
-    hashed_password: str
-
-
-class Token(BaseModel):
-    access_token: str
-    refresh_token: str
-
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-
-def create_refresh_token(
-    data: dict, expires_delta: Optional[timedelta] = None
-):
+def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     expire = datetime.utcnow() + (
         expires_delta or timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
@@ -69,49 +54,75 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 
 @router.post("/login", response_model=Token)
-async def login_for_access_token(
-    maria_session: SessionDep, form_data: LoginRequest
-):
+async def login_for_access_token(maria_session: SessionDep, form_data: LoginRequest):
     """
-    Handles the user login process. Authenticates the user and generates a JWT access token.
+    Authenticates a user against Active Directory (LDAP) and returns an access token.
+
+    Steps:
+    1. Check if the username exists in either `Account` or `HRISSecurityUser` (local DB).
+    2. If found, attempt LDAP authentication using `authenticate_and_get_user`.
+    3. If LDAP authentication is successful:
+       - Create or update the local user account.
+       - Retrieve the user's roles.
+       - Generate and return an access token & refresh token.
+    4. If authentication fails, return `401 Unauthorized`.
 
     Args:
-        request (LoginRequest): Contains the username, password, and optional domain scope.
-        session (AsyncSession): The database session provided by FastAPI's dependency injection.
+        maria_session (AsyncSession): SQLAlchemy AsyncSession for database operations.
+        form_data (LoginRequest): The login request payload (username & password).
 
     Returns:
-        Dict[str, Any]: Dictionary containing the access token, token type, account details, and optional pages information.
-
-    Raises:
-        HTTPException: Raised when authentication fails or when an internal server error occurs.
+        Token: A dictionary containing `access_token` and `refresh_token`.
     """
-    # Authenticate the user
-    user = Login(
-        session=maria_session,
-        username=form_data.username,
-        password=form_data.password,
-    )
-    await user.authenticate()
 
+    user = None  # Initialize user variable
+
+    # Check if the user exists in the database (either in `Account` or `HRISSecurityUser`)
+    account_exists = await read_account_by_username(maria_session, form_data.username)
+    hirs_account_exists = await read_hirs_account_by_username(
+        maria_session, form_data.username
+    )
+
+    if account_exists or hirs_account_exists:
+        # Authenticate via Active Directory (LDAP)
+        windows_account = await authenticate_and_get_user(
+            form_data.username, form_data.password
+        )
+
+        if windows_account:
+            # Create or update the user in the database
+            user = await create_or_update_user(
+                maria_session,
+                windows_account.username,
+                windows_account.fullName,
+                windows_account.title,
+            )
+
+    # If authentication fails, return `401 Unauthorized`
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
         )
 
+    # Retrieve user roles
+    roles = await read_roles_by_account_id(maria_session, user.id)
+    ic(roles)
+
+    # Generate JWT access and refresh tokens
     access_token = create_access_token(
         data={
-            "userId": user.user_id,
+            "userId": user.id,
             "username": user.username,
             "fullName": user.full_name,
             "userTitle": user.title,
-            "userRoles": user.roles,
+            "userRoles": roles,
         },
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 
     refresh_token = create_refresh_token(
-        data={"userId": user.user_id, "username": user.username}
+        data={"userId": user.id, "username": user.username}
     )
 
     return {"access_token": access_token, "refresh_token": refresh_token}

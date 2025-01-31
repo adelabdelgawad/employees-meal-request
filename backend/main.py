@@ -1,13 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import data, report, security, sec_login
+from routers import auth, data, report, security
 from dotenv import load_dotenv
 from routers import request
 from src.startup import lifespan
 import logging
 from middleware import TokenRenewalMiddleware
 
-# Configure logging
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] [%(name)s] | [%(funcName)s]: %(message)s",
@@ -44,4 +44,4 @@ app.include_router(data.router, tags=["Data"])
 app.include_router(request.router, tags=["Request"])
 app.include_router(report.router, tags=["Report"])
 app.include_router(security.router, tags=["Security Settings"])
-app.include_router(sec_login.router, tags=["Authentication"])
+app.include_router(auth.router, tags=["Authentication"])

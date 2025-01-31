@@ -92,6 +92,15 @@ class SettingUserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class User(BaseModel):
+    userId: int
+    username: str
+    fullName: Optional[str] = None
+    userTitle: Optional[str] = None
+    email: str
+    userRoles: list[str] = []
+
+
 class UserCreateRequest(BaseModel):
     username: str
     full_name: str
@@ -143,3 +152,24 @@ class ReportDetailsResponse(BaseModel):
 class UpdateRequestLinesPayload(BaseModel):
     request_id: int
     changed_statuses: List[UpdateRequestStatus]
+
+
+class Token(BaseModel):
+    access_token: str
+    refresh_token: str
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class UserResponse(BaseModel):
+    userId: int
+    username: str
+    fullName: str | None = None
+    userTitle: str | None = None
+    email: str
+    userRoles: list[str] = []
+
+    model_config = ConfigDict(from_attributes=True)

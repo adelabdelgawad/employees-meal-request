@@ -3,7 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { jwtVerify } from "jose";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const AUTH_SECRET = process.env.AUTH_SECRET;
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 const TOKEN_REFRESH_INTERVAL = 5 * 60; // 5 minutes (in seconds)
 
 /**
@@ -13,7 +13,7 @@ const TOKEN_REFRESH_INTERVAL = 5 * 60; // 5 minutes (in seconds)
  */
 const decodeJWT = async (token: string) => {
   try {
-    const secret = new TextEncoder().encode(AUTH_SECRET);
+    const secret = new TextEncoder().encode(NEXTAUTH_SECRET);
     const { payload } = await jwtVerify(token, secret);
     return payload;
   } catch (error) {
@@ -157,5 +157,5 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   pages: {
     signIn: "/auth/signin",
   },
-  secret: AUTH_SECRET,
+  secret: NEXTAUTH_SECRET,
 });

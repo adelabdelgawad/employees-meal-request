@@ -103,7 +103,6 @@ class AccountCreate(BaseModel):
     full_name: Optional[str]
     title: Optional[str]
     is_domain_user: Optional[bool] = False
-    hris_security_user_id: Optional[int]
 
 
 # ----- RolePermission Schemas -----

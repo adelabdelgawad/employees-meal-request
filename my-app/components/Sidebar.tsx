@@ -7,63 +7,63 @@ const data = {
   navMain: [
     {
       title: "Request",
-      role: "admin, requester, approver",
+      role: "Admin, User, Ordertaker",
       icon: null,
       items: [
         {
           title: "New Request",
           url: "/request/new-request",
-          role: "admin, requester",
+          role: "Admin, User",
           icon: null,
         },
         {
           title: "Requests",
           url: "/request/requests",
-          role: "admin, approver",
+          role: "Admin, Ordertaker",
           icon: null,
         },
       ],
     },
     {
       title: "Report",
-      role: "admin",
+      role: "Admin",
       icon: null,
       items: [
         {
           title: "Requests Dashboard",
           url: "/report/requests-dashboard",
-          role: "admin",
+          role: "Admin",
           icon: null,
         },
         {
           title: "Requests Details",
           url: "/report/details",
-          role: "admin",
+          role: "Admin",
           icon: null,
         },
         {
           title: "Meal Plans",
           url: "/data-management/meal-plans",
-          role: "admin",
+          role: "Admin",
           icon: null,
         },
       ],
     },
     {
       title: "Settings",
-      role: "admin, moderator",
+      role: "Admin, Manager",
       icon: null,
       items: [
         {
           title: "Users",
           url: "/setting/users",
-          role: "admin, moderator",
+          role: "Admin, Manager",
           icon: null,
         },
         {
           title: "Roles",
           url: "/security/roles",
-          role: "admin, moderator",
+          role: "Admin, Manager",
           icon: null,
         },
       ],

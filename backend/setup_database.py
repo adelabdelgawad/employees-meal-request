@@ -156,7 +156,7 @@ async def seed_roles(session: AsyncSession) -> None:
             Role(name="Admin", description="Has full access to the system"),
             Role(name="User", description="Can access basic features"),
             Role(
-                name="Waiter",
+                name="Ordertaker",
                 description="Handles customer orders and service",
             ),
             Role(name="Chef", description="Prepares food in the kitchen"),

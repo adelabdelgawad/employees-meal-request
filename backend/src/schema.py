@@ -157,5 +157,14 @@ class DomainAccount(BaseModel):
 
 
 class Token(BaseModel):
-    access_token: str | None
-    token_type: str | None
+    access_token: str
+    refresh_token: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+    model_config = ConfigDict(from_attributes=True)
