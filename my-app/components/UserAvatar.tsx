@@ -3,45 +3,75 @@
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 
-// ✅ Define TypeScript types for user data
+// ✅ Add proper TypeScript interface
+interface User {
+  id: string;
+  username: string;
+  fullName: string;
+  title: string;
+  roles: string[];
+}
 
 export default function UserAvatar() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // ✅ Ensure session and user data exist
+  // ✅ Add loading state and mount check
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // ✅ Show nothing until mounted and session is loaded
+  if (!isMounted || status === "loading") return null;
   if (!session?.user) return null;
 
-  const user: User = session.user as unknown as User; // ✅ Type assertion
+  // ✅ Proper type narrowing instead of assertion
+  const user = session.user as User;
 
   const getInitials = (name: string) => {
     const words = name.trim().split(" ");
-    if (words.length > 1) {
-      return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
-    }
-    return words[0][0].toUpperCase();
+    return words
+      .slice(0, 2)
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase();
   };
 
+  const initials = user.fullName
+    ? getInitials(user.fullName)
+    : user.username[0].toUpperCase();
+
   return (
-    <div className="absolute bottom-4 left-4 flex flex-col items-end">
-      {/* Avatar Icon with Initials */}
+    <div className="user-avatar-container absolute bottom-4 left-4 flex flex-col items-end">
       <button
-        className="w-12 h-12 flex items-center justify-center bg-blue-600 text-white text-lg font-bold rounded-full shadow-lg border-2 border-gray-300"
-        onClick={() => setIsOpen(!isOpen)}
+        className="w-12 h-12 flex items-center justify-center bg-blue-600 text-white text-lg font-bold rounded-full shadow-lg border-2 border-gray-300 hover:bg-blue-700 transition-colors"
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
+        aria-label="User menu"
       >
-        {getInitials(user.fullName)}
+        {initials}
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute bottom-14 left-0 w-56 bg-white shadow-md rounded-lg p-3 text-center border">
-          <p className="text-sm font-bold text-gray-900">{user.fullName}</p>
-          <p className="text-xs text-gray-500">@{user.username}</p>
-          <p className="text-xs text-gray-600 mt-1">{user.title}</p>
-          <hr className="my-2" />
+        <div className="absolute bottom-14 left-0 w-56 bg-white shadow-lg rounded-lg p-3 text-center border border-gray-200">
+          <div className="mb-2">
+            <p className="text-sm font-semibold text-gray-900 truncate">
+              {user.fullName || "Unknown User"}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">@{user.username}</p>
+            {user.title && (
+              <p className="text-xs text-gray-600 mt-1 truncate">
+                {user.title}
+              </p>
+            )}
+          </div>
+          <hr className="my-2 border-gray-200" />
           <button
             onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-            className="w-full px-3 py-2 text-sm text-red-600 hover:bg-red-100 rounded-md"
+            className="w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
           >
             Sign Out
           </button>

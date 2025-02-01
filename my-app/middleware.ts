@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { auth } from "./auth";
+import { jwtVerify } from "jose";
 
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // ✅ Define role-based access control mapping
 const roleBasedAccess: Record<string, string[]> = {
@@ -27,13 +29,9 @@ const publicPages = ["/access-denied", "/auth/signin"];
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // ✅ Allow public pages
-  if (publicPages.includes(pathname)) {
-    return NextResponse.next();
-  }
-
-  // ✅ Allow API calls, static assets, and Next.js internals
+  // Allow public pages and static assets (keep existing logic)
   if (
+    publicPages.includes(pathname) ||
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next") ||
     pathname.endsWith(".png")
@@ -41,40 +39,83 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 🔒 Enforce authentication using `getToken()`
+  // 🔒 Get both session and raw JWT
+  const sessionToken = await getToken({ req, secret: NEXTAUTH_SECRET });
   const session = await auth();
 
-  if (!session) {
-    console.warn("No token found - redirecting to login");
+  // 1. Check for valid session
+  if (!session || !sessionToken) {
+    console.warn("No session found - redirecting to login");
     const loginUrl = new URL("/auth/signin", req.url);
     loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // ✅ Prevent logged-in users from accessing the login page
+  // 2. Prevent access to login page for authenticated users
   if (pathname === "/auth/signin") {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // ✅ Extract user roles from token (ensure it's an array)
-  const userRoles: string[] = session.user.roles
-    ? Array.isArray(session.user.roles)
-      ? session.user.roles
-      : [session.user.roles]
-    : [];
+  // 3. Validate access token using jose
+  try {
+    const accessToken = sessionToken.accessToken as string;
+    const secret = new TextEncoder().encode(NEXTAUTH_SECRET);
 
-  // ✅ Determine allowed paths based on user roles
+    // Verify token signature and decode
+    const { payload } = await jwtVerify(accessToken, secret, {
+      algorithms: ["HS256"],
+    });
+
+    // Check expiration
+    const isExpired = (payload.exp || 0) * 1000 < Date.now();
+
+    if (isExpired) {
+      console.log("Access token expired - attempting refresh");
+
+      // Attempt to refresh tokens using refresh token from JWT
+      const refreshToken = sessionToken.refreshToken as string;
+      const refreshResponse = await fetch(`${API_URL}/token/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!refreshResponse.ok) {
+        console.error("Refresh token failed - forcing logout");
+        const response = NextResponse.redirect(
+          new URL("/auth/signin", req.url)
+        );
+        response.cookies.delete("next-auth.session-token");
+        return response;
+      }
+
+      // Update session with new tokens
+      const newTokens = await refreshResponse.json();
+      const response = NextResponse.next();
+      response.cookies.set("next-auth.session-token", newTokens.accessToken);
+      return response;
+    }
+  } catch (error) {
+    console.error("Token validation failed:", error);
+    return NextResponse.redirect(new URL("/auth/signin", req.url));
+  }
+
+  // 4. Role-based access control (keep existing logic)
+  const userRoles: string[] = Array.isArray(session.user.roles)
+    ? session.user.roles
+    : [session.user.roles || ""];
+
   const allowedPaths = userRoles.flatMap((role) => roleBasedAccess[role] || []);
 
-  // 🔒 Restrict access if the user is not authorized
   if (!allowedPaths.includes(pathname)) {
-    console.warn(`Access denied for user - Redirecting to /access-denied`);
+    console.warn(
+      `Access denied for ${session.user.username} - Redirecting to /access-denied`
+    );
     return NextResponse.redirect(new URL("/access-denied", req.url));
   }
 
   return NextResponse.next();
 }
-
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|.*\\.png$).*)"],
 };

@@ -33,6 +33,29 @@ async def read_account_by_username(
     return account
 
 
+async def read_user_by_id(session: AsyncSession, user_id: int) -> Optional[Account]:
+    """
+    Fetch an account by user_id.
+
+    Args:
+        session (AsyncSession): The SQLAlchemy async session.
+        user_id (int): The int to search for.
+
+    Returns:
+        Optional[Account]: The found account instance or None.
+    """
+    statement = select(Account).where(Account.id == user_id)
+    result = await session.execute(statement)
+    account = result.scalar_one_or_none()
+
+    if account:
+        logger.info(f"User '{user_id}' found in database.")
+    else:
+        logger.warning(f"User '{user_id}' not found in database.")
+
+    return account
+
+
 async def create_or_update_user(
     session: AsyncSession, username: str, full_name: str, title: str
 ) -> Account:
