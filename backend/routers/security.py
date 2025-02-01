@@ -9,7 +9,7 @@ from src.http_schema import DomainUser
 from src.active_directory import read_domain_users
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
-from routers.utils import security as crud
+from routers.cruds import security as crud
 from src.http_schema import (
     SettingUserResponse,
     UserCreateRequest,

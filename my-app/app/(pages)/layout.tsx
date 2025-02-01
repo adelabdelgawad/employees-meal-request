@@ -1,14 +1,24 @@
 import Sidebar from "@/components/Sidebar";
+import React from "react";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <main>
-      <div className="flex">
-        {/* Sidebar */}
-        <Sidebar />
-        {/* Page Content */}
-        <main className="flex-grow">{children}</main>
-      </div>
-    </main>
-  );
+interface LayoutProps {
+  children: React.ReactNode;
 }
+
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+  return (
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar */}
+      <div className="w-64 flex-shrink-0">
+        <Sidebar />
+      </div>
+
+      {/* Page Content */}
+      <div className="flex-grow overflow-auto">
+        <div className="min-w-full"> {children}</div>
+      </div>
+    </div>
+  );
+};
+
+export default Layout;

@@ -24,9 +24,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
+    ic(token)
     try:
+        ic(SECRET_KEY)
+
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        ic(payload)
         user_id: str = payload.get("sub") or payload.get("userId")
         if user_id is None:
             raise HTTPException(

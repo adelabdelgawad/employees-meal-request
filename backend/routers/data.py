@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Annotated, Dict, List
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
-from collections import defaultdict
 
 from db.database import get_application_session
 from db.models import Employee, Department, Meal

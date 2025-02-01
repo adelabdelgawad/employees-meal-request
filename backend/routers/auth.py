@@ -24,7 +24,7 @@ router = APIRouter()
 # Secret key to encode the JWT
 SECRET_KEY = os.getenv("AUTH_SECRET", "your_secret_key")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Updated to 60 minutes
+ACCESS_TOKEN_EXPIRE_MINUTES = 600000  # Updated to 60 minutes
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

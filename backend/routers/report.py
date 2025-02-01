@@ -1,10 +1,12 @@
 import traceback
 import logging
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query, Request
 from src.http_schema import ReportDashboardResponse
-from routers.utils import report as crud
-from depandancies import SessionDep
+from routers.utils.report_details import read_request_lines_with_attendance
+from routers.cruds.report import read_requests_data
+from depandancies import SessionDep, HRISSessionDep
+from icecream import ic
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -24,7 +26,7 @@ async def get_requests(
     Returns the number of dinner and lunch requests grouped by department.
     """
     try:
-        result = await crud.read_requests_data(maria_session, from_date, to_date)
+        result = await read_requests_data(maria_session, from_date, to_date)
         return result
     except Exception as err:
         logger.error(f"Unexpected error while reading requests: {err}")
@@ -42,6 +44,7 @@ async def get_requests(
 )
 async def get_requests_data(
     maria_session: SessionDep,
+    hris_session: HRISSessionDep,
     start_time: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     end_time: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     page: int = Query(1, ge=1, description="Page number (1-based)"),
@@ -60,9 +63,12 @@ async def get_requests_data(
     :return: A dictionary containing paginated data and metadata.
     """
     try:
+        # hris_session=hris_session,
+
         # Call CRUD function to fetch paginated data and metadata
-        result = await crud.read_request_lines_with_attendance(
+        result = await read_request_lines_with_attendance(
             session=maria_session,
+            hris_session=hris_session,
             start_time=start_time,
             end_time=end_time,
             employee_name=query,

@@ -10,16 +10,13 @@ from db.models import (
     Account,
     Meal,
 )
-from routers.utils.attendance_and_shift import (
+from routers.cruds.attendance_and_shift import (
     read_attendances_from_hris,
     read_shifts_from_hris,
 )
-from src.http_schema import RequestBody, RequestPageRecordResponse
-from itertools import groupby
-from operator import attrgetter
+from src.http_schema import RequestPageRecordResponse
 import pytz
 from fastapi import HTTPException, status
-from icecream import ic
 
 # Default timezone
 cairo_tz = pytz.timezone("Africa/Cairo")

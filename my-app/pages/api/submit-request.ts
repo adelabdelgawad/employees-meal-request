@@ -1,5 +1,6 @@
 // pages/api/submit-request.ts
 import { getToken } from "next-auth/jwt";
+
 import type { NextApiRequest, NextApiResponse } from "next";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -19,6 +20,7 @@ export default async function handler(
     }
 
     const accessToken = token.accessToken;
+    console.log("Access token:", accessToken);
     if (!accessToken) {
       return res
         .status(401)

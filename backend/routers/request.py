@@ -6,7 +6,7 @@ import logging
 from typing import List, Optional, Dict
 from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Query
 from routers.cruds import request as crud
-from routers.utils.request_lines import (
+from routers.cruds.request_lines import (
     read_request_lines,
     update_request_lines,
 )
@@ -17,7 +17,6 @@ from depandancies import HRISSessionDep, SessionDep, CurrentUserDep
 from icecream import ic
 from collections import defaultdict
 from routers.utils.request import continue_processing_meal_request
-from db.models import RequestLine
 
 # Default timezone
 cairo_tz = pytz.timezone("Africa/Cairo")
@@ -41,6 +40,7 @@ async def create_request_endpoint(
     """
     Create requests grouped by meal_id and process them in separate background tasks
     """
+    ic(current_user)
     if not request_lines:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

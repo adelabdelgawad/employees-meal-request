@@ -4,13 +4,13 @@ import {
   TableCell,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import React from 'react';
+} from "@/components/ui/table";
+import React from "react";
 
 export default function DataTable({ data }: { data: any[] }) {
   return (
-    <div className="relative overflow-x-auto border border-neutral-200 bg-white">
-      <Table className="w-full text-sm text-neutral-700 whitespace-nowrap">
+    <div>
+      <Table className="relative overflow-x-auto border border-neutral-200 bg-white text-sm text-neutral-700 whitespace-nowrap">
         <TableHeader className="bg-neutral-100 text-xs font-semibold uppercase text-neutral-600">
           <TableRow>
             <TableCell className="px-4 py-2 text-center">Code</TableCell>
@@ -46,37 +46,37 @@ export default function DataTable({ data }: { data: any[] }) {
                 className="hover:bg-neutral-50 text-neutral-700"
               >
                 <TableCell className="px-4 py-2 text-center">
-                  {item.employee_code || '-'}
+                  {item.employee_code || "-"}
                 </TableCell>
                 <TableCell className="px-4 py-2 text-center">
-                  {item.employee_name || '-'}
+                  {item.employee_name || "-"}
                 </TableCell>
                 <TableCell className="px-4 py-2 text-center">
-                  {item.employee_title || '-'}
+                  {item.employee_title || "-"}
                 </TableCell>
                 <TableCell className="px-4 py-2 text-center">
-                  {item.department || '-'}
+                  {item.department || "-"}
                 </TableCell>
                 <TableCell className="px-4 py-2 text-center">
-                  {item.requester_name || '-'}
+                  {item.requester_name || "-"}
                 </TableCell>
                 <TableCell className="px-4 py-2 text-center">
-                  {item.requester_title || '-'}
+                  {item.requester_title || "-"}
                 </TableCell>
                 <TableCell className="px-4 py-2 text-center">
-                  {item.request_time || '-'}
+                  {item.request_time || "-"}
                 </TableCell>
                 <TableCell className="px-4 py-2 text-center">
-                  {item.meal || '-'}
+                  {item.meal || "-"}
                 </TableCell>
                 <TableCell className="px-4 py-2 text-center">
-                  {item.attendance_in || '-'}
+                  {item.attendance_in || "-"}
                 </TableCell>
                 <TableCell className="px-4 py-2 text-center">
-                  {item.attendance_out || '-'}
+                  {item.attendance_out || "-"}
                 </TableCell>
                 <TableCell className="px-4 py-2 text-center">
-                  {item.notes || '-'}
+                  {item.notes || "-"}
                 </TableCell>
               </TableRow>
             ))

@@ -23,7 +23,7 @@ export default function page() {
   const totalRequests = totalDinnerRequests + totalLunchRequests;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-2">
+    <div className=" bg-gray-100 p-2">
       {/* Header */}
       <div className="p-2"></div>
       {/* Stats Section */}
