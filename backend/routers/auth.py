@@ -1,6 +1,4 @@
 from fastapi import APIRouter, HTTPException, status, Body
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from datetime import datetime, timedelta
 from typing import Optional, Dict
 from jose import jwt, JWTError
@@ -15,7 +13,9 @@ from routers.utils.auth import (
     read_user_by_id,
 )
 from src.active_directory import authenticate_and_get_user
-from icecream import ic
+import pytz
+
+cairo_tz = pytz.timezone("Africa/Cairo")
 
 router = APIRouter()
 
@@ -38,9 +38,29 @@ def create_token(data: dict, expires_delta: Optional[timedelta] = None):
         str: The encoded JWT token.
     """
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    expire = datetime.now(cairo_tz) + (expires_delta or timedelta(minutes=15))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+async def update_refresh_token(session: SessionDep, user_id: int, refresh_token: str):
+    """
+    Updates the refresh token associated with a user ID in the database.
+
+    Args:
+        session (SessionDep): The SQLAlchemy async session.
+        user_id (int): The ID of the user to update.
+        refresh_token (str): The new refresh token to associate with the user.
+
+    Returns:
+        None
+    """
+    user = await read_user_by_id(session, user_id)
+    if user:
+        user.refresh_token = (
+            refresh_token  # Add refresh_token column to your User model
+        )
+        await session.commit()
 
 
 @router.post("/login", response_model=Token)
@@ -121,7 +141,6 @@ async def login_for_access_token(maria_session: SessionDep, form_data: LoginRequ
     }
 
 
-# Update your refresh token endpoint
 @router.post("/token/refresh", response_model=Token)
 async def refresh_access_token(
     maria_session: SessionDep,
@@ -135,64 +154,77 @@ async def refresh_access_token(
         )
 
     try:
+        # Verify refresh token signature and claims
         payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+
+        # Validate token type
         if payload.get("type") != "refresh":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token type",
             )
+
+        # Validate user ID exists
         user_id: int = payload.get("userId")
-        if user_id is None:
+        if not user_id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token payload",
             )
-    except JWTError:
+
+        # Retrieve user from database
+        user = await read_user_by_id(maria_session, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        # Verify refresh token matches stored version
+        if user.refresh_token != refresh_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token",
+            )
+
+        # Get updated roles
+        roles = await read_roles_by_account_id(maria_session, user.id)
+
+        # Generate new tokens
+        new_access_token = create_token(
+            data={
+                "userId": user.id,
+                "username": user.username,
+                "fullName": user.full_name,
+                "email": f"{user.username}@andalusiagroup.net",
+                "userTitle": user.title,
+                "userRoles": roles,
+                "type": "access",
+            },
+            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        )
+
+        new_refresh_token = create_token(
+            data={"userId": user.id, "type": "refresh"},
+            expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+        )
+
+        # Update stored refresh token in database
+        await update_refresh_token(maria_session, user.id, new_refresh_token)
+
+        return {
+            "accessToken": new_access_token,
+            "refreshToken": new_refresh_token,
+            "id": user.id,
+            "username": user.username,
+            "fullName": user.full_name,
+            "title": user.title,
+            "email": f"{user.username}@andalusiagroup.net",
+            "roles": roles,
+        }
+
+    except JWTError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token",
         )
-
-    # Add database check for valid refresh token here
-    # Example: Check if refresh token exists in user's valid tokens
-    user = await read_user_by_id(maria_session, user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-    roles = await read_roles_by_account_id(maria_session, user.id)
-
-    # Generate new tokens
-    access_token = create_token(
-        data={
-            "userId": user.id,
-            "username": user.username,
-            "fullName": user.full_name,
-            "email": f"{user.username}@andalusiagroup.net",
-            "userTitle": user.title,
-            "userRoles": roles,
-            "type": "access",
-        },
-        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-    )
-
-    new_refresh_token = create_token(
-        data={"userId": user.id, "type": "refresh"},
-        expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
-    )
-
-    # Update database with new refresh token (implementation needed)
-    # await update_user_refresh_token(maria_session, user.id, new_refresh_token)
-
-    return {
-        "accessToken": access_token,
-        "refreshToken": new_refresh_token,
-        "id": user.id,
-        "username": user.username,
-        "fullName": user.full_name,
-        "title": user.title,
-        "email": f"{user.username}@andalusiagroup.net",
-        "roles": roles,
-    }

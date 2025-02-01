@@ -33,7 +33,7 @@ async def read_attendances_from_hris(
         List[HRISEmployeeAttendanceWithDetails]: List of attendances matching the criteria.
     """
     try:
-        three_days_ago = datetime.now() - timedelta(days=3)
+        three_days_ago = datetime.now(cairo_tz) - timedelta(days=3)
         all_attendances = []
 
         for i in range(0, len(employee_codes), batch_size):

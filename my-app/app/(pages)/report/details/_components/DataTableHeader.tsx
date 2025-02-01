@@ -1,9 +1,15 @@
+"use client";
 import ExportTable from "@/components/data-table/DataTableExport";
 import DataTableRangePicker from "@/components/data-table/DataTableRangePicker";
 import DataTableSearch from "@/components/data-table/DataTableSearch";
-import React from "react";
+import { URLSwitch } from "@/components/url-switch";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useRouter } from "next/router";
+import React, { useState } from "react";
 
 export default function DataTableHeader() {
+  const [isActive, setIsActive] = useState(false);
+
   return (
     <div>
       {/* Top Section */}
@@ -16,6 +22,13 @@ export default function DataTableHeader() {
 
         {/* Right Section */}
         <div className="flex items-center gap-4">
+          <URLSwitch
+            placeholder="Update Attendance"
+            value={isActive}
+            setValue={setIsActive}
+            paramName="update_attendance"
+            className="my-4"
+          />
           <ExportTable />
         </div>
       </div>

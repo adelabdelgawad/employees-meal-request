@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { fetchReportRequestRecords } from '@/lib/services/report-request';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { fetchReportRequestRecords } from "@/lib/services/report-request";
 
 type ReportRequestRecord = {
   id: number;
@@ -31,7 +31,7 @@ export const ReportRequestProvider: React.FC<{ children: React.ReactNode }> = ({
   const [filteredRequests, setFilteredRequests] = useState<
     ReportRequestRecord[]
   >([]);
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
 
@@ -39,10 +39,9 @@ export const ReportRequestProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchData = async (fromDate?: string, toDate?: string) => {
     try {
       const response = await fetchReportRequestRecords(fromDate, toDate);
-      console.log('Fetched Data:', response);
       setRequests(response);
     } catch (error) {
-      console.error('Failed to fetch report request data:', error);
+      console.error("Failed to fetch report request data:", error);
     }
   };
 
@@ -54,7 +53,7 @@ export const ReportRequestProvider: React.FC<{ children: React.ReactNode }> = ({
   // Filter requests based on search query
   useEffect(() => {
     const filtered = requests.filter((request) =>
-      request.department.toLowerCase().includes(searchQuery.toLowerCase()),
+      request.department.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredRequests(filtered);
   }, [searchQuery, requests]);
@@ -80,7 +79,7 @@ export const useReportRequest = (): ReportRequestContextValue => {
   const context = useContext(ReportRequestContext);
   if (!context) {
     throw new Error(
-      'useReportRequest must be used within a ReportRequestProvider',
+      "useReportRequest must be used within a ReportRequestProvider"
     );
   }
   return context;

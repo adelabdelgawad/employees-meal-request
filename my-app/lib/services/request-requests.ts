@@ -39,8 +39,6 @@ export async function getRequests({
     url.searchParams.append("start_time", startTime);
     url.searchParams.append("end_time", endTime);
 
-    console.log("Fetching data from:", url.toString());
-
     const response = await fetch(url.toString(), { cache: "no-store" });
 
     if (!response.ok) {

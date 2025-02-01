@@ -3,13 +3,11 @@
 import StatSection from "./_sections/StatSection";
 import ChartSection from "./_sections/ChartSection";
 import TopTenSection from "./_sections/TopTenSection";
-import DetailsTable from "./_sections/DetailsTable";
 import { useReportRequest } from "@/hooks/ReportRequestContext";
 
 export default function page() {
   // Fetch dashboard data
   const { filteredRequests: requests } = useReportRequest();
-  console.log("Requests:", requests);
 
   // Calculate totals
   const totalDinnerRequests = requests.reduce(

@@ -1,27 +1,32 @@
+// app/actions.js
+"use server";
+
 export async function fetchReportDetails({
-  query = '',
+  query = "",
   currentPage = 1,
   pageSize = 20,
-  startTime = '',
-  endTime = '',
+  startTime = "",
+  endTime = "",
   download = false,
+  update_attendance = false,
 } = {}) {
   try {
-    const baseUrl = 'http://localhost:8000/report-details';
+    const baseUrl = "http://localhost:8000/report-details";
     const url = new URL(baseUrl);
 
     // Add query parameters
-    url.searchParams.append('query', query);
-    url.searchParams.append('page', currentPage.toString());
-    url.searchParams.append('page_size', pageSize.toString());
-    url.searchParams.append('start_time', startTime);
-    url.searchParams.append('end_time', endTime);
+    url.searchParams.append("query", query);
+    url.searchParams.append("page", currentPage.toString());
+    url.searchParams.append("page_size", pageSize.toString());
+    url.searchParams.append("start_time", startTime);
+    url.searchParams.append("end_time", endTime);
+    url.searchParams.append("update_attendance", update_attendance);
 
     if (download) {
-      url.searchParams.append('download', 'true');
+      url.searchParams.append("download", "true");
     }
 
-    const response = await fetch(url.toString(), { cache: 'no-store' });
+    const response = await fetch(url.toString(), { cache: "no-store" });
 
     if (!response.ok) {
       throw new Error(`Failed to fetch data: ${response.statusText}`);
@@ -29,7 +34,7 @@ export async function fetchReportDetails({
 
     return await response.json();
   } catch (error) {
-    console.error('Error fetching report details:', error);
+    console.error("Error fetching report details:", error);
     throw error;
   }
 }

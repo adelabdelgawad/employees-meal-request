@@ -10,6 +10,7 @@ interface SearchParams {
   page_size?: string;
   start_time?: string;
   end_time?: string;
+  update_attendance?: boolean;
 }
 
 export default async function Page({
@@ -21,13 +22,18 @@ export default async function Page({
   const searchParams = (await searchParamsPromise) || {};
 
   // 1. Parse search parameters
-  const query = searchParams.query || ""; // Default to an empty search query
-  const currentPage = Number(searchParams.page) || 1; // Default to page 1
-  const pageSize = Number(searchParams.page_size) || 20; // Default rows per page
-  const startTime = searchParams.start_time || "";
-  const endTime = searchParams.end_time || "";
+  const {
+    query = "",
+    page = "1",
+    page_size = "20",
+    start_time = "",
+    end_time = "",
+    update_attendance = false,
+  } = searchParams;
 
   // 2. Fetch data (server-side)
+  const currentPage = parseInt(page, 10);
+  const pageSize = parseInt(page_size, 10);
   let data = null;
 
   try {
@@ -35,10 +41,10 @@ export default async function Page({
       query,
       currentPage,
       pageSize,
-      startTime,
-      endTime,
+      startTime: start_time,
+      endTime: end_time,
+      update_attendance,
     });
-    console.log(data);
   } catch (error) {
     console.error("Error fetching report details:", error);
   }

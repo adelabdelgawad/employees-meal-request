@@ -43,6 +43,13 @@ export async function middleware(req: NextRequest) {
   const sessionToken = await getToken({ req, secret: NEXTAUTH_SECRET });
   const session = await auth();
 
+  // Handle token expiration errors
+  if (session?.error === "RefreshFailed") {
+    const response = NextResponse.redirect("/auth/signin");
+    response.cookies.delete("next-auth.session-token");
+    return response;
+  }
+
   // 1. Check for valid session
   if (!session || !sessionToken) {
     console.warn("No session found - redirecting to login");
