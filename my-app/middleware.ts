@@ -3,7 +3,7 @@ import { getToken } from "next-auth/jwt";
 import { auth } from "./auth";
 import { jwtVerify } from "jose";
 
-const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
+const AUTH_SECRET = process.env.AUTH_SECRET;
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // ✅ Define role-based access control mapping
@@ -40,7 +40,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // 🔒 Get both session and raw JWT
-  const sessionToken = await getToken({ req, secret: NEXTAUTH_SECRET });
+  const sessionToken = await getToken({ req, secret: AUTH_SECRET });
   const session = await auth();
 
   // Handle token expiration errors
@@ -66,7 +66,7 @@ export async function middleware(req: NextRequest) {
   // 3. Validate access token using jose
   try {
     const accessToken = sessionToken.accessToken as string;
-    const secret = new TextEncoder().encode(NEXTAUTH_SECRET);
+    const secret = new TextEncoder().encode(AUTH_SECRET);
 
     // Verify token signature and decode
     const { payload } = await jwtVerify(accessToken, secret, {

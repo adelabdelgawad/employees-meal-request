@@ -10,7 +10,7 @@ export default async function handler(
   }
 
   try {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    const token = await getToken({ req, secret: process.env.AUTH_SECRET });
     if (!token) {
       return res.status(401).json({ message: "Unauthorized - No session" });
     }

@@ -29,6 +29,7 @@ const RequestLinesTable: React.FC<RequestLinesTableProps> = ({
   onSave,
   onCancel,
 }) => {
+  console.log(data);
   return (
     <div className="flex flex-col h-full border border-gray-300 rounded-lg shadow">
       {/* Table Header */}
@@ -44,6 +45,9 @@ const RequestLinesTable: React.FC<RequestLinesTableProps> = ({
               </TableHead>
               <TableHead className="w-1/4 text-center px-4 py-2">
                 Shift Hours
+              </TableHead>
+              <TableHead className="w-1/4 text-center px-4 py-2">
+                Notes
               </TableHead>
               <TableHead className="w-1/4 text-center px-4 py-2">
                 Accepted
@@ -89,6 +93,10 @@ const RequestLinesTable: React.FC<RequestLinesTableProps> = ({
                 {/* Shift */}
                 <TableCell className="text-center px-4 py-2">
                   {line.shift_hours ? line.shift_hours : "N/A"}
+                </TableCell>
+
+                <TableCell className="text-center px-4 py-2">
+                  {line.notes ? line.notes : "N/A"}
                 </TableCell>
 
                 {/* Accepted Switch */}

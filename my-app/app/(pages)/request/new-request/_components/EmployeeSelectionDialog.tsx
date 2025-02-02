@@ -28,28 +28,16 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
   onSelectMeal,
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [employeeNotes, setEmployeeNotes] = useState<Record<number, string>>(
-    {}
-  );
-  const tempEmployeeNotes = useRef<Record<number, string>>({}); // Use `useRef` to persist changes
-
+  const employeeNotes = useRef<Record<number, string>>({});
   const [selectedMeals, setSelectedMeals] = useState<Meal[]>([]);
   const { submittedEmployees, setSubmittedEmployees } = useNewRequest();
 
-  // Open drawer and sync notes
   const handleOpenDrawer = () => {
-    tempEmployeeNotes.current = { ...employeeNotes }; // Preserve existing notes without triggering re-render
     setIsDrawerOpen(true);
   };
 
-  // Handle input change (Temporary Notes)
   const handleNoteChange = (employeeId: number, note: string) => {
-    tempEmployeeNotes.current[employeeId] = note;
-  };
-
-  // Confirm Notes on final submission
-  const handleConfirmNotes = () => {
-    setEmployeeNotes({ ...tempEmployeeNotes.current }); // Save only on confirm
+    employeeNotes.current[employeeId] = note;
   };
 
   const handleMealChange = (selectedMeals: Meal[]) => {
@@ -58,11 +46,7 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
   };
 
   const handleSubmit = () => {
-    if (selectedMeals.length === 0) {
-      return;
-    }
-
-    handleConfirmNotes(); // Confirm notes before submitting
+    if (selectedMeals.length === 0) return;
 
     const finalData = selectedEmployees.flatMap((employee) =>
       selectedMeals.map((Meal) => ({
@@ -72,7 +56,7 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
         department_id: employee.department_id,
         meal_id: Meal.id,
         meal_name: Meal.name,
-        notes: tempEmployeeNotes.current[employee.id] || "", // Use ref-based notes
+        notes: employeeNotes.current[employee.id] || "",
       }))
     );
 
@@ -107,7 +91,6 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
 
   return (
     <div>
-      {/* Trigger Button */}
       <Button
         onClick={handleOpenDrawer}
         className="w-full p-2 mt-2 bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-300 disabled:text-gray-500"
@@ -116,7 +99,6 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
         Add Selected Employees
       </Button>
 
-      {/* Right-Side Drawer */}
       <div
         className={`fixed top-0 right-0 h-full bg-white shadow-lg transform ${
           isDrawerOpen ? "translate-x-0" : "translate-x-full"
@@ -130,7 +112,6 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
         </div>
 
         <div className="p-4">
-          {/* Meal Type Selection */}
           <div className="mb-2">
             <MealOption
               Meals={Meals}
@@ -139,40 +120,27 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
             />
           </div>
 
-          {/* Selected Employees List */}
           <div className="flex-grow overflow-y-auto border-gray-300 my-2">
             {selectedEmployees.length > 0 ? (
               <ScrollArea.Root className="h-[75vh] w-full rounded-lg overflow-hidden border border-gray-300 shadow-sm">
                 <List
-                  height={Math.floor(window.innerHeight * 0.75)} // Set height to 75% of viewport
-                  width="100%" // Full width
-                  itemCount={selectedEmployees.length} // Number of items
-                  itemSize={100} // Height of each item (adjust as needed)
+                  height={Math.floor(window.innerHeight * 0.75)}
+                  width="100%"
+                  itemCount={selectedEmployees.length}
+                  itemSize={100}
                 >
-                  {({
-                    index,
-                    style,
-                  }: {
-                    index: number;
-                    style: React.CSSProperties;
-                  }) => {
+                  {({ index, style }) => {
                     const emp = selectedEmployees[index];
                     return (
                       <div
                         key={emp.id}
-                        style={style} // Apply styles for virtualization
+                        style={style}
                         className="p-2 m-1 border-b border-gray-300 sm:flex-row sm:items-center bg-white"
                       >
-                        {/* Employee Info */}
                         <div className="flex flex-col space-y-2">
-                          {/* Employee Name */}
-                          <div
-                            className={`text-sm font-semibold ${rubik.className}`}
-                          >
+                          <div className={`text-sm font-semibold ${rubik.className}`}>
                             {emp.name}
                           </div>
-
-                          {/* Title, Code, and Notes */}
                           <div className="flex justify-between items-center">
                             <div>
                               <div className="text-xs text-gray-500">
@@ -182,17 +150,11 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
                                 Code: {emp.code}
                               </span>
                             </div>
-
-                            {/* Notes Input (Uses `useRef` for smooth typing) */}
                             <Input
                               type="text"
                               placeholder="Notes"
-                              defaultValue={
-                                tempEmployeeNotes.current[emp.id] || ""
-                              }
-                              onChange={(e) =>
-                                handleNoteChange(emp.id, e.target.value)
-                              }
+                              defaultValue={employeeNotes.current[emp.id] || ""}
+                              onChange={(e) => handleNoteChange(emp.id, e.target.value)}
                               className="w-full min-h-[40px] text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               style={{
                                 whiteSpace: "normal",
@@ -213,7 +175,6 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
             )}
           </div>
 
-          {/* Confirm Button */}
           <div className="mt-2">
             <Button
               onClick={handleSubmit}

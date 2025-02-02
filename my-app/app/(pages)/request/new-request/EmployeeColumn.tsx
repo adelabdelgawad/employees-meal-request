@@ -25,7 +25,7 @@ export default function EmployeeColumn() {
   } = useNewRequest();
 
   const [search, setSearch] = useState("");
-  const listRef = useRef(null);
+  const listRef = useRef<{ scrollToItem: (index: number) => void } | null>(null);
 
   const departmentMealFilteredEmployees = useMemo(() => {
     return employees.filter((emp) => {
@@ -105,7 +105,7 @@ export default function EmployeeColumn() {
         />
       </div>
 
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden p-2 space-y-4">
         {finalFilteredEmployees.length > 0 ? (
           <List
             ref={listRef}
@@ -113,7 +113,7 @@ export default function EmployeeColumn() {
             height={Math.floor(window.innerHeight * 0.75)}
             width="100%"
             itemCount={finalFilteredEmployees.length}
-            itemSize={80}
+            itemSize={80} // Adjusted for spacing
           >
             {({
               index,
@@ -129,34 +129,44 @@ export default function EmployeeColumn() {
 
               return (
                 <div
-                  key={emp.id}
-                  style={style || {}}
-                  className={`flex items-center justify-between border rounded-lg p-3 cursor-pointer ${
-                    isSelected
-                      ? "bg-blue-50 border-blue-500"
-                      : "bg-white border-gray-300"
-                  }`}
-                  onClick={() => toggleEmployee(emp.id)}
+                  style={{
+                    ...style,
+                    display: "flex",
+                    justifyContent: "center",
+                    paddingBottom: "6px", // Add bottom padding for spacing
+                  }}
                 >
-                  <div>
-                    <div className={`text-sm font-semibold ${rubik.className}`}>
-                      {emp.name}
-                    </div>
-                    <div className="text-xs text-gray-500">{emp.title}</div>
-                    <span className="text-xs text-gray-500 font-bold">
-                      Code: {emp.code}
-                    </span>
-                  </div>
-                  <Checkbox.Root
-                    checked={isSelected}
-                    className="w-5 h-5 border rounded flex items-center justify-center"
-                    onCheckedChange={() => toggleEmployee(emp.id)}
-                    onClick={(e) => e.stopPropagation()}
+                  <div
+                    key={emp.id}
+                    className={`flex items-center justify-between border rounded-lg p-1 cursor-pointer w-full max-w-[95%] ${
+                      isSelected
+                        ? "bg-blue-50 border-blue-500"
+                        : "bg-white border-gray-300"
+                    }`}
+                    onClick={() => toggleEmployee(emp.id)}
                   >
-                    <Checkbox.Indicator>
-                      <CheckIcon className="w-4 h-4 text-blue-500" />
-                    </Checkbox.Indicator>
-                  </Checkbox.Root>
+                    <div>
+                      <div
+                        className={`text-sm font-semibold ${rubik.className}`}
+                      >
+                        {emp.name}
+                      </div>
+                      <div className="text-xs text-gray-500">{emp.title}</div>
+                      <span className="text-xs text-gray-500 font-bold">
+                        Code: {emp.code}
+                      </span>
+                    </div>
+                    <Checkbox.Root
+                      checked={isSelected}
+                      className="w-5 h-5 border rounded flex items-center justify-center"
+                      onCheckedChange={() => toggleEmployee(emp.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Checkbox.Indicator>
+                        <CheckIcon className="w-4 h-4 text-blue-500" />
+                      </Checkbox.Indicator>
+                    </Checkbox.Root>
+                  </div>
                 </div>
               );
             }}

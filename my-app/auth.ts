@@ -1,9 +1,8 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { jwtVerify } from "jose";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
+const AUTH_SECRET = process.env.AUTH_SECRET;
 
 interface UserSession {
   id: string;
@@ -15,6 +14,7 @@ interface UserSession {
   accessToken: string;
   refreshToken: string;
 }
+console.log("AUTH_SECRET", AUTH_SECRET)
 
 async function refreshAccessToken(
   refreshToken: string
@@ -160,7 +160,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     signIn: "/auth/signin",
     error: "/auth/error",
   },
-  secret: NEXTAUTH_SECRET,
+  secret: AUTH_SECRET,
   session: {
     strategy: "jwt",
     maxAge: 60 * 60 * 24 * 7, // 7 days

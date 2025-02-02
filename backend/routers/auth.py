@@ -22,7 +22,7 @@ router = APIRouter()
 # Secret key to encode the JWT
 SECRET_KEY = os.getenv("AUTH_SECRET", "your_secret_key")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Access token validity
+ACCESS_TOKEN_EXPIRE_MINUTES = 10080  # Access token validity
 REFRESH_TOKEN_EXPIRE_DAYS = 7  # Refresh token validity
 
 
@@ -43,7 +43,9 @@ def create_token(data: dict, expires_delta: Optional[timedelta] = None):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-async def update_refresh_token(session: SessionDep, user_id: int, refresh_token: str):
+async def update_refresh_token(
+    session: SessionDep, user_id: int, refresh_token: str
+):
     """
     Updates the refresh token associated with a user ID in the database.
 
@@ -57,14 +59,14 @@ async def update_refresh_token(session: SessionDep, user_id: int, refresh_token:
     """
     user = await read_user_by_id(session, user_id)
     if user:
-        user.refresh_token = (
-            refresh_token  # Add refresh_token column to your User model
-        )
+        user.refresh_token = refresh_token
         await session.commit()
 
 
 @router.post("/login", response_model=Token)
-async def login_for_access_token(maria_session: SessionDep, form_data: LoginRequest):
+async def login_for_access_token(
+    maria_session: SessionDep, form_data: LoginRequest
+):
     """
     Authenticates a user against Active Directory (LDAP) and returns access and refresh tokens.
 
@@ -78,7 +80,9 @@ async def login_for_access_token(maria_session: SessionDep, form_data: LoginRequ
     user = None
 
     # Check if the user exists in the database
-    account_exists = await read_account_by_username(maria_session, form_data.username)
+    account_exists = await read_account_by_username(
+        maria_session, form_data.username
+    )
     hirs_account_exists = await read_hirs_account_by_username(
         maria_session, form_data.username
     )

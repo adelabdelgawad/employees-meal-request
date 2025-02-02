@@ -29,6 +29,7 @@ async def read_request_lines(
                 Employee.name.label("name"),
                 Employee.title.label("title"),
                 Employee.code.label("code"),
+                RequestLine.notes,
                 RequestLine.attendance,
                 RequestLine.is_accepted,
                 RequestLine.shift_hours,

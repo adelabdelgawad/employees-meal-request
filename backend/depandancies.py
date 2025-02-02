@@ -24,18 +24,18 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
-    ic(token)
     try:
-        ic(SECRET_KEY)
-
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub") or payload.get("userId")
+        user_id = payload.get("userId")  # Directly fetch userId
+
         if user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token: subject or id missing",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+        ic(user_id)
+        
         return User(
             id=user_id,
             username=payload.get("username"),

@@ -22,21 +22,19 @@ async def continue_processing_meal_request(
     request: Request,
     request_lines: List[dict],
 ):
+    ic(request_lines)
     request_lines = await create_meal_request_lines(
         maria_session, request, request_lines
     )
+
     await update_request_lines(
         maria_session=maria_session,
         hris_session=hris_session,
         request_lines=request_lines,
     )
 
-    print("Request lines updated")
-    ic(request)
-
     await update_request_request_time(
         maria_session,
         request_id=request.id,
         request_time=datetime.now(cairo_tz),
     )
-    ic(request)

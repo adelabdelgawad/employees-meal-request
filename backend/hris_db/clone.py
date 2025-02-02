@@ -40,7 +40,9 @@ async def add_and_commit(session: AsyncSession, items: List):
         await session.refresh(item)
 
 
-async def replicate(hris_session: AsyncSession, app_session: AsyncSession) -> None:
+async def replicate(
+    hris_session: AsyncSession, app_session: AsyncSession
+) -> None:
     """
     Replicate data from the HRIS database to the local application database.
     This includes departments, employees, shifts, and security users.
@@ -55,10 +57,14 @@ async def replicate(hris_session: AsyncSession, app_session: AsyncSession) -> No
         await _create_or_update_employees(hris_session, app_session)
         logger.info("Data replication completed successfully.")
     except Exception as e:
-        logger.error("An error occurred during data replication:", exc_info=True)
+        logger.error(
+            "An error occurred during data replication:", exc_info=True
+        )
 
 
-def schedule_replication(hris_session: AsyncSession, app_session: AsyncSession):
+def schedule_replication(
+    hris_session: AsyncSession, app_session: AsyncSession
+):
     """
     Schedule the data replication task to run periodically (every hour).
 
@@ -87,7 +93,9 @@ async def _create_or_update_departments(
     :param app_session: AsyncSession connected to the local application database.
     """
     hris_departments = (
-        (await hris_session.execute(select(HRISOrganizationUnit))).scalars().all()
+        (await hris_session.execute(select(HRISOrganizationUnit)))
+        .scalars()
+        .all()
     )
     for hris_dep in hris_departments:
         dep = (
@@ -127,11 +135,15 @@ async def _create_or_update_employees(
             HRISEmployeePosition,
             HRISEmployee.id == HRISEmployeePosition.employee_id,
         )
-        .join(HRISPosition, HRISEmployeePosition.position_id == HRISPosition.id)
+        .join(
+            HRISPosition, HRISEmployeePosition.position_id == HRISPosition.id
+        )
         .where(HRISEmployee.is_active == True)
     )
 
-    hris_employees_with_positions = (await hris_session.execute(statement)).all()
+    hris_employees_with_positions = (
+        await hris_session.execute(statement)
+    ).all()
     for emp_data in hris_employees_with_positions:
         full_name = " ".join(
             filter(
@@ -145,7 +157,9 @@ async def _create_or_update_employees(
             )
         ).strip()
         emp = (
-            await app_session.exec(select(Employee).where(Employee.id == emp_data.id))
+            await app_session.exec(
+                select(Employee).where(Employee.id == emp_data.id)
+            )
         ).first()
         if emp:
             emp.code, emp.name, emp.title, emp.is_active, emp.department_id = (
@@ -181,11 +195,14 @@ async def _create_or_update_security_users(
         HRISHRISSecurityUser.is_deleted == False,
         HRISHRISSecurityUser.is_locked == False,
     )
-    hris_sec_users = (await hris_session.execute(statement)).scalars().all()
+    result = await hris_session.execute(statement)
+    hris_sec_users = result.scalars().all()
     for hris_sec_user in hris_sec_users:
         sec_user = (
             await app_session.exec(
-                select(HRISSecurityUser).where(HRISSecurityUser.id == hris_sec_user.id)
+                select(HRISSecurityUser).where(
+                    HRISSecurityUser.id == hris_sec_user.id
+                )
             )
         ).first()
         if not sec_user:

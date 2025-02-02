@@ -45,6 +45,7 @@ class RequestLineRespose(BaseModel):
     name: str
     title: str
     code: int
+    notes: str | None = None
     attendance: datetime | None = None
     shift_hours: int | None = None
     is_accepted: bool

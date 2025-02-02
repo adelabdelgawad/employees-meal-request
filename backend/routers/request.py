@@ -40,7 +40,6 @@ async def create_request_endpoint(
     """
     Create requests grouped by meal_id and process them in separate background tasks
     """
-    ic(current_user)
     if not request_lines:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -50,6 +49,7 @@ async def create_request_endpoint(
     # Group requests by meal_id
     meal_groups = defaultdict(list)
     for request in request_lines:
+        ic(request)
         meal_groups[request.meal_id].append(request.model_dump())
 
     try:
@@ -57,6 +57,7 @@ async def create_request_endpoint(
 
         # Create a background task for each meal group
         for meal_id, request_lines in meal_groups.items():
+            ic(request_lines)
             # Create a request in the database
             request = await crud.create_request(
                 maria_session, current_user.id, meal_id, notes
@@ -93,10 +94,14 @@ async def create_request_endpoint(
 )
 async def get_requests(
     maria_session: SessionDep,
-    start_time: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    start_time: Optional[str] = Query(
+        None, description="Start date (YYYY-MM-DD)"
+    ),
     end_time: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     page: int = Query(1, ge=1, description="Page number (1-based)"),
-    page_size: int = Query(10, ge=1, le=100, description="Number of rows per page"),
+    page_size: int = Query(
+        10, ge=1, le=100, description="Number of rows per page"
+    ),
     query: str = Query(None, description="Search parameters"),
     download: bool = Query(False, description="Download status"),
 ):
@@ -178,6 +183,7 @@ async def get_request_lines_endpoint(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"No request lines found for request ID {request_id}.",
             )
+        ic(lines)
         return lines
     except HTTPException as http_exc:
         logger.error(f"HTTP error: {http_exc.detail}")
