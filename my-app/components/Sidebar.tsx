@@ -1,6 +1,7 @@
-import { auth } from "@/auth";
 import Link from "next/link";
-import UserAvatar from "./UserAvatar";
+import { cookies } from "next/headers";
+import { decrypt } from "@/lib/session";
+import UserAvatar from "@/my-app/components/UserAvatar";
 
 // ✅ Define TypeScript types for sidebar structure
 interface SidebarItem {
@@ -84,12 +85,13 @@ const sidebarData: SidebarSection[] = [
   },
 ];
 
-// ✅ Define TypeScript type for user session
-
 export default async function Sidebar() {
   // ✅ Fetch session safely
-  const session = await auth();
-  const userRoles: string[] = session?.user?.roles ?? [];
+  const cookieStore = await cookies();
+  const session = await decrypt(cookieStore.get("access_token")?.value);
+
+  // ✅ Get user roles
+  const userRoles: string[] = session?.roles ?? [];
 
   // ✅ Ensure roles are properly formatted as an array
   const normalizeRoles = (roles: string): string[] =>
@@ -110,7 +112,7 @@ export default async function Sidebar() {
       </div>
 
       {/* Dynamic Sidebar Menu */}
-      <ul className="space-y-2 mt-4">
+      <ul className="space-y-2 mt-4 flex-grow">
         {sidebarData
           .filter((section) => isRoleAllowed(section.role))
           .map((section) => (
@@ -146,7 +148,9 @@ export default async function Sidebar() {
       </ul>
 
       {/* Avatar at Bottom */}
-      <UserAvatar />
+      <div className="mt-auto p-4">
+        <UserAvatar />
+      </div>
     </aside>
   );
 }

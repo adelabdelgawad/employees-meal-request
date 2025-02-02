@@ -35,7 +35,7 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
                 headers={"WWW-Authenticate": "Bearer"},
             )
         ic(user_id)
-        
+
         return User(
             id=user_id,
             username=payload.get("username"),

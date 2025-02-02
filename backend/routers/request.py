@@ -13,7 +13,7 @@ from routers.cruds.request_lines import (
 from src.http_schema import RequestBody, RequestLineRespose
 import pytz
 from src.http_schema import UpdateRequestLinesPayload
-from depandancies import HRISSessionDep, SessionDep, CurrentUserDep
+from dependencies import HRISSessionDep, SessionDep, CurrentUserDep
 from icecream import ic
 from collections import defaultdict
 from routers.utils.request import continue_processing_meal_request
@@ -94,14 +94,10 @@ async def create_request_endpoint(
 )
 async def get_requests(
     maria_session: SessionDep,
-    start_time: Optional[str] = Query(
-        None, description="Start date (YYYY-MM-DD)"
-    ),
+    start_time: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     end_time: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     page: int = Query(1, ge=1, description="Page number (1-based)"),
-    page_size: int = Query(
-        10, ge=1, le=100, description="Number of rows per page"
-    ),
+    page_size: int = Query(10, ge=1, le=100, description="Number of rows per page"),
     query: str = Query(None, description="Search parameters"),
     download: bool = Query(False, description="Download status"),
 ):

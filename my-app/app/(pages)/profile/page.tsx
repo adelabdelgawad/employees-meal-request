@@ -1,32 +1,25 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import { decrypt } from "@/lib/session";
+import { cookies } from "next/headers";
 import React from "react";
 
 export default async function ProfilePage() {
   // Retrieve session on the server
-  const session = await auth();
-
-  // Redirect if user is not authenticated
-  if (!session?.user) {
-    return redirect(
-      `/api/auth/signin?callbackUrl=${encodeURIComponent("/profile")}`
-    );
-  }
-
-  const { user } = session;
+  const cookieStore = await cookies();
+  const userIdCookie = cookieStore.get("userId");
+  const userId = userIdCookie ? userIdCookie.value : null;
 
   return (
     <main style={{ padding: "2rem" }}>
       <h1>Profile</h1>
-      <UserInfo label="ID" value={user?.userId || "N/A"} />
-      <UserInfo label="Name" value={user?.fullName || "N/A"} />
-      <UserInfo label="Title" value={user?.userTitle || "N/A"} />
-      <UserInfo
+      <UserInfo label="ID" value={userId || "N/A"} />
+      {/* <UserInfo label="Name" value={user?.fullName || "N/A"} />
+      <UserInfo label="Title" value={user?.userTitle || "N/A"} /> */}
+      {/* <UserInfo
         label="Role"
         value={
           Array.isArray(user?.userRoles) ? user.userRoles.join(", ") : "N/A"
         }
-      />
+      /> */}
     </main>
   );
 }

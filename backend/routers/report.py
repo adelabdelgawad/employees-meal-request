@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, status, Query, Request
 from src.http_schema import ReportDashboardResponse
 from routers.utils.report_details import read_request_lines_with_attendance
 from routers.cruds.report import read_requests_data
-from depandancies import SessionDep, HRISSessionDep
+from dependencies import SessionDep, HRISSessionDep
 from icecream import ic
 
 router = APIRouter()

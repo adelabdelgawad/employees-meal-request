@@ -1,7 +1,7 @@
 from db.models import Role, RolePermission
 from sqlmodel import select
 from typing import List
-from depandancies import SessionDep
+from dependencies import SessionDep
 
 
 async def read_roles(session: SessionDep, user_id: int) -> list[str]:

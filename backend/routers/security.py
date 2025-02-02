@@ -16,7 +16,7 @@ from src.http_schema import (
     UserCreateResponse,
     UpdateRolesRequest,
 )
-from depandancies import SessionDep
+from dependencies import SessionDep
 
 
 router = APIRouter()

@@ -1,5 +1,8 @@
 "use client";
 
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { login } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -9,43 +12,28 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-
 import { useForm } from "react-hook-form";
+import { Input } from "@/components/ui/input";
 import LoadingButton from "@/components/loading-button";
-import { handleCredentialsSignin } from "@/app/actions/authActions";
-import { useState } from "react";
-import ErrorMessage from "@/components/error-message";
 
-type FormValues = {
+export type FormValues = {
   username: string;
   password: string;
 };
 
-export default function SignIn() {
-  const [globalError, setGlobalError] = useState<string>("");
-
+/**
+ * LoginForm component renders a login card with username and password fields.
+ *
+ * @returns {JSX.Element} The rendered login form.
+ */
+export function LoginForm(): JSX.Element {
+  const [state, handleLogin] = useActionState(login, undefined);
   const form = useForm<FormValues>({
     defaultValues: {
       username: "",
       password: "",
     },
   });
-
-  const onSubmit = async (values: FormValues) => {
-    try {
-      const result = await handleCredentialsSignin(values);
-      if (result?.message) {
-        setGlobalError(result.message);
-      } else {
-        // Success logic (e.g., redirecting user)
-        console.log("Successfully signed in");
-      }
-    } catch (error) {
-      setGlobalError("An unexpected error occurred. Please try again.");
-      console.error(error);
-    }
-  };
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
@@ -56,9 +44,11 @@ export default function SignIn() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {globalError && <ErrorMessage error={globalError} />}
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form
+              action={handleLogin}
+              className="flex max-w-[300px] flex-col gap-4"
+            >
               <FormField
                 control={form.control}
                 name="username"
@@ -67,8 +57,8 @@ export default function SignIn() {
                     <FormLabel>Username</FormLabel>
                     <FormControl>
                       <Input
-                        type="username"
-                        placeholder="Enter your username address"
+                        type="text"
+                        placeholder="Enter your username"
                         autoComplete="off"
                         {...field}
                       />
@@ -79,7 +69,6 @@ export default function SignIn() {
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="password"
@@ -99,7 +88,7 @@ export default function SignIn() {
                   </FormItem>
                 )}
               />
-
+              {/* Using LoadingButton with form submission state */}
               <LoadingButton pending={form.formState.isSubmitting}>
                 Sign In
               </LoadingButton>

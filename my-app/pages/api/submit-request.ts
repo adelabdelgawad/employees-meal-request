@@ -1,5 +1,4 @@
 // pages/api/submit-request.ts
-import { getToken } from "next-auth/jwt";
 
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -14,19 +13,6 @@ export default async function handler(
   }
 
   try {
-    const token = await getToken({ req, secret: process.env.AUTH_SECRET });
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized - No session" });
-    }
-
-    const accessToken = token.accessToken;
-    console.log("Access token:", accessToken);
-    if (!accessToken) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized - No access token" });
-    }
-
     const { requests } = req.body;
 
     if (!requests || !Array.isArray(requests) || requests.length === 0) {
@@ -46,7 +32,6 @@ export default async function handler(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(transformedRequests),
     });

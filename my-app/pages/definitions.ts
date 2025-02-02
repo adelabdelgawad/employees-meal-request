@@ -16,19 +16,6 @@ export interface Meal {
   name: string;
 }
 
-import { ColumnDef } from '@tanstack/react-table';
-
-export interface Column {
-  id: string;
-  header: React.ReactNode;
-  isVisible: boolean;
-}
-
-export interface ViewProps {
-  columns: Column[];
-  toggleColumnVisibility: (id: string) => void;
-}
-
 export interface RequestRecord {
   id: number;
   status_name: string;

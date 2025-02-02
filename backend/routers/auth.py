@@ -1,234 +1,166 @@
-from fastapi import APIRouter, HTTPException, status, Body
-from datetime import datetime, timedelta
-from typing import Optional, Dict
-from jose import jwt, JWTError
 import os
-from depandancies import SessionDep
-from src.schema import LoginRequest, Token
+from datetime import datetime, timedelta
+from fastapi import APIRouter, HTTPException, status
+from dependencies import SessionDep
+from src.schema import LoginRequest  # assuming LoginRequest is a Pydantic model
 from routers.utils.auth import (
     read_account_by_username,
     read_hirs_account_by_username,
     create_or_update_user,
     read_roles_by_account_id,
-    read_user_by_id,
 )
 from src.active_directory import authenticate_and_get_user
-import pytz
-
-cairo_tz = pytz.timezone("Africa/Cairo")
+from jose import jwt
+from pydantic import BaseModel, ConfigDict
+from typing import List, Optional
 
 router = APIRouter()
 
-# Secret key to encode the JWT
+# Configuration
 SECRET_KEY = os.getenv("AUTH_SECRET", "your_secret_key")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 10080  # Access token validity
-REFRESH_TOKEN_EXPIRE_DAYS = 7  # Refresh token validity
+ACCESS_TOKEN_EXPIRE_MINUTES = 60  # adjust as needed
+
+###############################################################################
+# Models
+###############################################################################
 
 
-def create_token(data: dict, expires_delta: Optional[timedelta] = None):
+class TokenPayload(BaseModel):
     """
-    Create a JWT token with the given data and expiration delta.
+    Model representing the token payload data to be encoded.
+    """
+
+    userId: int
+    username: str
+    fullName: str
+    title: str
+    email: str
+    roles: List[str] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TokenResponse(BaseModel):
+    """
+    Model for the login response containing the access token.
+    """
+
+    access_token: str
+    token_type: str = "bearer"
+
+
+###############################################################################
+# Utility Functions
+###############################################################################
+
+
+def create_token(data: TokenPayload, expires_delta: Optional[timedelta] = None) -> str:
+    """
+    Create a JWT token with the given data.
 
     Args:
-        data (dict): The data to include in the token payload.
-        expires_delta (Optional[timedelta]): The time delta until expiration.
+        data (TokenPayload): The data to include in the token payload.
+        expires_delta (Optional[timedelta]): Optional time delta until expiration.
+            If provided, an "exp" claim will be added.
 
     Returns:
         str: The encoded JWT token.
     """
-    to_encode = data.copy()
-    expire = datetime.now(cairo_tz) + (expires_delta or timedelta(minutes=15))
-    to_encode.update({"exp": expire})
+    to_encode = data.model_dump()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+        to_encode.update({"exp": expire})
+        print("SECRET_KEY, ", SECRET_KEY)
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-async def update_refresh_token(
-    session: SessionDep, user_id: int, refresh_token: str
-):
+async def validate_user(
+    session: SessionDep, username: str, password: str
+) -> Optional[TokenPayload]:
     """
-    Updates the refresh token associated with a user ID in the database.
+    Validate user credentials against Active Directory and the database.
 
     Args:
-        session (SessionDep): The SQLAlchemy async session.
-        user_id (int): The ID of the user to update.
-        refresh_token (str): The new refresh token to associate with the user.
+        session (SessionDep): Database session dependency.
+        username (str): The username provided.
+        password (str): The password provided.
 
     Returns:
-        None
+        Optional[TokenPayload]: The token payload data if the user is validated;
+            otherwise, None.
     """
-    user = await read_user_by_id(session, user_id)
-    if user:
-        user.refresh_token = refresh_token
-        await session.commit()
+    # Check if account exists in either source
+    account_exists = any(
+        [
+            await read_account_by_username(session, username),
+            await read_hirs_account_by_username(session, username),
+        ]
+    )
+    if not account_exists:
+        return None
+
+    # Authenticate against Active Directory
+    windows_account = await authenticate_and_get_user(username, password)
+    if not windows_account:
+        return None
+
+    # Create or update the user in the database
+    user = await create_or_update_user(
+        session,
+        windows_account.username,
+        windows_account.fullName,
+        windows_account.title,
+    )
+    if not user:
+        return None
+
+    # Retrieve user roles
+    roles = await read_roles_by_account_id(session, user.id)
+
+    return TokenPayload(
+        userId=user.id,
+        username=user.username,
+        email=f"{user.username}@andalusiagroup.net",
+        fullName=user.full_name,
+        title=user.title,
+        roles=roles,
+    )
 
 
-@router.post("/login", response_model=Token)
+###############################################################################
+# Route Handlers
+###############################################################################
+
+
+@router.post("/login", response_model=TokenResponse)
 async def login_for_access_token(
     maria_session: SessionDep, form_data: LoginRequest
-):
+) -> TokenResponse:
     """
-    Authenticates a user against Active Directory (LDAP) and returns access and refresh tokens.
+    Authenticate the user and return a JWT access token.
 
     Args:
         maria_session (SessionDep): Database session dependency.
-        form_data (LoginRequest): The login request containing username and password.
+        form_data (LoginRequest): Login data containing username and password.
+
+    Raises:
+        HTTPException: If the credentials are invalid.
 
     Returns:
-        Token: A dictionary containing user information, access token, and refresh token.
+        TokenResponse: A response model containing the JWT access token.
     """
-    user = None
-
-    # Check if the user exists in the database
-    account_exists = await read_account_by_username(
-        maria_session, form_data.username
+    user_data = await validate_user(
+        maria_session, form_data.username, form_data.password
     )
-    hirs_account_exists = await read_hirs_account_by_username(
-        maria_session, form_data.username
-    )
-
-    if account_exists or hirs_account_exists:
-        # Authenticate via Active Directory (LDAP)
-        windows_account = await authenticate_and_get_user(
-            form_data.username, form_data.password
-        )
-
-        if windows_account:
-            # Create or update the user in the database
-            user = await create_or_update_user(
-                maria_session,
-                windows_account.username,
-                windows_account.fullName,
-                windows_account.title,
-            )
-
-    if not user:
+    if not user_data:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Retrieve user roles
-    roles = await read_roles_by_account_id(maria_session, user.id)
-
-    # Generate access and refresh tokens
-    access_token = create_token(
-        data={
-            "userId": user.id,
-            "username": user.username,
-            "fullName": user.full_name,
-            "email": f"{user.username}@andalusiagroup.net",
-            "userTitle": user.title,
-            "userRoles": roles,
-            "type": "access",
-        },
-        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+    jwt_token = create_token(
+        user_data, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-
-    refresh_token = create_token(
-        data={"userId": user.id, "type": "refresh"},
-        expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
-    )
-
-    # Store the refresh token in the database or cache with association to the user
-    # This step is essential for managing token revocation and validation
-
-    return {
-        "id": user.id,
-        "username": user.username,
-        "fullName": user.full_name,
-        "title": user.title,
-        "email": f"{user.username}@andalusiagroup.net",
-        "roles": roles,
-        "accessToken": access_token,
-        "refreshToken": refresh_token,
-    }
-
-
-@router.post("/token/refresh", response_model=Token)
-async def refresh_access_token(
-    maria_session: SessionDep,
-    refresh_data: Dict[str, str] = Body(...),
-):
-    refresh_token = refresh_data.get("refreshToken")
-    if not refresh_token:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Missing refresh token",
-        )
-
-    try:
-        # Verify refresh token signature and claims
-        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
-
-        # Validate token type
-        if payload.get("type") != "refresh":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token type",
-            )
-
-        # Validate user ID exists
-        user_id: int = payload.get("userId")
-        if not user_id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token payload",
-            )
-
-        # Retrieve user from database
-        user = await read_user_by_id(maria_session, user_id)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found",
-            )
-
-        # Verify refresh token matches stored version
-        if user.refresh_token != refresh_token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token",
-            )
-
-        # Get updated roles
-        roles = await read_roles_by_account_id(maria_session, user.id)
-
-        # Generate new tokens
-        new_access_token = create_token(
-            data={
-                "userId": user.id,
-                "username": user.username,
-                "fullName": user.full_name,
-                "email": f"{user.username}@andalusiagroup.net",
-                "userTitle": user.title,
-                "userRoles": roles,
-                "type": "access",
-            },
-            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-        )
-
-        new_refresh_token = create_token(
-            data={"userId": user.id, "type": "refresh"},
-            expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
-        )
-
-        # Update stored refresh token in database
-        await update_refresh_token(maria_session, user.id, new_refresh_token)
-
-        return {
-            "accessToken": new_access_token,
-            "refreshToken": new_refresh_token,
-            "id": user.id,
-            "username": user.username,
-            "fullName": user.full_name,
-            "title": user.title,
-            "email": f"{user.username}@andalusiagroup.net",
-            "roles": roles,
-        }
-
-    except JWTError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token",
-        )
+    return TokenResponse(access_token=jwt_token)

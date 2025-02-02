@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getToken } from "next-auth/jwt";
 
 export default async function handler(
   req: NextApiRequest,
@@ -10,17 +9,10 @@ export default async function handler(
   }
 
   try {
-    const token = await getToken({ req, secret: process.env.AUTH_SECRET });
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized - No session" });
-    }
-
     const { id, statusId } = req.body;
     if (!id || !statusId) {
       return res.status(400).json({ message: "Missing id or statusId" });
     }
-
-    const accessToken = token.accessToken;
 
     const response = await fetch(
       `http://localhost:8000/update-request-status?request_id=${id}&status_id=${statusId}`,
@@ -28,7 +20,6 @@ export default async function handler(
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
         },
       }
     );
