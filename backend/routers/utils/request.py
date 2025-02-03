@@ -22,16 +22,18 @@ async def continue_processing_meal_request(
     request: Request,
     request_lines: List[dict],
 ):
-    ic(request_lines)
     request_lines = await create_meal_request_lines(
         maria_session, request, request_lines
     )
 
-    await update_request_lines(
-        maria_session=maria_session,
-        hris_session=hris_session,
-        request_lines=request_lines,
-    )
+    try:
+        await update_request_lines(
+            maria_session=maria_session,
+            hris_session=hris_session,
+            request_lines=request_lines,
+        )
+    except Exception as e:
+        logger.error(f"Error updating request lines: {e}")
 
     await update_request_request_time(
         maria_session,

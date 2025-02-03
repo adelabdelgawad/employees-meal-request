@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { decrypt, getSession } from "@/lib/session";
-import UserAvatar from "@/my-app/components/UserAvatar";
+import UserAvatar from "@/components/UserAvatar";
 
 // ✅ Define TypeScript types for sidebar structure
 interface SidebarItem {

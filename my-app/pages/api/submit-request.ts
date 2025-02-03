@@ -1,60 +1,105 @@
-// pages/api/submit-request.ts
+import { NextApiRequest, NextApiResponse } from "next";
 
-import type { NextApiRequest, NextApiResponse } from "next";
+const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000/request";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
+/**
+ * API Route handler that forwards a POST request to FastAPI,
+ * transforming each request object to include the required fields.
+ */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method Not Allowed" });
+    return res.status(405).json({
+      status: "error",
+      message: "Method Not Allowed",
+      allowed_methods: ["POST"],
+    });
   }
 
   try {
-    const { requests } = req.body;
-
-    if (!requests || !Array.isArray(requests) || requests.length === 0) {
-      return res.status(400).json({ message: "No requests provided" });
-    }
-
-    // Transform the request keys to match your FastAPI backend requirements
-    const transformedRequests = requests.map((request: any) => ({
-      employee_id: request.id,
-      employee_code: request.code,
-      department_id: request.department_id,
-      meal_id: request.meal_id,
-      notes: request.notes || "",
-    }));
-
-    const fastApiResponse = await fetch(`${API_URL}/request`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(transformedRequests),
-    });
-
-    const result = await fastApiResponse.json();
-
-    if (!fastApiResponse.ok) {
-      return res.status(fastApiResponse.status).json({
-        message: "FastAPI request failed",
-        fastApiError: result,
+    const token = req.cookies.session;
+    if (!token) {
+      return res.status(401).json({
+        status: "error",
+        code: "NO_SESSION",
+        message: "Authentication required",
       });
     }
 
-    return res.status(200).json(result);
+    if (!req.body || !req.body.requests) {
+      return res.status(400).json({
+        status: "error",
+        code: "INVALID_REQUEST",
+        message: "Missing requests data",
+      });
+    }
+
+    // Transform each request object to include 'employee_id' and 'employee_code'
+    const transformedRequests = req.body.requests.map((item: any) => ({
+      employee_id: item.id,
+      employee_code: item.code,
+      name: item.name,
+      department_id: item.department_id,
+      meal_id: item.meal_id,
+      meal_name: item.meal_name,
+      notes: item.notes,
+    }));
+
+    const serializedRequestTime = req.body.request_time
+      ? new Date(req.body.request_time).toISOString()
+      : undefined;
+
+    const payload = {
+      ...req.body,
+      requests: transformedRequests,
+      request_time: serializedRequestTime,
+    };
+    console.log(payload);
+
+    const apiResponse = await fetch(FASTAPI_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const contentType = apiResponse.headers.get("content-type");
+    const data =
+      contentType && contentType.includes("application/json")
+        ? await apiResponse.json()
+        : await apiResponse.text();
+
+    if (!apiResponse.ok) {
+      return res.status(apiResponse.status).json({
+        status: "error",
+        code: "UPSTREAM_ERROR",
+        message: "Error from FastAPI",
+        details: data,
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      data,
+    });
   } catch (error) {
-    console.error("Error handling requests:", error);
-    const errorMessage =
-      error instanceof Error
-        ? error.message
-        : "An error occurred while processing the request";
     return res.status(500).json({
-      message: errorMessage,
-      errorDetails: error,
+      status: "error",
+      code: "INTERNAL_SERVER_ERROR",
+      message: "An unexpected error occurred",
+      details: error instanceof Error ? error.message : "Unknown error",
     });
   }
 }

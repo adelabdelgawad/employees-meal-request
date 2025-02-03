@@ -1,25 +1,7 @@
 "use client";
 
+import { logout } from "@/lib/session";
 import { useEffect, useState } from "react";
-import { signOut } from "next-auth/react";
-
-interface User {
-  fullName?: string;
-  username: string;
-  title?: string;
-}
-
-/**
- * Type definition for the session object.
- * In this context, we assume session contains user properties.
- */
-interface Session {
-  userId?: string;
-  fullName?: string;
-  username?: string;
-  title?: string;
-  roles?: string[];
-}
 
 /**
  * Props for the UserAvatarClient component.
@@ -28,26 +10,11 @@ interface UserAvatarClientProps {
   session: Session | null;
 }
 
-/**
- * Renders the user avatar with an upward-opening dropdown menu.
- *
- * The dropdown appears above the avatar button, and the component is left-aligned.
- *
- * @param {UserAvatarClientProps} props - Contains the session data.
- * @returns {JSX.Element | null} The rendered component.
- */
 export default function UserAvatarClient({ session }: UserAvatarClientProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-
-  // Set mounted flag after first render
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Return nothing until the component is mounted or session is missing.
-  if (!isMounted) return null;
-  if (!session?.userId) return null;
+  if (!session?.user.userId) return null;
 
   /**
    * Returns the initials of a given name.
@@ -64,9 +31,9 @@ export default function UserAvatarClient({ session }: UserAvatarClientProps) {
       .toUpperCase();
   };
 
-  const initials = session.fullName
-    ? getInitials(session.fullName)
-    : session.username?.[0].toUpperCase() || "";
+  const initials = session.user.fullName
+    ? getInitials(session.user.fullName)
+    : session.user.username?.[0].toUpperCase() || "";
 
   return (
     <div className="user-avatar-container relative flex flex-col items-start">
@@ -90,18 +57,20 @@ export default function UserAvatarClient({ session }: UserAvatarClientProps) {
             </div>
             <div className="mb-2">
               <p className="text-sm font-semibold text-gray-900 truncate">
-                {session.fullName || "Unknown User"}
+                {session.user.fullName || "Unknown User"}
               </p>
-              <p className="text-xs text-gray-500 mt-1">@{session.username}</p>
-              {session.title && (
+              <p className="text-xs text-gray-500 mt-1">
+                @{session.user.username}
+              </p>
+              {session.user.title && (
                 <p className="text-xs text-gray-600 mt-1 truncate">
-                  {session.title}
+                  {session.user.title}
                 </p>
               )}
             </div>
             <hr className="my-3 border-gray-200" />
             <button
-              onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+              onClick={() => logout()}
               className="w-full py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
             >
               Sign Out

@@ -14,11 +14,13 @@ class DepartmentResponse(BaseModel):
 
 # ✅ RequestBody Model
 class RequestBody(BaseModel):
-    employee_id: int
-    employee_code: int
+    employee_id: int = Field(..., alias="id")
+    employee_code: int = Field(..., alias="code")
+    name: str
     department_id: int
     meal_id: int
-    notes: str | None = None
+    meal_name: str
+    notes: Optional[str] = ""
 
     model_config = ConfigDict(from_attributes=True)
 

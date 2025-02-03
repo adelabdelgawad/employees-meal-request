@@ -17,6 +17,9 @@ from dependencies import HRISSessionDep, SessionDep, CurrentUserDep
 from icecream import ic
 from collections import defaultdict
 from routers.utils.request import continue_processing_meal_request
+from pydantic import BaseModel
+from collections import defaultdict
+from types import SimpleNamespace
 
 # Default timezone
 cairo_tz = pytz.timezone("Africa/Cairo")
@@ -28,19 +31,64 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+class RequestItem(BaseModel):
+    """
+    Represents a single request item.
+
+    Attributes:
+        employee_id (int): The unique ID of the employee.
+        employee_code (str): The employee's code.
+        name (str): The name of the employee.
+        department_id (int): The identifier for the department.
+        meal_id (int): The identifier for the meal.
+        meal_name (str): The name of the meal.
+        notes (Optional[str]): Any additional notes.
+    """
+
+    employee_id: int
+    employee_code: int
+    name: str
+    department_id: int
+    meal_id: int
+    meal_name: str
+    notes: Optional[str] = None
+
+
+class RequestPayload(BaseModel):
+    """
+    Represents the payload for the request endpoint.
+
+    Attributes:
+        requests (List[RequestItem]): A list of request items.
+        request_time (Optional[datetime]): The time of the request in ISO format.
+    """
+
+    requests: List[RequestItem]
+    request_time: Optional[datetime] = None
+    notes: Optional[str] = None
+    request_timing_option: Optional[str] = None
+
+
 @router.post("/request")
 async def create_request_endpoint(
+    payload: RequestPayload,
     maria_session: SessionDep,
-    request_lines: List[RequestBody],
     background_tasks: BackgroundTasks,
     hris_session: HRISSessionDep,
     current_user: CurrentUserDep,
-    notes: Optional[str] = None,
 ):
     """
-    Create requests grouped by meal_id and process them in separate background tasks
+    Create requests grouped by meal_id and process them in separate background tasks.
+
+    Expects a JSON object with the following structure:
+    {
+        "requests": [ { ... }, ... ],
+        "notes": "Optional notes",
+        "request_timing_option": "request_now" | "schedule_request" | "save_for_later",
+        "request_time": "ISO-formatted datetime string"
+    }
     """
-    if not request_lines:
+    if not payload.requests:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No request lines provided",
@@ -48,34 +96,38 @@ async def create_request_endpoint(
 
     # Group requests by meal_id
     meal_groups = defaultdict(list)
-    for request in request_lines:
-        ic(request)
-        meal_groups[request.meal_id].append(request.model_dump())
+    for req in payload.requests:
+        # Convert each RequestBody to a dict if needed
+        meal_groups[req.meal_id].append(req.model_dump())
 
     try:
         logger.info(f"Processing {len(meal_groups)} meal groups")
 
-        # Create a background task for each meal group
-        for meal_id, request_lines in meal_groups.items():
-            ic(request_lines)
-            # Create a request in the database
-            request = await crud.create_request(
-                maria_session, current_user.id, meal_id, notes
+        # Process each meal group in a background task
+        for meal_id, req_list in meal_groups.items():
+            ic(current_user)
+
+            created_request = await crud.create_request(
+                maria_session, current_user.id, meal_id, payload.notes
             )
+
+            # Ensure attribute access for downstream code (if create_request returns a dict)
+            if isinstance(created_request, dict):
+                created_request = SimpleNamespace(**created_request)
 
             background_tasks.add_task(
                 continue_processing_meal_request,
                 maria_session=maria_session,
                 hris_session=hris_session,
-                request=request,
-                request_lines=request_lines,
+                request=created_request,
+                request_lines=req_list,
             )
 
         return {
-            "message": f"{len(request_lines)* len(meal_groups)} Request(s) created successfully",
+            "message": f"{len(payload.requests) * len(meal_groups)} Request(s) created successfully",
             "meal_groups": {
-                meal_id: {"count": len(requests)}
-                for meal_id, requests in meal_groups.items()
+                meal_id: {"count": len(req_list)}
+                for meal_id, req_list in meal_groups.items()
             },
         }
 

@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Annotated
-from fastapi import Depends, HTTPException, status
+from fastapi import Request, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 
@@ -23,34 +23,42 @@ ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
+async def decrypt(token: str):
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("userId")  # Directly fetch userId
+        return payload
+    except JWTError as e:
+        print(f"Token verification failed: {e}")
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-        if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token: subject or id missing",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        ic(user_id)
+
+async def get_current_user(request: Request):
+    token = request.cookies.get("session")  # Check cookies first
+    if not token:
+        # Fallback: Check Authorization header
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    # Verify JWT token using the decrypt function
+    try:
+        payload = await decrypt(token)
+        user = payload["user"]
 
         return User(
-            id=user_id,
-            username=payload.get("username"),
-            roles=payload.get("userRoles"),
-            full_name=payload.get("fullName"),
-            title=payload.get("userTitle"),
-            email=payload.get("email"),
+            id=user["userId"],
+            username=user["username"],
+            roles=user["roles"],
+            email=user["email"],
+            full_name=user["fullName"],
+            title=user["title"],
         )
-
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_application_session)]

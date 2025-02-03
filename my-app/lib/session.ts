@@ -1,9 +1,9 @@
 "use server";
 
 import { SignJWT, jwtVerify } from "jose";
+import { NextApiRequest } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { NextRequest, NextResponse } from "next/server";
 
 // Ensure the SESSION_SECRET environment variable is defined
 if (!process.env.SESSION_SECRET) {
@@ -41,7 +41,7 @@ export async function createSession(user: User) {
     httpOnly: true,
     secure: true,
     expires: expiresAt,
-    sameSite: "lax",
+    sameSite: "none",
     path: "/",
   });
 }
@@ -112,4 +112,10 @@ export async function getSession(): Promise<Session | null> {
   const session = await decrypt(cookie);
   if (!session) return null;
   return session;
+}
+
+export async function getToken(req?: NextApiRequest) {
+  const cookieStore = await cookies();
+
+  return cookieStore.get("session")?.value;
 }
