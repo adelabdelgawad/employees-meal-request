@@ -2,36 +2,18 @@
 
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { NextRequest, NextResponse } from "next/server";
 
 // Ensure the SESSION_SECRET environment variable is defined
 if (!process.env.SESSION_SECRET) {
   throw new Error("SESSION_SECRET environment variable is not defined");
 }
+
 const secretKey: string = process.env.SESSION_SECRET;
-// Encode the secret key once for signing and verifying
 const encodedKey = new TextEncoder().encode(secretKey);
 
-/**
- * Type definition for the session payload.
- */
-export type SessionPayload = {
-  userId: number;
-  username: string;
-  fullName: string;
-  title: string;
-  email: string;
-  roles: string[];
-  exp: string;
-};
-
-/**
- * Encrypts (signs) the provided session payload into a JWT token.
- *
- * @param payload - The session payload containing the user ID and expiration timestamp.
- * @returns A Promise that resolves to the signed JWT token.
- */
-export async function encrypt(payload: SessionPayload): Promise<string> {
+export async function encrypt(payload: any) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -39,73 +21,95 @@ export async function encrypt(payload: SessionPayload): Promise<string> {
     .sign(encodedKey);
 }
 
-/**
- * Decrypts and verifies a session JWT token.
- *
- * @param session - The JWT session token to verify.
- * @returns A Promise that resolves to the session payload if verification succeeds,
- *          or undefined if the token is invalid.
- */
-export async function decrypt(
-  session: string | undefined = ""
-): Promise<SessionPayload | undefined> {
-  if (!session) {
-    console.error("No session token provided for decryption.");
-    return undefined;
-  }
+export async function decrypt(session: string | undefined = "") {
   try {
     const { payload } = await jwtVerify(session, encodedKey, {
       algorithms: ["HS256"],
     });
-    // Optionally perform additional type checks here before returning
-    return payload as SessionPayload;
+    return payload as unknown as Session;
   } catch (error) {
-    console.error("Failed to verify session", error);
-    return undefined;
+    console.log("Failed to verify session");
   }
 }
 
-/**
- * Creates a session cookie by signing a JWT token with the provided user ID.
- *
- * @param userId - The ID of the authenticated user.
- * @returns A Promise that resolves to a NextResponse with the session cookie set.
- */
-export async function createSession(userId: string): Promise<NextResponse> {
-  const cookieStore = await cookies(); // cookies() is synchronous
-  const expiresDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
-  const payload: SessionPayload = {
-    userId,
-    expiresAt: expiresDate.toISOString(),
-  };
+export async function createSession(user: User) {
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const session = await encrypt({ user, expiresAt });
+  const cookieStore = await cookies();
 
-  const sessionToken = await encrypt(payload);
-
-  cookieStore.set("session", sessionToken, {
+  cookieStore.set("session", session, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    expires: expiresDate,
+    secure: true,
+    expires: expiresAt,
+    sameSite: "lax",
     path: "/",
   });
-
-  // Return a response so that cookie changes are attached to it.
-  return NextResponse.next();
 }
 
-/**
- * Deletes the session cookie from the client.
- *
- * @returns A Promise that resolves to a NextResponse with the session cookie removed.
- */
-export async function deleteSession(): Promise<NextResponse> {
+export async function updateSession() {
+  const session = (await cookies()).get("session")?.value;
+  const payload = await decrypt(session);
+
+  if (!session || !payload) {
+    return null;
+  }
+
+  const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
   const cookieStore = await cookies();
-  cookieStore.delete("session", { path: "/" });
-  return NextResponse.next();
+  cookieStore.set("session", session, {
+    httpOnly: true,
+    secure: true,
+    expires: expires,
+    sameSite: "lax",
+    path: "/",
+  });
 }
 
-export async function getSession() {
+export async function deleteSession() {
   const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("access_token")?.value;
-  const session = await decrypt(sessionToken);
+  cookieStore.delete("session");
+}
+
+export async function logout() {
+  deleteSession();
+  redirect("/login");
+}
+export async function login(prevState: any, formData: FormData) {
+  const username = formData.get("username")?.toString() || "";
+  const password = formData.get("password")?.toString() || "";
+
+  // Authenticate with FastAPI
+  const response = await fetch("http://localhost:8000/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ username, password }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    return {
+      errors: {
+        username: [errorData.detail || "Authentication failed"],
+      },
+    };
+  }
+
+  // Get user data from response (e.g. FastAPI may return a user object)
+  const user = await response.json();
+
+  // Create the session payload with an expiration time.
+  await createSession(user);
+  redirect("/");
+}
+
+export async function getSession(): Promise<Session | null> {
+  // Extract the token string from the cookie object.
+  const cookie = (await cookies()).get("session")?.value;
+  if (!cookie) return null;
+  const session = await decrypt(cookie);
+  if (!session) return null;
   return session;
 }

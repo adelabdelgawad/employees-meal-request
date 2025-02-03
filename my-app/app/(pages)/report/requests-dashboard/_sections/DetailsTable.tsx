@@ -38,8 +38,6 @@ const DetailsTableContent: React.FC<DetailsTableProps> = ({ records }) => {
     setCurrentPageData(newPageData);
   }, [filteredData, currentPage, rowsPerPage]);
 
-  console.log("Filtered Data:", filteredData);
-  console.log("Current Page Data:", currentPageData);
 
   // Total Rows and Pages Calculation
   const totalRows = filteredData.length;

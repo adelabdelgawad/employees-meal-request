@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { decrypt } from "@/lib/session";
+import { decrypt, getSession } from "@/lib/session";
 import UserAvatar from "@/my-app/components/UserAvatar";
 
 // ✅ Define TypeScript types for sidebar structure
@@ -87,11 +87,11 @@ const sidebarData: SidebarSection[] = [
 
 export default async function Sidebar() {
   // ✅ Fetch session safely
-  const cookieStore = await cookies();
-  const session = await decrypt(cookieStore.get("access_token")?.value);
+
+  const session = await getSession();
 
   // ✅ Get user roles
-  const userRoles: string[] = session?.roles ?? [];
+  const userRoles: string[] = session?.user.roles ?? [];
 
   // ✅ Ensure roles are properly formatted as an array
   const normalizeRoles = (roles: string): string[] =>

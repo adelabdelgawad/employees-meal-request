@@ -156,17 +156,6 @@ class DomainAccount(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class Token(BaseModel):
-    userId: int | None = None
-    username: str | None = None
-    fullName: str | None = None
-    title: str | None = None
-    email: str | None = None
-    roles: List[str] | None = []
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class LoginRequest(BaseModel):
     username: str
     password: str

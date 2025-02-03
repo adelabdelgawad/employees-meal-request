@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 from fastapi import APIRouter, HTTPException, status
 from dependencies import SessionDep
 from src.schema import LoginRequest  # assuming LoginRequest is a Pydantic model
@@ -10,74 +10,15 @@ from routers.utils.auth import (
     read_roles_by_account_id,
 )
 from src.active_directory import authenticate_and_get_user
-from jose import jwt
-from pydantic import BaseModel, ConfigDict
+from src.http_schema import UserData
 from typing import List, Optional
 
 router = APIRouter()
 
-# Configuration
-SECRET_KEY = os.getenv("AUTH_SECRET", "your_secret_key")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60  # adjust as needed
-
-###############################################################################
-# Models
-###############################################################################
-
-
-class TokenPayload(BaseModel):
-    """
-    Model representing the token payload data to be encoded.
-    """
-
-    userId: int
-    username: str
-    fullName: str
-    title: str
-    email: str
-    roles: List[str] = []
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class TokenResponse(BaseModel):
-    """
-    Model for the login response containing the access token.
-    """
-
-    access_token: str
-    token_type: str = "bearer"
-
-
-###############################################################################
-# Utility Functions
-###############################################################################
-
-
-def create_token(data: TokenPayload, expires_delta: Optional[timedelta] = None) -> str:
-    """
-    Create a JWT token with the given data.
-
-    Args:
-        data (TokenPayload): The data to include in the token payload.
-        expires_delta (Optional[timedelta]): Optional time delta until expiration.
-            If provided, an "exp" claim will be added.
-
-    Returns:
-        str: The encoded JWT token.
-    """
-    to_encode = data.model_dump()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-        to_encode.update({"exp": expire})
-        print("SECRET_KEY, ", SECRET_KEY)
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
 
 async def validate_user(
     session: SessionDep, username: str, password: str
-) -> Optional[TokenPayload]:
+) -> Optional[UserData]:
     """
     Validate user credentials against Active Directory and the database.
 
@@ -118,7 +59,7 @@ async def validate_user(
     # Retrieve user roles
     roles = await read_roles_by_account_id(session, user.id)
 
-    return TokenPayload(
+    return UserData(
         userId=user.id,
         username=user.username,
         email=f"{user.username}@andalusiagroup.net",
@@ -133,12 +74,12 @@ async def validate_user(
 ###############################################################################
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=UserData)
 async def login_for_access_token(
     maria_session: SessionDep, form_data: LoginRequest
-) -> TokenResponse:
+) -> UserData:
     """
-    Authenticate the user and return a JWT access token.
+    Authenticate the user and return a User data.
 
     Args:
         maria_session (SessionDep): Database session dependency.
@@ -148,7 +89,7 @@ async def login_for_access_token(
         HTTPException: If the credentials are invalid.
 
     Returns:
-        TokenResponse: A response model containing the JWT access token.
+        UserData: A response model containing the User data.
     """
     user_data = await validate_user(
         maria_session, form_data.username, form_data.password
@@ -160,7 +101,4 @@ async def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    jwt_token = create_token(
-        user_data, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
-    return TokenResponse(access_token=jwt_token)
+    return user_data

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { decrypt } from "./lib/session";
+import { decrypt, getSession } from "./lib/session";
 
 // Ensure the secret is available and consistent with your backend
 const SESSION_SECRET = new TextEncoder().encode(process.env.SESSION_SECRET!);
@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // 🔒 Get the session token from cookies (raw JWT)
-  const sessionToken = request.cookies.get("access_token")?.value;
+  const sessionToken = request.cookies.get("session")?.value;
 
   // 1. Check for a valid session token; if missing, redirect to login
   if (!sessionToken) {
@@ -49,33 +49,30 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. Prevent access to the signin page for authenticated users
-  if (pathname === "/auth/signin") {
+  if (pathname === "/login") {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
   // 3. Validate the access token using jose and extract the session payload
   let session = null;
 
-  // Access cookies on the server
-  const cookieStore = await cookies();
-  const token = cookieStore.get("access_token")?.value;
-
   // Decrypt and retrieve the session
-  session = await decrypt(token);
+  session = await await getSession();
+
   if (!session) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // 4. Role-based access control: verify that the session has roles
-  if (!session || !session.roles) {
+  if (!session || !session?.user.roles) {
     console.warn("No roles found in session - access denied");
     return NextResponse.redirect(new URL("/access-denied", request.url));
   }
 
   // Normalize roles to an array
-  const userRoles: string[] = Array.isArray(session.roles)
-    ? session.roles
-    : [session.roles];
+  const userRoles: string[] = Array.isArray(session?.user.roles)
+    ? session?.user.roles
+    : [session?.user.roles];
 
   // Derive allowed paths for the user based on their roles
   const allowedPaths = userRoles.flatMap((role) => roleBasedAccess[role] || []);

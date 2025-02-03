@@ -26,6 +26,12 @@ declare global {
     email: string;
     roles: string[];
   };
+  interface Session {
+    user: User;
+    expiresAt: string;
+    iat: number;
+    exp: number;
+  }
   type ReportDetailRecord = {
     id: number;
     employee_code: number;

@@ -2,11 +2,11 @@
 export async function fetchRoles(): Promise<Role[]> {
   try {
     const response = await fetch(`http://localhost:8000/roles`, {
-      cache: 'no-store',
+      cache: "no-store",
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch roles');
+      throw new Error("Failed to fetch roles");
     }
 
     // Parse the response and ensure it matches the Role type
@@ -14,7 +14,7 @@ export async function fetchRoles(): Promise<Role[]> {
 
     return data;
   } catch (error) {
-    console.error('Error fetching roles:', error);
+    console.error("Error fetching roles:", error);
     return [];
   }
 }
@@ -23,17 +23,16 @@ export async function fetchRoles(): Promise<Role[]> {
 export async function fetchDomainUsers() {
   try {
     const response = await fetch(`http://localhost:8000/domain-users`, {
-      cache: 'no-store',
+      cache: "no-store",
     });
-    console.log(response);
 
     if (!response.ok) {
-      throw new Error('Failed to fetch roles');
+      throw new Error("Failed to fetch roles");
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Error fetching roles:', error);
+    console.error("Error fetching roles:", error);
     return [];
   }
 }
@@ -45,11 +44,11 @@ export async function fetchUsers(userId?: number) {
       : `http://localhost:8000/user`;
 
     const response = await fetch(url, {
-      cache: 'no-store',
+      cache: "no-store",
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch users');
+      throw new Error("Failed to fetch users");
     }
 
     const data = await response.json();
@@ -61,7 +60,7 @@ export async function fetchUsers(userId?: number) {
 
     return data;
   } catch (error) {
-    console.error('Error fetching users:', error);
+    console.error("Error fetching users:", error);
     return null;
   }
 }
@@ -71,14 +70,13 @@ export async function submitAddUser(
   username: string,
   fullName: string,
   title: string,
-  roles: number[],
+  roles: number[]
 ) {
-  console.log('Submit Add User', username, fullName, title, roles);
   try {
-    const fastApiResponse = await fetch('http://localhost:8000/user', {
-      method: 'POST',
+    const fastApiResponse = await fetch("http://localhost:8000/user", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         username,
@@ -89,12 +87,12 @@ export async function submitAddUser(
     });
 
     if (!fastApiResponse.ok) {
-      throw new Error('Failed to fetch roles');
+      throw new Error("Failed to fetch roles");
     }
 
     return await fastApiResponse.json();
   } catch (error) {
-    console.error('Error fetching roles:', error);
+    console.error("Error fetching roles:", error);
     return [];
   }
 }
@@ -102,13 +100,13 @@ export async function submitAddUser(
 export async function updateUserRoles(
   userId: number,
   addedRoles: number[],
-  removedRoles: number[],
+  removedRoles: number[]
 ): Promise<void> {
   try {
     const response = await fetch(`http://localhost:8000/user/${userId}/roles`, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         added_roles: addedRoles,
@@ -117,10 +115,10 @@ export async function updateUserRoles(
     });
 
     if (!response.ok) {
-      throw new Error('Failed to update user roles');
+      throw new Error("Failed to update user roles");
     }
   } catch (error) {
-    console.error('Error updating user roles:', error);
+    console.error("Error updating user roles:", error);
     throw error;
   }
 }

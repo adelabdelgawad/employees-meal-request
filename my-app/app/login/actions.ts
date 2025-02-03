@@ -42,12 +42,11 @@ export async function login(prevState: any, formData: FormData) {
 
     // Get JWT token from response
     const data = await response.json();
-    console.log(data);
 
     // Set HTTP-only cookie
     cookieStore.set({
-      name: "access_token",
-      value: data.access_token,
+      name: "session",
+      value: data.session,
       httpOnly: true,
       path: "/",
       maxAge: 60 * 30, // 30 minutes
@@ -68,6 +67,6 @@ export async function logout() {
   const cookieStore = await cookies();
 
   // Remove JWT cookie
-  cookieStore.delete("access_token");
+  cookieStore.delete("session");
   redirect("/login");
 }

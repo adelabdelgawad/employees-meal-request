@@ -37,7 +37,6 @@ export default async function Page({
       startTime,
       endTime,
     });
-    console.log(data);
   } catch (err) {
     console.error("Error fetching report details:", err);
     error = err;

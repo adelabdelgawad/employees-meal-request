@@ -29,7 +29,6 @@ const RequestLinesTable: React.FC<RequestLinesTableProps> = ({
   onSave,
   onCancel,
 }) => {
-  console.log(data);
   return (
     <div className="flex flex-col h-full border border-gray-300 rounded-lg shadow">
       {/* Table Header */}
