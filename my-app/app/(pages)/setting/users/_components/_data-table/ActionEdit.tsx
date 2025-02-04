@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useEffect, startTransition } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, startTransition } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
   DialogTrigger,
-} from '@radix-ui/react-dialog';
-import { DialogHeader } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
+} from "@radix-ui/react-dialog";
+import { DialogHeader } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import {
   fetchUsers,
   fetchRoles,
   updateUserRoles,
-} from '@/lib/services/setting-user';
-import { useSettingUserContext } from '@/hooks/SettingUserContext';
-import toast from 'react-hot-toast';
-import { PencilIcon } from 'lucide-react';
+} from "@/lib/services/setting-user";
+import { useSettingUserContext } from "@/hooks/SettingUserContext";
+import toast from "react-hot-toast";
+import { PencilIcon } from "lucide-react";
 
 export default function ActionEdit({ userId }: { userId: number }) {
   // State variables
@@ -50,7 +50,7 @@ export default function ActionEdit({ userId }: { userId: number }) {
           setOriginalRoles(roleIds);
         }
       } catch {
-        toast.error('Error fetching user data.');
+        toast.error("Error fetching user data.");
       } finally {
         setIsLoading(false);
       }
@@ -64,17 +64,17 @@ export default function ActionEdit({ userId }: { userId: number }) {
     setSelectedRoles((prev) =>
       prev.includes(roleId)
         ? prev.filter((id) => id !== roleId)
-        : [...prev, roleId],
+        : [...prev, roleId]
     );
   };
 
   // Check if roles have changed
   const hasChanges = () => {
     const addedRoles = selectedRoles.filter(
-      (roleId) => !originalRoles.includes(roleId),
+      (roleId) => !originalRoles.includes(roleId)
     );
     const removedRoles = originalRoles.filter(
-      (roleId) => !selectedRoles.includes(roleId),
+      (roleId) => !selectedRoles.includes(roleId)
     );
     return addedRoles.length > 0 || removedRoles.length > 0;
   };
@@ -84,21 +84,21 @@ export default function ActionEdit({ userId }: { userId: number }) {
     e.preventDefault();
 
     const addedRoles = selectedRoles.filter(
-      (roleId) => !originalRoles.includes(roleId),
+      (roleId) => !originalRoles.includes(roleId)
     );
     const removedRoles = originalRoles.filter(
-      (roleId) => !selectedRoles.includes(roleId),
+      (roleId) => !selectedRoles.includes(roleId)
     );
 
     startTransition(async () => {
       try {
         await updateUserRoles(userId, addedRoles, removedRoles);
-        toast.success('User roles updated successfully!');
+        toast.success("User roles updated successfully!");
         setOriginalRoles(selectedRoles);
         setIsDialogOpen(false);
         await mutate();
       } catch {
-        toast.error('Failed to update user roles. Please try again.');
+        toast.error("Failed to update user roles. Please try again.");
       }
     });
   };
@@ -136,7 +136,9 @@ export default function ActionEdit({ userId }: { userId: number }) {
                   className="flex items-start justify-between mb-4"
                 >
                   <div>
-                    <div className="font-medium">{role.name}</div>
+                    <div className="font-medium flex items-start">
+                      {role.name}
+                    </div>
                     <div className="text-sm text-gray-500">
                       {role.description}
                     </div>
@@ -152,7 +154,7 @@ export default function ActionEdit({ userId }: { userId: number }) {
                 <Button
                   type="submit"
                   className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md ${
-                    !hasChanges() && 'opacity-50 cursor-not-allowed'
+                    !hasChanges() && "opacity-50 cursor-not-allowed"
                   }`}
                   disabled={!hasChanges()}
                 >

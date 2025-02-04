@@ -1,17 +1,22 @@
 import os
-from datetime import timedelta
 from fastapi import APIRouter, HTTPException, status
 from dependencies import SessionDep
 from src.schema import LoginRequest  # assuming LoginRequest is a Pydantic model
 from routers.utils.auth import (
+    validate_user_name_and_password,
     read_account_by_username,
     read_hirs_account_by_username,
     create_or_update_user,
-    read_roles_by_account_id,
+    read_roles,
 )
 from src.active_directory import authenticate_and_get_user
 from src.http_schema import UserData
 from typing import List, Optional
+from dotenv import load_dotenv
+from icecream import ic
+
+# Load environment variables
+load_dotenv()
 
 router = APIRouter()
 
@@ -32,32 +37,49 @@ async def validate_user(
             otherwise, None.
     """
     # Check if account exists in either source
-    account_exists = any(
-        [
-            await read_account_by_username(session, username),
-            await read_hirs_account_by_username(session, username),
-        ]
-    )
-    if not account_exists:
+    login_type: str = "local"
+
+    hris_user = await read_hirs_account_by_username(session, username)
+    if hris_user:
+        login_type = "domain"
+    if not hris_user:
+        autherized_user = await read_account_by_username(session, username)
+        if autherized_user.is_domain_user:
+            login_type = "domain"
+
+    if not hris_user and not autherized_user:
         return None
 
     # Authenticate against Active Directory
-    windows_account = await authenticate_and_get_user(username, password)
-    if not windows_account:
-        return None
+    if login_type == "domain":
+        windows_account = await authenticate_and_get_user(username, password)
+        if not windows_account:
+            return None
 
-    # Create or update the user in the database
-    user = await create_or_update_user(
-        session,
-        windows_account.username,
-        windows_account.fullName,
-        windows_account.title,
-    )
-    if not user:
-        return None
+        # Create or update the user in the database
+        user = await create_or_update_user(
+            session,
+            windows_account.username,
+            windows_account.fullName,
+            windows_account.title,
+        )
+        if not user:
+            return None
 
-    # Retrieve user roles
-    roles = await read_roles_by_account_id(session, user.id)
+        # Retrieve user roles
+
+        roles = await read_roles(session, user.id)
+    else:
+        user = await validate_user_name_and_password(session, username, password)
+        if not user:
+            return None
+        ic(user)
+        # Retrieve user roles
+        roles = (
+            await read_roles(session)
+            if user.is_super_admin == True
+            else await read_roles(session, user.id)
+        )
 
     return UserData(
         userId=user.id,

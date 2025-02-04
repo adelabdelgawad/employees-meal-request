@@ -192,6 +192,7 @@ async def update_order_status_endpoint(
     """
     Update the status of a request by its ID.
     """
+    ic(current_user)
     try:
         result = await crud.update_request_status(
             maria_session, current_user.id, request_id, status_id

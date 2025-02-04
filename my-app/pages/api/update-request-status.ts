@@ -1,5 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
+const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000/request";
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -9,6 +11,15 @@ export default async function handler(
   }
 
   try {
+    const token = req.cookies.session;
+    if (!token) {
+      return res.status(401).json({
+        status: "error",
+        code: "NO_SESSION",
+        message: "Authentication required",
+      });
+    }
+
     const { id, statusId } = req.body;
     if (!id || !statusId) {
       return res.status(400).json({ message: "Missing id or statusId" });
@@ -20,6 +31,7 @@ export default async function handler(
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       }
     );

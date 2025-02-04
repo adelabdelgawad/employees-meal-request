@@ -11,7 +11,7 @@ Steps:
 
 import asyncio
 import os
-
+from routers.utils.hashing import hash_password
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
@@ -36,6 +36,8 @@ from db.models import (
 # ------------------------------------------------------------------------------
 #  Load environment variables
 # ------------------------------------------------------------------------------
+
+
 load_dotenv()
 
 DB_USER = os.getenv("DB_USER")
@@ -224,12 +226,14 @@ async def seed_admin_user(session: AsyncSession) -> None:
         await session.exec(select(Account).where(Account.username == "admin"))
     ).first()
     if not admin_user:
+        hashed_password = hash_password("Password123")
         # Ideally, use a hashed password in production
         admin_user = Account(
             username="admin",
-            password="securepassword123",
+            password=hashed_password,
             full_name="Administrator",
             title="Built-in Administrator",
+            is_super_admin=True,
         )
         session.add(admin_user)
         print("Default admin account added.")

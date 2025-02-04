@@ -3,6 +3,7 @@ from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 from db.models import Account, Role, RolePermission, HRISSecurityUser
+from routers.utils.hashing import verify_password
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -31,6 +32,31 @@ async def read_account_by_username(
         logger.warning(f"User '{username}' not found in database.")
 
     return account
+
+
+async def validate_user_name_and_password(
+    session: AsyncSession, username: str, password: str
+) -> Optional[Account]:
+    """
+    Fetch an account by username.
+
+    Args:
+        session (AsyncSession): The SQLAlchemy async session.
+        username (str): The username to search for.
+
+    Returns:
+        Optional[Account]: The found account instance or None.
+    """
+    statement = select(Account).where(Account.username == username)
+    result = await session.execute(statement)
+    account = result.scalar_one_or_none()
+
+    if account and verify_password(password, account.password):
+        logger.info(f"User '{username}' authenticated successfully.")
+        return account
+    else:
+        logger.warning(f"Authentication failed for user '{username}'.")
+        return None
 
 
 async def read_user_by_id(session: AsyncSession, user_id: int) -> Optional[Account]:
@@ -159,7 +185,9 @@ async def read_hirs_account_by_username(
     return account
 
 
-async def read_roles_by_account_id(session: AsyncSession, account_id: int) -> List[str]:
+async def read_roles(
+    session: AsyncSession, account_id: Optional[int] = None
+) -> List[str]:
     """
     Fetch the list of role names assigned to an account.
 
@@ -170,11 +198,14 @@ async def read_roles_by_account_id(session: AsyncSession, account_id: int) -> Li
     Returns:
         List[str]: A list of role names associated with the given account.
     """
-    statement = (
-        select(Role.name)
-        .join(RolePermission, Role.id == RolePermission.role_id)
-        .where(RolePermission.account_id == account_id)
-    )
+    if account_id:
+        statement = (
+            select(Role.name)
+            .join(RolePermission, Role.id == RolePermission.role_id)
+            .where(RolePermission.account_id == account_id)
+        )
+    else:
+        statement = select(Role.name)
 
     results = await session.execute(statement)
     roles = results.scalars().all()
