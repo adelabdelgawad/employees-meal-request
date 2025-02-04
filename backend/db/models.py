@@ -14,7 +14,9 @@ class Role(SQLModel, table=True):
     name: str = Field(nullable=False, max_length=64)
     description: str = Field(nullable=False, max_length=64)
 
-    role_permissions: List["RolePermission"] = Relationship(back_populates="role")
+    role_permissions: List["RolePermission"] = Relationship(
+        back_populates="role"
+    )
     permission_logs_admin: Optional["LogRolePermission"] = Relationship(
         back_populates="role"
     )
@@ -62,8 +64,12 @@ class Employee(SQLModel, table=True):
     department_id: int = Field(foreign_key="department.id", nullable=False)
 
     # Relationships
-    department: Optional["Department"] = Relationship(back_populates="employees")
-    request_lines: List["RequestLine"] = Relationship(back_populates="employee")
+    department: Optional["Department"] = Relationship(
+        back_populates="employees"
+    )
+    request_lines: List["RequestLine"] = Relationship(
+        back_populates="employee"
+    )
 
 
 class RequestStatus(SQLModel, table=True):
@@ -109,8 +115,12 @@ class Account(SQLModel, table=True):
     title: Optional[str] = Field(default=None, max_length=64)
     is_domain_user: bool = Field(default=False)
 
-    role_permissions: List["RolePermission"] = Relationship(back_populates="account")
-    request_line_logs: List["LogRequestLine"] = Relationship(back_populates="account")
+    role_permissions: List["RolePermission"] = Relationship(
+        back_populates="account"
+    )
+    request_line_logs: List["LogRequestLine"] = Relationship(
+        back_populates="account"
+    )
     # Relationship: One Account can have many Requests they initiated
     requests: List["Request"] = Relationship(
         back_populates="requester",
@@ -133,7 +143,9 @@ class RolePermission(SQLModel, table=True):
 
     # Relationships
     role: Optional["Role"] = Relationship(back_populates="role_permissions")
-    account: Optional["Account"] = Relationship(back_populates="role_permissions")
+    account: Optional["Account"] = Relationship(
+        back_populates="role_permissions"
+    )
 
 
 class Request(SQLModel, table=True):
@@ -144,12 +156,15 @@ class Request(SQLModel, table=True):
     __tablename__ = "request"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    status_id: int = Field(foreign_key="request_status.id", nullable=False, default=1)
+    status_id: int = Field(
+        foreign_key="request_status.id", nullable=False, default=1
+    )
     requester_id: int = Field(foreign_key="account.id", nullable=False)
     meal_id: int = Field(foreign_key="meal.id", nullable=False)
-
     request_time: Optional[datetime] = Field(default=None)
-    created_time: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
+    created_time: datetime = Field(
+        default_factory=lambda: datetime.now(cairo_tz)
+    )
     closed_time: Optional[datetime] = Field(default=None)
     notes: Optional[str] = Field(default=None, max_length=256)
     auditor_id: Optional[int] = Field(foreign_key="account.id", default=None)
@@ -199,7 +214,9 @@ class RequestLine(SQLModel, table=True):
     # Relationships
     meal: Optional["Meal"] = Relationship(back_populates="request_lines")
 
-    employee: Optional["Employee"] = Relationship(back_populates="request_lines")
+    employee: Optional["Employee"] = Relationship(
+        back_populates="request_lines"
+    )
     request: Optional["Request"] = Relationship(  # Change Request to Request
         back_populates="request_lines"
     )
@@ -226,7 +243,9 @@ class LogRolePermission(SQLModel, table=True):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
 
     # Relationships
-    role: Optional["Role"] = Relationship(back_populates="permission_logs_admin")
+    role: Optional["Role"] = Relationship(
+        back_populates="permission_logs_admin"
+    )
 
 
 class LogRequestLine(SQLModel, table=True):
@@ -248,7 +267,9 @@ class LogRequestLine(SQLModel, table=True):
     request_line: Optional["RequestLine"] = Relationship(
         back_populates="request_line_logs"
     )
-    account: Optional["Account"] = Relationship(back_populates="request_line_logs")
+    account: Optional["Account"] = Relationship(
+        back_populates="request_line_logs"
+    )
 
 
 class LogTraffic(SQLModel, table=True):

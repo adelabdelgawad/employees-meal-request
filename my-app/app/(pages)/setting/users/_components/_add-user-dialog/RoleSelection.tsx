@@ -1,12 +1,21 @@
-import { Switch } from '@/components/ui/switch';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+// RoleSelection.tsx
+import { Switch } from "@/components/ui/switch";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
-type Role = {
+export type Role = {
   id: number;
   name: string;
   description: string;
 };
 
+/**
+ * Component for selecting user roles.
+ *
+ * @param {Object} props - Component props.
+ * @param {Role[]} props.roles - Array of roles.
+ * @param {number[]} props.selectedRoles - Array of selected role IDs.
+ * @param {(roleId: number) => void} props.handleRoleToggle - Function to toggle role selection.
+ */
 export function RoleSelection({
   roles,
   selectedRoles,

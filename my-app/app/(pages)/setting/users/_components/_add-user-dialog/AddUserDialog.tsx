@@ -1,78 +1,29 @@
+// AddUserDialog.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import { UserPlus, X as CrossIcon } from "lucide-react"; // Updated icon
+import { UserPlus, X as CrossIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SkeletonContent } from "./SkeletonContent";
-import { UserSelection } from "./UserSelection";
 import { RoleSelection } from "./RoleSelection";
-
+import { AddUserDialogProvider, useAddUserDialogContext } from "./AddUserDialogContext";
 import { useSettingUserContext } from "@/hooks/SettingUserContext";
-import { submitAddUser, fetchDomainUsers } from "@/lib/services/setting-user";
-import { toastWarning } from "@/lib/utils/toast";
-import toast from "react-hot-toast";
+import { UserSelection } from "./UserSelectionInput";
 
-export function AddUserDialog() {
-  const { domainUsers, setDomainUsers, roles, mutate } =
-    useSettingUserContext();
-
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
-  const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const selectedUser = domainUsers.find((user) => user.id === selectedUserId);
-
-  useEffect(() => {
-    if (isDrawerOpen) {
-      setLoading(true);
-      fetchDomainUsers()
-        .then((users) => setDomainUsers(users))
-        .finally(() => setLoading(false));
-    }
-  }, [isDrawerOpen, setDomainUsers]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!selectedUserId) {
-      toastWarning("Please select a user.");
-      return;
-    }
-
-    if (selectedRoles.length === 0) {
-      toast.error("Please select at least one role.");
-      return;
-    }
-
-    const selectedUser = domainUsers.find((user) => user.id === selectedUserId);
-
-    if (!selectedUser) {
-      toast.error("Failed to find the selected user.");
-      return;
-    }
-
-    const response = await submitAddUser(
-      selectedUser.username,
-      selectedUser.fullName,
-      selectedUser.title,
-      selectedRoles
-    );
-
-    if (response.success) {
-      toast.success("User added successfully.");
-      await mutate();
-      resetForm();
-    } else {
-      toast.error("Failed to add user.");
-    }
-  };
-
-  const resetForm = () => {
-    setSelectedUserId(null);
-    setSelectedRoles([]);
-    setIsDrawerOpen(false);
-  };
+/**
+ * The internal content of the Add User Dialog.
+ */
+function AddUserDialogContent() {
+  const {
+    isDrawerOpen,
+    setIsDrawerOpen,
+    resetForm,
+    handleSubmit,
+    setSelectedUser,
+    selectedRoles,
+    setSelectedRoles,
+    loading,
+  } = useAddUserDialogContext();
+  const { domainUsers, roles } = useSettingUserContext();
 
   return (
     <div>
@@ -107,10 +58,8 @@ export function AddUserDialog() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <UserSelection
-                filteredUsers={domainUsers}
-                selectedUser={selectedUser}
-                selectedUserId={selectedUserId}
-                setSelectedUserId={setSelectedUserId}
+                users={domainUsers}
+                onUserSelect={setSelectedUser}
               />
               <RoleSelection
                 roles={roles}
@@ -143,5 +92,16 @@ export function AddUserDialog() {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * The AddUserDialog component wrapped with its context provider.
+ */
+export function AddUserDialog() {
+  return (
+    <AddUserDialogProvider>
+      <AddUserDialogContent />
+    </AddUserDialogProvider>
   );
 }

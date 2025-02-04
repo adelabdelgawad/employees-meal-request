@@ -93,7 +93,6 @@ async def create_request_endpoint(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No request lines provided",
         )
-    ic(payload.request_timing_option)
     if payload.request_timing_option == "request_now":
         request_time = datetime.now(cairo_tz)
     elif payload.request_timing_option == "schedule_request":
