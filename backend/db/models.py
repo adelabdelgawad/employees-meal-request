@@ -193,6 +193,8 @@ class RequestLine(SQLModel, table=True):
     notes: Optional[str] = Field(default=None, max_length=256)
     is_accepted: bool = Field(default=True)
     shift_hours: Optional[int] = Field(default=None)
+    data_collected: bool = Field(default=False)
+    is_deleted: bool = Field(default=False)
 
     # Relationships
     meal: Optional["Meal"] = Relationship(back_populates="request_lines")

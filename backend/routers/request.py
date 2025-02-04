@@ -93,6 +93,13 @@ async def create_request_endpoint(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No request lines provided",
         )
+    ic(payload.request_timing_option)
+    if payload.request_timing_option == "request_now":
+        request_time = datetime.now(cairo_tz)
+    elif payload.request_timing_option == "schedule_request":
+        request_time = payload.request_time
+    elif payload.request_timing_option == "save_for_later":
+        request_time = None
 
     # Group requests by meal_id
     meal_groups = defaultdict(list)
@@ -105,23 +112,23 @@ async def create_request_endpoint(
 
         # Process each meal group in a background task
         for meal_id, req_list in meal_groups.items():
-            ic(current_user)
-
             created_request = await crud.create_request(
-                maria_session, current_user.id, meal_id, payload.notes
+                maria_session, current_user.id, meal_id, payload.notes, request_time
             )
 
-            # Ensure attribute access for downstream code (if create_request returns a dict)
-            if isinstance(created_request, dict):
-                created_request = SimpleNamespace(**created_request)
+        # Ensure attribute access for downstream code (if create_request returns a dict)
+        if isinstance(created_request, dict):
+            created_request = SimpleNamespace(**created_request)
 
-            background_tasks.add_task(
-                continue_processing_meal_request,
-                maria_session=maria_session,
-                hris_session=hris_session,
-                request=created_request,
-                request_lines=req_list,
-            )
+        background_tasks.add_task(
+            continue_processing_meal_request,
+            maria_session=maria_session,
+            hris_session=hris_session,
+            request=created_request,
+            request_lines=req_list,
+            request_time=payload.request_time,
+            request_timing_option=payload.request_timing_option,
+        )
 
         return {
             "message": f"{len(payload.requests) * len(meal_groups)} Request(s) created successfully",

@@ -1,7 +1,7 @@
 import logging
-from typing import List
+from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.models import Request, RequestLine
+from db.models import Request
 from routers.cruds.request import (
     create_meal_request_lines,
     update_request_lines,
@@ -21,7 +21,11 @@ async def continue_processing_meal_request(
     hris_session: AsyncSession,
     request: Request,
     request_lines: List[dict],
+    request_time: Optional[datetime] = None,
+    request_timing_option=Optional[str],
 ):
+
+    ic(request_lines)
     request_lines = await create_meal_request_lines(
         maria_session, request, request_lines
     )
