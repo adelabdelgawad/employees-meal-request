@@ -75,34 +75,48 @@ export async function logout() {
   deleteSession();
   redirect("/login");
 }
+
 export async function login(prevState: any, formData: FormData) {
   const username = formData.get("username")?.toString() || "";
   const password = formData.get("password")?.toString() || "";
 
-  // Authenticate with FastAPI
-  const response = await fetch("http://localhost:8000/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ username, password }),
-  });
+  try {
+    const response = await fetch("http://localhost:8000/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json();
+    if (!response.ok) {
+      let errorMessage = "Authentication failed";
+      switch (response.status) {
+        case 401:
+          errorMessage = "Invalid Username or Password";
+          break;
+        case 500:
+          errorMessage = "Internal Server Error";
+          break;
+        case 503:
+          errorMessage = "Network Connection Error";
+          break;
+      }
+      return { errors: { general: errorMessage } };
+    }
+
+    // If response is successful, parse user data
+    const user = await response.json();
+    await createSession(user);
+
+    // Instead of redirecting, return a success flag
+    return { success: true };
+  } catch (error) {
+    console.error("Error logging in:", error);
     return {
       errors: {
-        username: [errorData.detail || "Authentication failed"],
+        general: "Unable to connect to the server. Please try again later.",
       },
     };
   }
-
-  // Get user data from response (e.g. FastAPI may return a user object)
-  const user = await response.json();
-
-  // Create the session payload with an expiration time.
-  await createSession(user);
-  redirect("/");
 }
 
 export async function getSession(): Promise<Session | null> {

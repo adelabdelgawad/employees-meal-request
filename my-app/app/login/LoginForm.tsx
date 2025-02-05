@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // Import router for navigation
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -20,19 +21,19 @@ export type FormValues = {
   password: string;
 };
 
-/**
- * LoginForm component renders a login card with username and password fields.
- *
- * @returns {JSX.Element} The rendered login form.
- */
 export function LoginForm(): JSX.Element {
+  const router = useRouter(); // Initialize router
   const [state, handleLogin] = useActionState(login, undefined);
   const form = useForm<FormValues>({
-    defaultValues: {
-      username: "",
-      password: "",
-    },
+    defaultValues: { username: "", password: "" },
   });
+
+  // Use useEffect to navigate after login success
+  useEffect(() => {
+    if (state?.success) {
+      router.push("/"); // Perform navigation only after state updates
+    }
+  }, [state?.success, router]); // Runs only when `state.success` changes
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
@@ -68,6 +69,7 @@ export function LoginForm(): JSX.Element {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="password"
@@ -87,7 +89,13 @@ export function LoginForm(): JSX.Element {
                   </FormItem>
                 )}
               />
-              {/* Using LoadingButton with form submission state */}
+              {/* Display general error messages */}
+              {state?.errors?.general && (
+                <p className="text-red-500 text-sm text-center">
+                  {state.errors.general}
+                </p>
+              )}
+
               <LoadingButton pending={form.formState.isSubmitting}>
                 Sign In
               </LoadingButton>
