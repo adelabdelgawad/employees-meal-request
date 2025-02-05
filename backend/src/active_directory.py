@@ -121,7 +121,7 @@ async def authenticate_and_get_user(
     client.set_credentials("SIMPLE", user=user_dn, password=password)
 
     try:
-        async with client.connect(is_async=True) as conn:
+        async with client.connect(is_async=True, timeout=5) as conn:
             logger.info(f"User {username} authenticated successfully.")
 
             # Search the entire Andalusia organizational unit
@@ -149,10 +149,15 @@ async def authenticate_and_get_user(
 
     except AuthenticationError:
         logger.warning(f"Authentication failed for user {username}.")
+        return None
+
     except LDAPError as e:
         logger.error(f"LDAP error during authentication for {username}: {e}")
+        return None
+
     except Exception as e:
         logger.error(f"Unexpected error during authentication for {username}: {e}")
+        return None
 
     return None
 

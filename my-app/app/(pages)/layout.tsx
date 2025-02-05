@@ -1,24 +1,15 @@
-import Sidebar from "@/components/Sidebar";
-import React from "react";
+import NavigationBar from "@/components/Navbar";
+import { ReactNode } from "react";
 
-interface LayoutProps {
-  children: React.ReactNode;
+interface RootLayoutProps {
+  children: ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
-      <div className="w-64 flex-shrink-0">
-        <Sidebar />
-      </div>
-
-      {/* Page Content */}
-      <div className="flex-grow overflow-auto">
-        <div className="min-w-full"> {children}</div>
-      </div>
+    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900 antialiased">
+      <NavigationBar /> {/* Server Component */}
+      <div className="flex-1 p-4">{children}</div>
     </div>
   );
-};
-
-export default Layout;
+}

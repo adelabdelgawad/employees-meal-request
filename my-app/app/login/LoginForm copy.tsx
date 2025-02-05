@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // Import router for navigation
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -11,15 +12,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
 import LoadingButton from "@/components/loading-button";
@@ -47,16 +39,18 @@ export function LoginForm(): JSX.Element {
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
-      <Card className="mx-auto max-w-sm">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Login</CardTitle>
-          <CardDescription>
-            Enter your username and password to login to your account
-          </CardDescription>
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold text-center text-gray-800">
+            Welcome Back
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form action={handleLogin} className="space-y-4">
+            <form
+              action={handleLogin}
+              className="flex max-w-[300px] flex-col gap-4"
+            >
               <FormField
                 control={form.control}
                 name="username"
