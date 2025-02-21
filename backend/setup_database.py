@@ -52,12 +52,8 @@ if not DB_USER or not DB_PASSWORD or not DB_SERVER or not DB_NAME:
 # ------------------------------------------------------------------------------
 #  Database URLs
 # ------------------------------------------------------------------------------
-ASYNC_DATABASE_URL = (
-    f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
-)
-SYNC_DATABASE_URL = (
-    f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
-)
+ASYNC_DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
+SYNC_DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
 BASE_SYNC_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}"
 
 
@@ -140,6 +136,7 @@ async def seed_default_values(engine: AsyncEngine) -> None:
             await seed_request_status(session)
             await seed_menu(session)
             await session.commit()
+
             print("Default values seeding complete.")
             async for hris_session in get_hris_session():
                 await replicate(hris_session, session)
@@ -264,7 +261,9 @@ async def main_async() -> None:
     """
     create_database_if_not_exists()
 
-    async_engine = create_async_engine(ASYNC_DATABASE_URL, echo=False, future=True)
+    async_engine = create_async_engine(
+        ASYNC_DATABASE_URL, echo=False, future=True
+    )
 
     try:
         await create_tables(async_engine)
@@ -277,4 +276,6 @@ async def main_async() -> None:
 if __name__ == "__main__":
     print("Starting database setup...")
     asyncio.run(main_async())
-    print("Database setup and default values insertion completed successfully.")
+    print(
+        "Database setup and default values insertion completed successfully."
+    )

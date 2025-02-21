@@ -60,7 +60,6 @@ const ViewAction: React.FC<ViewActionProps> = ({
       setIsDrawerOpen(false);
     }
   };
-  console.log(disableStatus);
   return (
     <div>
       {/* Trigger Button */}

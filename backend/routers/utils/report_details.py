@@ -6,8 +6,10 @@ from pydantic import BaseModel, ValidationError
 
 # Import models from both databases
 from db.models import RequestLine, Employee, Department, Request, Account, Meal
-from hris_db.models import HRISEmployeeAttendanceWithDetails as AttendanceTransaction
-from src.http_schema import ReportDetailsResponse
+from hris_db.models import (
+    HRISEmployeeAttendanceWithDetails as AttendanceTransaction,
+)
+from services.http_schema import ReportDetailsResponse
 from icecream import ic
 import logging
 
@@ -163,7 +165,9 @@ async def fetch_same_day_attendance(
         try:
             att = AttendanceRecord(**raw_data)
         except ValidationError as e:
-            logger.warning(f"Skipping invalid attendance row: {raw_data} -> {e}")
+            logger.warning(
+                f"Skipping invalid attendance row: {raw_data} -> {e}"
+            )
             continue
 
         # Key by (employee_code, date(in_time))
@@ -207,8 +211,12 @@ async def read_request_lines_with_attendance(
             end_dt = datetime.strptime(end_time, date_format)
 
             # Adjust start_time to today's start and end_time to today's end
-            start_dt = start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_dt = end_dt.replace(hour=23, minute=59, second=59, microsecond=0)
+            start_dt = start_dt.replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            end_dt = end_dt.replace(
+                hour=23, minute=59, second=59, microsecond=0
+            )
         except ValueError:
             raise ValueError(
                 "Invalid date format. Expected 'MM/DD/YYYY, HH:MM:SS AM/PM'."
@@ -232,7 +240,9 @@ async def read_request_lines_with_attendance(
 
     # Apply filters
     if start_time and end_time:
-        statement = statement.where(Request.request_time.between(start_dt, end_dt))
+        statement = statement.where(
+            Request.request_time.between(start_dt, end_dt)
+        )
     if employee_name:
         statement = statement.where(Employee.name.ilike(f"%{employee_name}%"))
 
@@ -270,7 +280,9 @@ async def read_request_lines_with_attendance(
 
     # Apply filters
     if start_time and end_time:
-        statement = statement.where(Request.request_time.between(start_dt, end_dt))
+        statement = statement.where(
+            Request.request_time.between(start_dt, end_dt)
+        )
     if employee_name:
         statement = statement.where(Employee.name.ilike(f"%{employee_name}%"))
 
@@ -304,11 +316,11 @@ async def read_request_lines_with_attendance(
         min_date=min_dt,
         max_date=max_dt,
     )
-    ic(attendance_map)
-    ic(request_lines)
 
     # 5) Merge
-    merged_results = await merge_requests_with_attendance(request_lines, attendance_map)
+    merged_results = await merge_requests_with_attendance(
+        request_lines, attendance_map
+    )
 
     return {
         "data": merged_results,

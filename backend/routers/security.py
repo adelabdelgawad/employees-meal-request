@@ -5,18 +5,18 @@ from icecream import ic
 from typing import List, Optional
 from sqlmodel import select
 from db.models import Account, Role
-from src.http_schema import DomainUser
-from src.active_directory import read_domain_users
+from services.http_schema import DomainUser
+from services.active_directory import read_domain_users
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from routers.cruds import security as crud
-from src.http_schema import (
+from services.http_schema import (
     SettingUserResponse,
     UserCreateRequest,
     UserCreateResponse,
     UpdateRolesRequest,
 )
-from dependencies import SessionDep
+from src.dependencies import SessionDep
 
 
 router = APIRouter()

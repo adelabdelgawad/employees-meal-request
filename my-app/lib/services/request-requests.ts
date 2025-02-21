@@ -2,7 +2,7 @@
 "use server";
 import { NextApiRequest, NextApiResponse } from "next";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
 
 export interface RequestParams {
   query?: string;
@@ -25,7 +25,7 @@ export async function getRequests({
   startTime = "",
   endTime = "",
 }: RequestParams = {}): Promise<RequestResponse> {
-  const baseUrl = "http://localhost:8000/requests"; // Moved outside the try block
+  const baseUrl = `${NEXT_PUBLIC_FASTAPI_URL}/requests`;
 
   try {
     const url = new URL(baseUrl);
@@ -74,7 +74,7 @@ export default async function handler(
     }
 
     const response = await fetch(
-      `http://localhost:8000/update-request-status?request_id=${id}&status_id=${statusId}`,
+      `${NEXT_PUBLIC_FASTAPI_URL}/update-request-status?request_id=${id}&status_id=${statusId}`,
       {
         method: "PUT",
         headers: {
@@ -97,7 +97,7 @@ export default async function handler(
 
 export const getRequestLineById = async (id: number) => {
   const res = await fetch(
-    `http://localhost:8000/request-lines?request_id=${id}`,
+    `${NEXT_PUBLIC_FASTAPI_URL}/request-lines?request_id=${id}`,
     { cache: "no-store" }
   );
 
@@ -121,7 +121,7 @@ export const updateRequestLine = async (
     changed_statuses: changedStatus,
   };
 
-  const response = await fetch(`http://localhost:8000/update-request-lines`, {
+  const response = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/update-request-lines`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

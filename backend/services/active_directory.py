@@ -6,7 +6,7 @@ from typing import List, Optional, Union
 import bonsai
 from bonsai.errors import AuthenticationError, LDAPError
 from dotenv import load_dotenv
-from src.http_schema import DomainUser  # Ensure this path is correct
+from services.http_schema import DomainUser  # Ensure this path is correct
 
 # Logger configuration
 logger = logging.getLogger(__name__)
@@ -156,7 +156,9 @@ async def authenticate_and_get_user(
         return None
 
     except Exception as e:
-        logger.error(f"Unexpected error during authentication for {username}: {e}")
+        logger.error(
+            f"Unexpected error during authentication for {username}: {e}"
+        )
         return None
 
     return None

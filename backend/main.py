@@ -5,9 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers import auth, data, report, security
 from dotenv import load_dotenv
 from routers import request
-from src.startup import lifespan
+from services.startup import lifespan
 import logging
-from middleware import TokenRenewalMiddleware
+from src.middleware import TokenRenewalMiddleware
 
 
 logging.basicConfig(
@@ -26,7 +26,9 @@ app = FastAPI(lifespan=lifespan)
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+):
     return JSONResponse(
         status_code=422,
         content={"detail": exc.errors(), "body": exc.body},

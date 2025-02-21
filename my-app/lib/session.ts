@@ -1,19 +1,19 @@
 "use server";
 
 import { SignJWT, jwtVerify } from "jose";
-import { NextApiRequest } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
+
 // Ensure the SESSION_SECRET environment variable is defined
-if (!process.env.SESSION_SECRET) {
+const secretKey = process.env.SESSION_SECRET;
+if (!secretKey) {
   throw new Error("SESSION_SECRET environment variable is not defined");
 }
-
-const secretKey: string = process.env.SESSION_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
 
-export async function encrypt(payload: any) {
+export async function encrypt(payload) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -21,18 +21,19 @@ export async function encrypt(payload: any) {
     .sign(encodedKey);
 }
 
-export async function decrypt(session: string | undefined = "") {
+export async function decrypt(session = "") {
   try {
     const { payload } = await jwtVerify(session, encodedKey, {
       algorithms: ["HS256"],
     });
-    return payload as unknown as Session;
+    return payload;
   } catch (error) {
-    console.log("Failed to verify session");
+    console.error("Failed to verify session:", error);
+    return null;
   }
 }
 
-export async function createSession(user: User) {
+export async function createSession(user) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const session = await encrypt({ user, expiresAt });
   const cookieStore = await cookies();
@@ -41,13 +42,14 @@ export async function createSession(user: User) {
     httpOnly: true,
     secure: true,
     expires: expiresAt,
-    sameSite: "none",
+    sameSite: "lax", // Ensure consistency across all functions
     path: "/",
   });
 }
 
 export async function updateSession() {
-  const session = (await cookies()).get("session")?.value;
+  const cookieStore = await cookies();
+  const session = cookieStore.get("session")?.value;
   const payload = await decrypt(session);
 
   if (!session || !payload) {
@@ -56,24 +58,18 @@ export async function updateSession() {
 
   const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  const cookieStore = await cookies();
   cookieStore.set("session", session, {
     httpOnly: true,
     secure: true,
     expires: expires,
-    sameSite: "lax",
+    sameSite: "lax", // Ensure consistency across all functions
     path: "/",
   });
 }
 
 export async function deleteSession() {
-  const cookieStore = await cookies();
-  cookieStore.delete("session");
-}
-
-export async function logout() {
-  deleteSession();
-  redirect("/login");
+  const cookieStore = await cookies()
+  cookieStore.delete('session')
 }
 
 export async function login(prevState: any, formData: FormData) {
@@ -81,7 +77,7 @@ export async function login(prevState: any, formData: FormData) {
   const password = formData.get("password")?.toString() || "";
 
   try {
-    const response = await fetch("http://localhost:8000/login", {
+    const response = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
@@ -119,17 +115,18 @@ export async function login(prevState: any, formData: FormData) {
   }
 }
 
-export async function getSession(): Promise<Session | null> {
-  // Extract the token string from the cookie object.
-  const cookie = (await cookies()).get("session")?.value;
+export async function getSession() {
+  const cookieStore = await cookies();
+  const cookie = cookieStore.get("session")?.value;
   if (!cookie) return null;
   const session = await decrypt(cookie);
-  if (!session) return null;
   return session;
 }
 
-export async function getToken(req?: NextApiRequest) {
-  const cookieStore = await cookies();
 
-  return cookieStore.get("session")?.value;
+
+
+export async function logout() {
+  deleteSession()
+  redirect('/login')
 }

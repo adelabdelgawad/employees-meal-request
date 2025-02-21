@@ -11,7 +11,7 @@ from db.models import (
     Employee,
     Department,
 )
-from src.schema import RequestSummary, RequestLineResponse
+from services.schema import RequestSummary, RequestLineResponse
 
 logger = logging.getLogger(__name__)
 

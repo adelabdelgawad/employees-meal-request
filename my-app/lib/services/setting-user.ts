@@ -1,7 +1,9 @@
+const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
+
 // 1. Fetch roles (returns the roles examples)
 export async function fetchRoles(): Promise<Role[]> {
   try {
-    const response = await fetch(`http://localhost:8000/roles`, {
+    const response = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/roles`, {
       cache: "no-store",
     });
 
@@ -22,7 +24,7 @@ export async function fetchRoles(): Promise<Role[]> {
 // 2. Fetch domain users (returns the users examples)
 export async function fetchDomainUsers() {
   try {
-    const response = await fetch(`http://localhost:8000/domain-users`, {
+    const response = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/domain-users`, {
       cache: "no-store",
     });
 
@@ -40,8 +42,8 @@ export async function fetchDomainUsers() {
 export async function fetchUsers(userId?: number) {
   try {
     const url = userId
-      ? `http://localhost:8000/user?user_id=${userId}`
-      : `http://localhost:8000/user`;
+      ? `${NEXT_PUBLIC_FASTAPI_URL}/user?user_id=${userId}`
+      : `${NEXT_PUBLIC_FASTAPI_URL}/user`;
 
     const response = await fetch(url, {
       cache: "no-store",
@@ -73,7 +75,7 @@ export async function submitAddUser(
   roles: number[]
 ) {
   try {
-    const fastApiResponse = await fetch("http://localhost:8000/user", {
+    const fastApiResponse = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/user`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -103,7 +105,7 @@ export async function updateUserRoles(
   removedRoles: number[]
 ): Promise<void> {
   try {
-    const response = await fetch(`http://localhost:8000/user/${userId}/roles`, {
+    const response = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/user/${userId}/roles`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

@@ -16,14 +16,17 @@ interface SearchParams {
 export default async function Page({
   searchParams = {},
 }: {
-  searchParams?: SearchParams;
+  searchParams?: Promise<SearchParams>; // Mark searchParams as a Promise
 }) {
+  // Await the searchParams before accessing its properties
+  const resolvedSearchParams = await searchParams;
+
   // 1. Parse search parameters
-  const query = searchParams.query || ""; // Default to an empty search query
-  const currentPage = Number(searchParams.page) || 1; // Default to page 1
-  const pageSize = Number(searchParams.page_size) || 20; // Default rows per page
-  const startTime = searchParams.start_time || "";
-  const endTime = searchParams.end_time || "";
+  const query = resolvedSearchParams.query || ""; // Default to an empty search query
+  const currentPage = Number(resolvedSearchParams.page) || 1; // Default to page 1
+  const pageSize = Number(resolvedSearchParams.page_size) || 20; // Default rows per page
+  const startTime = resolvedSearchParams.start_time || "";
+  const endTime = resolvedSearchParams.end_time || "";
 
   // 2. Fetch data (server-side)
   let data = null;

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
-from dependencies import SessionDep
-from src.schema import LoginRequest
-from src.http_schema import UserData
+from src.dependencies import SessionDep
+from services.schema import LoginRequest
+from services.http_schema import UserData
 from routers.utils.auth import (
     validate_user_name_and_password,
     read_account_by_username,
@@ -9,8 +9,8 @@ from routers.utils.auth import (
     create_or_update_user,
     read_roles,
 )
-from src.active_directory import authenticate_and_get_user
-from exceptions import InvalidCredentialsException, InternalServerException
+from services.active_directory import authenticate_and_get_user
+from src.exceptions import InvalidCredentialsException, InternalServerException
 
 router = APIRouter()
 
@@ -58,7 +58,9 @@ async def login_for_access_token(
 
         # Authenticate Domain Users (Active Directory)
         if login_type == "domain":
-            windows_account = await authenticate_and_get_user(username, password)
+            windows_account = await authenticate_and_get_user(
+                username, password
+            )
             print(windows_account)
             if not windows_account:
                 raise InvalidCredentialsException()
@@ -74,7 +76,9 @@ async def login_for_access_token(
                 raise InternalServerException()
 
         else:  # Authenticate Local Users
-            user = await validate_user_name_and_password(session, username, password)
+            user = await validate_user_name_and_password(
+                session, username, password
+            )
             if not user:
                 raise InvalidCredentialsException()
 

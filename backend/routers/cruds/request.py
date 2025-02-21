@@ -14,7 +14,7 @@ from routers.cruds.attendance_and_shift import (
     read_attendances_from_hris,
     read_shifts_from_hris,
 )
-from src.http_schema import RequestPageRecordResponse
+from services.http_schema import RequestPageRecordResponse
 import pytz
 from fastapi import HTTPException, status
 from icecream import ic
@@ -336,7 +336,6 @@ async def update_request_request_time(
         await session.refresh(request)
 
         logger.info(f"Request {request_id} time updated successfully")
-        ic(request)
         return request
 
     except Exception as e:

@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
-const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000/request";
+const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
 
 export default async function handler(
   req: NextApiRequest,
@@ -26,7 +26,7 @@ export default async function handler(
     }
 
     const response = await fetch(
-      `http://localhost:8000/update-request-status?request_id=${id}&status_id=${statusId}`,
+      `${NEXT_PUBLIC_FASTAPI_URL}/update-request-status?request_id=${id}&status_id=${statusId}`,
       {
         method: "PUT",
         headers: {

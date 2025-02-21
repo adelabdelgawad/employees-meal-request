@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
+const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
 
 // API Route to handle the submission of requests
 export default async function handler(
@@ -17,9 +18,8 @@ export default async function handler(
       return res.status(400).json({ message: "No requests provided" });
     }
 
-    // Send requests to the FastAPI backend
     const fastApiResponse = await fetch(
-      "http://localhost:8000/submit-request",
+      `${NEXT_PUBLIC_FASTAPI_URL}/submit-request`,
       {
         method: "POST",
         headers: {

@@ -1,5 +1,10 @@
+const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
+
+
+
 export async function getDepartments() {
-  const res = await fetch("http://localhost:8000/departments", {
+  const res = await fetch(
+    `${NEXT_PUBLIC_FASTAPI_URL}/departments`, {
     cache: "no-store",
   });
 
@@ -11,7 +16,7 @@ export async function getDepartments() {
 }
 
 export async function getEmployees() {
-  const res = await fetch("http://localhost:8000/employees", {
+  const res = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/employees`, {
     cache: "no-store",
   });
 
@@ -23,13 +28,13 @@ export async function getEmployees() {
 }
 
 export async function getMeals() {
-  const res = await fetch("http://localhost:8000/meal-types", {
+  const res = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/meal-types`, {
     cache: "no-store",
   });
 
   if (!res.ok) {
     throw new Error("Failed to fetch employees");
-np  }
+}
 
   return res.json();
 }

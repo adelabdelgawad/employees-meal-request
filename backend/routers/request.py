@@ -10,10 +10,10 @@ from routers.cruds.request_lines import (
     read_request_lines,
     update_request_lines,
 )
-from src.http_schema import RequestBody, RequestLineRespose
+from services.http_schema import RequestBody, RequestLineRespose
 import pytz
-from src.http_schema import UpdateRequestLinesPayload
-from dependencies import HRISSessionDep, SessionDep, CurrentUserDep
+from services.http_schema import UpdateRequestLinesPayload
+from src.dependencies import HRISSessionDep, SessionDep, CurrentUserDep
 from icecream import ic
 from collections import defaultdict
 from routers.utils.request import continue_processing_meal_request
@@ -108,26 +108,25 @@ async def create_request_endpoint(
 
     try:
         logger.info(f"Processing {len(meal_groups)} meal groups")
-
         # Process each meal group in a background task
         for meal_id, req_list in meal_groups.items():
             created_request = await crud.create_request(
-                maria_session, current_user.id, meal_id, payload.notes, request_time
+                maria_session,
+                current_user.id,
+                meal_id,
+                payload.notes,
+                request_time,
             )
 
-        # Ensure attribute access for downstream code (if create_request returns a dict)
-        if isinstance(created_request, dict):
-            created_request = SimpleNamespace(**created_request)
-
-        background_tasks.add_task(
-            continue_processing_meal_request,
-            maria_session=maria_session,
-            hris_session=hris_session,
-            request=created_request,
-            request_lines=req_list,
-            request_time=payload.request_time,
-            request_timing_option=payload.request_timing_option,
-        )
+            background_tasks.add_task(
+                continue_processing_meal_request,
+                maria_session=maria_session,
+                hris_session=hris_session,
+                request=created_request,
+                request_lines=req_list,
+                request_time=payload.request_time,
+                request_timing_option=payload.request_timing_option,
+            )
 
         return {
             "message": f"{len(payload.requests) * len(meal_groups)} Request(s) created successfully",
@@ -152,10 +151,14 @@ async def create_request_endpoint(
 )
 async def get_requests(
     maria_session: SessionDep,
-    start_time: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    start_time: Optional[str] = Query(
+        None, description="Start date (YYYY-MM-DD)"
+    ),
     end_time: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     page: int = Query(1, ge=1, description="Page number (1-based)"),
-    page_size: int = Query(10, ge=1, le=100, description="Number of rows per page"),
+    page_size: int = Query(
+        10, ge=1, le=100, description="Number of rows per page"
+    ),
     query: str = Query(None, description="Search parameters"),
     download: bool = Query(False, description="Download status"),
 ):
@@ -192,7 +195,6 @@ async def update_order_status_endpoint(
     """
     Update the status of a request by its ID.
     """
-    ic(current_user)
     try:
         result = await crud.update_request_status(
             maria_session, current_user.id, request_id, status_id
@@ -238,7 +240,6 @@ async def get_request_lines_endpoint(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"No request lines found for request ID {request_id}.",
             )
-        ic(lines)
         return lines
     except HTTPException as http_exc:
         logger.error(f"HTTP error: {http_exc.detail}")

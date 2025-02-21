@@ -1,15 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
-const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000/request";
+const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL
 
-/**
- * API Route handler that forwards a POST request to FastAPI,
- * transforming each request object to include the required fields.
- */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({
       status: "error",
@@ -19,8 +12,14 @@ export default async function handler(
   }
 
   try {
-    const token = req.cookies.session;
+
+    let token = req.cookies.session; // Try to get from cookies
+    if (!token && req.headers.authorization?.startsWith("Bearer ")) {
+      token = req.headers.authorization.split(" ")[1]; // Try to get from headers
+    }
+
     if (!token) {
+      console.error("🚨 No authentication token found!");
       return res.status(401).json({
         status: "error",
         code: "NO_SESSION",
@@ -28,15 +27,6 @@ export default async function handler(
       });
     }
 
-    if (!req.body || !req.body.requests) {
-      return res.status(400).json({
-        status: "error",
-        code: "INVALID_REQUEST",
-        message: "Missing requests data",
-      });
-    }
-
-    // Transform each request object to include 'employee_id' and 'employee_code'
     const transformedRequests = req.body.requests.map((item: any) => ({
       employee_id: item.id,
       employee_code: item.code,
@@ -47,31 +37,23 @@ export default async function handler(
       notes: item.notes,
     }));
 
-    const serializedRequestTime = req.body.request_time
-      ? new Date(req.body.request_time).toISOString()
-      : undefined;
-
     const payload = {
       ...req.body,
       requests: transformedRequests,
-      request_time: serializedRequestTime,
+      request_time: req.body.request_time ? new Date(req.body.request_time).toISOString() : undefined,
     };
-    console.log(payload);
 
-    const apiResponse = await fetch(FASTAPI_URL, {
+    const apiResponse = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/request`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`, // Ensure token is passed
       },
       body: JSON.stringify(payload),
     });
 
     const contentType = apiResponse.headers.get("content-type");
-    const data =
-      contentType && contentType.includes("application/json")
-        ? await apiResponse.json()
-        : await apiResponse.text();
+    const data = contentType?.includes("application/json") ? await apiResponse.json() : await apiResponse.text();
 
     if (!apiResponse.ok) {
       return res.status(apiResponse.status).json({
@@ -87,6 +69,7 @@ export default async function handler(
       data,
     });
   } catch (error) {
+    console.error("🚨 Internal Server Error:", error);
     return res.status(500).json({
       status: "error",
       code: "INTERNAL_SERVER_ERROR",

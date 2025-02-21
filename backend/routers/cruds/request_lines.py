@@ -3,7 +3,7 @@ from typing import List
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.models import RequestLine, Employee
-from src.http_schema import UpdateRequestStatus, RequestLineRespose
+from services.http_schema import UpdateRequestStatus, RequestLineRespose
 
 # Logger setup
 logger = logging.getLogger(__name__)
@@ -47,7 +47,9 @@ async def read_request_lines(
 
         return [RequestLineRespose(**row) for row in lines]
     except Exception as e:
-        logger.error(f"Error reading request lines for request_id {request_id}: {e}")
+        logger.error(
+            f"Error reading request lines for request_id {request_id}: {e}"
+        )
         raise
 
 

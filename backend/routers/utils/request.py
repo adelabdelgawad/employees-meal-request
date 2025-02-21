@@ -27,7 +27,7 @@ async def continue_processing_meal_request(
     request_lines = await create_meal_request_lines(
         maria_session, request, request_lines
     )
-    ic(request_timing_option)
+    ic(request_lines)
     # Set the request time if it hasn't been provided and the timing option is "request_now"
     if request_timing_option == "save_for_later":
         request_time = None

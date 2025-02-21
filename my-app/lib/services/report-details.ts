@@ -1,5 +1,6 @@
 // app/actions.js
 "use server";
+const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
 
 export async function fetchReportDetails({
   query = "",
@@ -11,7 +12,7 @@ export async function fetchReportDetails({
   update_attendance = false,
 } = {}) {
   try {
-    const baseUrl = "http://localhost:8000/report-details";
+    const baseUrl = `${NEXT_PUBLIC_FASTAPI_URL}/report-details`;
     const url = new URL(baseUrl);
 
     // Add query parameters

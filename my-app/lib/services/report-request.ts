@@ -1,3 +1,5 @@
+const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
+
 export async function fetchReportRequestRecords(
   fromDate?: string,
   toDate?: string
@@ -13,7 +15,7 @@ export async function fetchReportRequestRecords(
   const toDateFormatted = toDate ? formatDate(new Date(toDate)) : "";
 
   const res = await fetch(
-    `http://localhost:8000/dashboard-records?from_date=${fromDateFormatted}&to_date=${toDateFormatted}`,
+    `${NEXT_PUBLIC_FASTAPI_URL}/dashboard-records?from_date=${fromDateFormatted}&to_date=${toDateFormatted}`,
     {
       cache: "no-store", // Ensures fresh data each time
     }

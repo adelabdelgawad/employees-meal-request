@@ -2,10 +2,10 @@ import traceback
 import logging
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, status, Query, Request
-from src.http_schema import ReportDashboardResponse
+from services.http_schema import ReportDashboardResponse
 from routers.utils.report_details import read_request_lines_with_attendance
 from routers.cruds.report import read_requests_data
-from dependencies import SessionDep, HRISSessionDep
+from src.dependencies import SessionDep, HRISSessionDep
 from icecream import ic
 
 router = APIRouter()
@@ -45,10 +45,14 @@ async def get_requests(
 async def get_requests_data(
     maria_session: SessionDep,
     hris_session: HRISSessionDep,
-    start_time: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    start_time: Optional[str] = Query(
+        None, description="Start date (YYYY-MM-DD)"
+    ),
     end_time: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     page: int = Query(1, ge=1, description="Page number (1-based)"),
-    page_size: int = Query(10, ge=1, le=100, description="Number of rows per page"),
+    page_size: int = Query(
+        10, ge=1, le=100, description="Number of rows per page"
+    ),
     query: str = Query(None, description="Search parameters"),
     download: bool = Query(False, description="Download status"),
 ):

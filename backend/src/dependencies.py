@@ -10,12 +10,12 @@ from jose import JWTError, jwt
 
 from db.database import get_application_session
 from hris_db.database import get_hris_session
-from src.http_schema import User
+from services.http_schema import User
 from icecream import ic
 from fastapi import Depends
 
 # Define your secret key and algorithm
-SECRET_KEY = os.getenv("AUTH_SECRET")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 ALGORITHM = "HS256"
 
@@ -34,21 +34,22 @@ async def decrypt(token: str):
 
 
 async def get_current_user(request: Request):
-    token = request.cookies.get("session")  # Check cookies first
+    token = request.cookies.get("session")  # Try to get from cookies
+
     if not token:
         # Fallback: Check Authorization header
         auth_header = request.headers.get("Authorization")
+
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split(" ")[1]
 
     if not token:
+        ic("🚨 No token found!")
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    # Verify JWT token using the decrypt function
     try:
-        payload = await decrypt(token)
+        payload = await decrypt(token)  # Decrypt token
         user = payload["user"]
-
         return User(
             id=user["userId"],
             username=user["username"],
@@ -57,7 +58,8 @@ async def get_current_user(request: Request):
             full_name=user["fullName"],
             title=user["title"],
         )
-    except Exception:
+    except Exception as e:
+        ic("🚨 Invalid token:", e)
         raise HTTPException(status_code=401, detail="Invalid token")
 
 

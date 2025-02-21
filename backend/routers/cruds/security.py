@@ -10,7 +10,7 @@ from db.models import (
 from fastapi import HTTPException
 from typing import Optional, Union, List
 from sqlalchemy.exc import IntegrityError
-from src.http_schema import (
+from services.http_schema import (
     SettingUserResponse,
     UserCreateRequest,
     RoleResponse,

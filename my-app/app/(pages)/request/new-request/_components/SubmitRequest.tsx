@@ -10,7 +10,7 @@ import { Clock, Calendar, Bookmark } from "lucide-react";
 import { useNewRequest } from "@/hooks/NewRequestContext";
 import toast from "react-hot-toast";
 import { debounce } from "@/lib/utils";
-import { getToken } from "@/lib/session";
+import { getSession } from "@/lib/session";
 
 /**
  * RequestForm component that handles submission of requests.
@@ -35,7 +35,7 @@ export default function RequestForm() {
     setLoading(true);
 
     try {
-      const session = await getToken();
+      const session = await getSession();
       if (!session) {
         throw new Error("Session token not found. Please log in again.");
       }
@@ -107,11 +107,11 @@ export default function RequestForm() {
                 label: "Schedule",
                 icon: <Calendar className="w-4 h-4" />,
               },
-              {
-                value: "save_for_later",
-                label: "Save for Later",
-                icon: <Bookmark className="w-4 h-4" />,
-              },
+              // {
+              //   value: "save_for_later",
+              //   label: "Save for Later",
+              //   icon: <Bookmark className="w-4 h-4" />,
+              // },
             ].map((option) => (
               <div key={option.value} className="flex items-center space-x-2">
                 <RadioGroupItem value={option.value} id={option.value} />

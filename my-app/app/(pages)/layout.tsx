@@ -1,4 +1,4 @@
-import NavigationBar from "@/components/Navbar";
+import NavigationBar from "@/components/NavigationBar";
 import { ReactNode } from "react";
 
 interface RootLayoutProps {

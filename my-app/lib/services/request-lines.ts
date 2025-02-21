@@ -1,9 +1,10 @@
 import { ChangedStatus } from "@/pages/definitions";
+const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
 
 export async function getRequestLines(requestId: number) {
   // Fetch requests with date range filter
   const res = await fetch(
-    `http://localhost:8000/request-lines?request_id=${requestId}`,
+    `${NEXT_PUBLIC_FASTAPI_URL}/request-lines?request_id=${requestId}`,
     {
       cache: "no-store",
     }
@@ -24,7 +25,7 @@ export async function updateRequestLines(
     throw new Error("No changes to update.");
   }
   const response = await fetch(
-    `http://localhost:8000/update-request-status?request_id=${requestId}&changed_statuses=${changedStatuses}`,
+    `${NEXT_PUBLIC_FASTAPI_URL}/update-request-status?request_id=${requestId}&changed_statuses=${changedStatuses}`,
     {
       method: "PUT",
       headers: {
