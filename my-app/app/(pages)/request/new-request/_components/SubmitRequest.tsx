@@ -40,7 +40,7 @@ export default function RequestForm() {
         throw new Error("Session token not found. Please log in again.");
       }
 
-      const response = await fetch("/api/submit-request", {
+      const response = await fetch("/api/requests/submit-request", {
         // Adjusted endpoint
         method: "POST",
         headers: {

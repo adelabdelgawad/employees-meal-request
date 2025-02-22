@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from "react";
 import ViewAction from "./ViewAction";
-import { Check, X, Trash } from "lucide-react";
+import { Check, X } from "lucide-react";
 import ConfirmationDialog from "@/components/confirmation-dialog";
+import DeleteAction from "./DeleteAction";
 
 interface ActionsProps {
-  handleAction: (id: number, statusId: number) => Promise<void>;
+  handleAction: (id: number, newStatusId: number) => Promise<void>;
   handleRequestLinesChanges: (id: number, updatedRecord: any) => Promise<void>;
   recordId: number;
   currentStatusId: number;
@@ -13,60 +14,56 @@ interface ActionsProps {
 }
 
 const Actions: React.FC<ActionsProps> = ({
-  handleRequestLinesChanges,
   handleAction,
+  handleRequestLinesChanges,
   recordId,
   currentStatusId,
   isAdmin,
   isTheRequester,
 }) => {
-  const [showDialog, setShowDialog] = useState(false);
-  const [statusToChange, setStatusToChange] = useState<number | null>(null);
+  // If the current status is not 1, disable action buttons.
+  const disableActions = currentStatusId !== 1;
 
-  const isActionDisabled = currentStatusId !== 1;
+  // State to control the confirmation dialog and the new status value.
+  const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [selectedStatusId, setSelectedStatusId] = useState<number | null>(null);
 
-  const openConfirmationDialog = useCallback((statusId: number) => {
-    setStatusToChange(statusId);
-    setShowDialog(true);
+  const openConfirmDialog = useCallback((newStatusId: number) => {
+    setSelectedStatusId(newStatusId);
+    setConfirmDialogOpen(true);
   }, []);
 
-  const closeConfirmationDialog = useCallback(() => {
-    setShowDialog(false);
-    setStatusToChange(null);
+  const closeConfirmDialog = useCallback(() => {
+    setConfirmDialogOpen(false);
+    setSelectedStatusId(null);
   }, []);
 
-  const handleAsyncAction = useCallback(async () => {
-    if (statusToChange !== null) {
+  const handleConfirmAction = useCallback(async () => {
+    if (selectedStatusId !== null) {
       try {
-        await handleAction(recordId, statusToChange);
+        await handleAction(recordId, selectedStatusId);
       } catch (error) {
-        console.error(
-          `Failed to handle action for statusId ${statusToChange}:`,
-          error
-        );
+        console.error(`Failed to update status to ${selectedStatusId} for record ${recordId}:`, error);
       } finally {
-        closeConfirmationDialog();
+        closeConfirmDialog();
       }
     }
-  }, [handleAction, recordId, statusToChange, closeConfirmationDialog]);
+  }, [handleAction, recordId, selectedStatusId, closeConfirmDialog]);
 
-  const handleDeleteAction = useCallback(() => {
-    console.log(`Deleting ID: ${recordId}`);
-  }, [recordId]);
-
-  const renderActionButton = (
-    statusId: number,
-    Icon: React.ElementType,
-    colorClasses: string
-  ) => (
+  // Component for rendering an action button with an icon.
+  const ActionButton: React.FC<{
+    newStatusId: number;
+    Icon: React.ElementType;
+    buttonColor: string;
+  }> = ({ newStatusId, Icon, buttonColor }) => (
     <button
-      onClick={() => openConfirmationDialog(statusId)}
+      onClick={() => openConfirmDialog(newStatusId)}
       className={`w-10 h-10 flex items-center justify-center rounded-full ${
-        isActionDisabled
+        disableActions
           ? "bg-gray-300 cursor-not-allowed"
-          : `${colorClasses} cursor-pointer hover:brightness-105`
+          : `${buttonColor} cursor-pointer hover:brightness-105`
       }`}
-      disabled={isActionDisabled}
+      disabled={disableActions}
     >
       <Icon size={24} />
     </button>
@@ -77,33 +74,27 @@ const Actions: React.FC<ActionsProps> = ({
       <ViewAction
         handleRequestLinesChanges={handleRequestLinesChanges}
         id={recordId}
-        disableStatus={isActionDisabled}
+        disableStatus={disableActions}
       />
 
       {isAdmin && (
         <>
-          {renderActionButton(4, X, "bg-red-200")}
-          {renderActionButton(3, Check, "bg-green-200")}
+          <ActionButton newStatusId={4} Icon={X} buttonColor="bg-red-200" />
+          <ActionButton newStatusId={3} Icon={Check} buttonColor="bg-green-200" />
         </>
       )}
 
-      {isTheRequester && (
-        <button
-          onClick={handleDeleteAction}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-red-500 text-white cursor-pointer hover:bg-red-600"
-        >
-          <Trash size={20} />
-        </button>
-      )}
+    
+      <DeleteAction id={recordId} disableStatus={disableActions} isTheRequester={isTheRequester}/>
 
       <ConfirmationDialog
-        isOpen={showDialog}
+        isOpen={isConfirmDialogOpen}
         title="Confirm Action"
         message="Are you sure you want to proceed with this action?"
         confirmLabel="Yes, Confirm"
         cancelLabel="Cancel"
-        onConfirm={handleAsyncAction}
-        onCancel={closeConfirmationDialog}
+        onConfirm={handleConfirmAction}
+        onCancel={closeConfirmDialog}
       />
     </div>
   );

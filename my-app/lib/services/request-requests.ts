@@ -1,6 +1,7 @@
 // app/actions.ts
 "use server";
 import { NextApiRequest, NextApiResponse } from "next";
+import { getSession } from "../session";
 
 const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
 
@@ -29,6 +30,14 @@ export async function getRequests({
 
   try {
     const url = new URL(baseUrl);
+    const session = await getSession(); // Removed duplicate await
+    const userId = session?.user?.userId;
+    const isAdmin = !!session?.user?.roles?.includes("Admin");
+    if (!userId) {
+      throw new Error("User session is invalid or missing user ID");
+    }
+    // Convert isAdmin boolean to string
+    const isAdminString = isAdmin ? "true" : "false";
 
     // Add query parameters
     url.searchParams.append("query", query);
@@ -36,8 +45,17 @@ export async function getRequests({
     url.searchParams.append("page_size", pageSize.toString());
     url.searchParams.append("start_time", startTime);
     url.searchParams.append("end_time", endTime);
+    url.searchParams.append("user_id", userId);
+    url.searchParams.append("is_admin", isAdminString);
 
-    const response = await fetch(url.toString(), { cache: "no-store" });
+
+    const response = await fetch(url.toString(), { 
+      cache: "no-store",
+      headers: {
+        // Add authorization header if needed
+        Authorization: `Bearer ${session.accessToken}`,
+      }
+    });
 
     if (!response.ok) {
       throw new Error(`Failed to fetch data: ${response.statusText}`);

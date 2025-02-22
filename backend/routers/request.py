@@ -144,6 +144,13 @@ async def create_request_endpoint(
         ) from e
 
 
+@router.delete("/requests/{request_id}")
+async def delete_request(current_user: CurrentUserDep, request_id: int):
+    ic(current_user, request_id)
+
+    return {"message": "Request deleted successfully."}
+
+
 @router.get(
     "/requests",
     response_model=dict,
@@ -151,6 +158,8 @@ async def create_request_endpoint(
 )
 async def get_requests(
     maria_session: SessionDep,
+    user_id: int,
+    is_admin: bool = Query(False, description="Admin status"),
     start_time: Optional[str] = Query(
         None, description="Start date (YYYY-MM-DD)"
     ),
@@ -159,15 +168,19 @@ async def get_requests(
     page_size: int = Query(
         10, ge=1, le=100, description="Number of rows per page"
     ),
-    query: str = Query(None, description="Search parameters"),
+    query: Optional[str] = Query(None, description="Search parameters"),
     download: bool = Query(False, description="Download status"),
 ):
     try:
+        if is_admin == True:
+            user_id = None
+
         requests = await crud.read_requests(
             session=maria_session,
+            requester_id=user_id,
             start_time=start_time,
             end_time=end_time,
-            requester_id=query,
+            requester_name=query,
             page=page,
             page_size=page_size,
             download=download,

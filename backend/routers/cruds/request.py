@@ -142,7 +142,8 @@ async def read_requests(
     session: AsyncSession,
     start_time: Optional[str] = None,
     end_time: Optional[str] = None,
-    requester_id: Optional[str] = None,
+    requester_id: Optional[int] = None,
+    requester_name: Optional[str] = None,
     page: int = 1,
     page_size: int = 10,
     download: Optional[bool] = False,
@@ -196,9 +197,12 @@ async def read_requests(
         count_stmt = count_stmt.where(
             Request.request_time.between(start_dt, end_dt)
         )
+
     if requester_id:
+        count_stmt = count_stmt.where(Request.requester_id == requester_id)
+    if requester_name:
         count_stmt = count_stmt.where(
-            Request.requester_id == int(requester_id)
+            Account.full_name.ilike(f"%{requester_name}%")
         )
     # Exclude future request_time records
     count_stmt = count_stmt.where(Request.request_time <= current_time)
@@ -254,8 +258,15 @@ async def read_requests(
         data_stmt = data_stmt.where(
             Request.request_time.between(start_dt, end_dt)
         )
+
     if requester_id:
-        data_stmt = data_stmt.where(Request.requester_id == int(requester_id))
+        data_stmt = data_stmt.where(Request.requester_id == requester_id)
+
+    if requester_name:
+        data_stmt = data_stmt.where(
+            Account.full_name.ilike(f"%{requester_name}%")
+        )
+
     # Exclude future request_time records
     data_stmt = data_stmt.where(Request.request_time <= current_time)
 
