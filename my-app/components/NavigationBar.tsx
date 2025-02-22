@@ -42,7 +42,7 @@ const components: SidebarSection[] = [
       {
         title: "Requests",
         url: "/request/requests",
-        role: "Admin, Ordertaker",
+        role: "Admin, Ordertaker, User",
         icon: null,
         description: "View and manage all submitted requests.",
       },
@@ -147,7 +147,7 @@ function ListItem({
  */
 export default async function NavigationBar() {
   // Retrieve the session (expects session.roles to be an array, e.g. ["User"])
-  const session: Session = await getSession();
+  const session: Session | null =  await getSession();
   const userRoles: string[] = session?.user.roles || [];
 
   // Filter sections and their items based on the user's roles.

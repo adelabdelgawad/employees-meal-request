@@ -30,6 +30,7 @@ class RequestPageRecordResponse(BaseModel):
     id: int
     status_name: str
     status_id: int
+    requester_id: int | None = None
     requester: Optional[str] = None
     requester_title: Optional[str] = None
     meal: Optional[str] = None

@@ -15,6 +15,7 @@ import toast from "react-hot-toast";
 interface Request {
   id: number;
   requester?: string;
+  requester_id?:number;
   requester_title?: string;
   request_time?: string;
   meal?: string;
@@ -26,10 +27,22 @@ interface Request {
   notes?: string;
 }
 
-const DataTable = ({ initialData }: { initialData: Request[] }) => {
+interface DataTableProps {
+  initialData: Request[];
+  isAdmin: boolean;
+  userId: number;
+}
+
+
+const DataTable: React.FC<DataTableProps> = ({ initialData, isAdmin, userId }) => {
   const [data, setData] = useState<Request[]>(initialData);
 
-  useEffect(() => setData(initialData), [initialData]);
+  // Update the table data when initialData changes.
+  useEffect(() => {
+    console.log(initialData)
+    setData(initialData);
+  }, [initialData]);
+
 
   const handleAction = useCallback(
     async (recordId: number, statusId: number) => {
@@ -53,7 +66,7 @@ const DataTable = ({ initialData }: { initialData: Request[] }) => {
 
         const updatedRecord = await response.json();
 
-        if (updatedRecord.status == "error") {
+        if (updatedRecord.status === "error") {
           toast.error(
             `Failed to update request status: ${updatedRecord.message}`
           );
@@ -75,6 +88,12 @@ const DataTable = ({ initialData }: { initialData: Request[] }) => {
     []
   );
 
+  /**
+   * Handles changes to the request lines by merging the updated fields.
+   *
+   * @param recordId - The ID of the request record.
+   * @param updatedRecord - The fields to update in the record.
+   */
   const handleRequestLinesChanges = useCallback(
     async (recordId: number, updatedRecord: Partial<Request>) => {
       setData((prevData) =>
@@ -121,12 +140,14 @@ const DataTable = ({ initialData }: { initialData: Request[] }) => {
                 <TableCell>{record.accepted_lines ?? "-"}</TableCell>
                 <TableCell>{record.notes ?? "-"}</TableCell>
                 <TableCell>
-                  <Actions
-                    handleRequestLinesChanges={handleRequestLinesChanges}
-                    handleAction={handleAction}
-                    recordId={record.id}
-                    currentStatusId={record.status_id ?? 0}
-                  />
+                <Actions
+                  handleRequestLinesChanges={handleRequestLinesChanges}
+                  handleAction={handleAction}
+                  recordId={record.id}
+                  currentStatusId={record.status_id ?? 0}
+                  isAdmin={isAdmin}
+                  isTheRequester={record.requester_id === userId}
+                />
                 </TableCell>
               </TableRow>
             ))

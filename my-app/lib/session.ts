@@ -3,6 +3,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { JWTPayload } from "jose";
 
 const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
 
@@ -13,7 +14,7 @@ if (!secretKey) {
 }
 const encodedKey = new TextEncoder().encode(secretKey);
 
-export async function encrypt(payload) {
+export async function encrypt(payload: JWTPayload) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -33,7 +34,7 @@ export async function decrypt(session = "") {
   }
 }
 
-export async function createSession(user) {
+export async function createSession(user: string) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const session = await encrypt({ user, expiresAt });
   const cookieStore = await cookies();
@@ -115,7 +116,7 @@ export async function login(prevState: any, formData: FormData) {
   }
 }
 
-export async function getSession() {
+export async function getSession(): Promise<JWTPayload | null> {
   const cookieStore = await cookies();
   const cookie = cookieStore.get("session")?.value;
   if (!cookie) return null;

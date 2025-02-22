@@ -1,7 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { jwtVerify } from "jose";
-import { cookies } from "next/headers";
-import { decrypt, getSession } from "./lib/session";
+import {  getSession } from "./lib/session";
 
 // Ensure the secret is available and consistent with your backend
 const SESSION_SECRET = new TextEncoder().encode(process.env.SESSION_SECRET!);
@@ -18,7 +16,7 @@ const roleBasedAccess: Record<string, string[]> = {
     "/setting/users",
     "/security/roles",
   ],
-  User: ["/", "/request/new-request"],
+  User: ["/", "/request/new-request", "/request/requests"],
   Ordertaker: ["/", "/request/requests"],
   Manager: ["/", "/setting/users", "/security/roles"],
 };
@@ -64,15 +62,15 @@ export async function middleware(request: NextRequest) {
   }
 
   // 4. Role-based access control: verify that the session has roles
-  if (!session || !session?.user.roles) {
+  if (!session || !session?.user?.roles) {
     console.warn("No roles found in session - access denied");
     return NextResponse.redirect(new URL("/access-denied", request.url));
   }
 
   // Normalize roles to an array
-  const userRoles: string[] = Array.isArray(session?.user.roles)
-    ? session?.user.roles
-    : [session?.user.roles];
+  const userRoles: string[] = Array.isArray(session?.user?.roles)
+    ? session?.user?.roles
+    : [session?.user?.roles];
 
   // Derive allowed paths for the user based on their roles
   const allowedPaths = userRoles.flatMap((role) => roleBasedAccess[role] || []);

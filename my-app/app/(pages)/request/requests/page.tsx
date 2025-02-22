@@ -4,6 +4,7 @@ import DataTableHeader from "./_components/DataTableHeader";
 import { DataTableFooter } from "./_components/DataTableFooter";
 import DataTable from "./_components/DataTable";
 import { getRequests } from "@/lib/services/request-requests";
+import { getSession } from "@/lib/session";
 
 interface SearchParams {
   query?: string;
@@ -27,6 +28,10 @@ export default async function Page({
   const pageSize = Number(resolvedSearchParams.page_size) || 20; // Default rows per page
   const startTime = resolvedSearchParams.start_time || "";
   const endTime = resolvedSearchParams.end_time || "";
+  const session = await getSession();
+  const userRoles: string[] = session?.user?.roles || [];
+  const userId: number = session?.user?.userId || 0;
+  const isAdmin = userRoles.includes("Admin");
 
   // 2. Fetch data (server-side)
   let data = null;
@@ -62,7 +67,7 @@ export default async function Page({
             Failed to load data. Please try again later.
           </div>
         ) : data ? (
-          <DataTable initialData={data.data} />
+          <DataTable initialData={data.data} isAdmin={isAdmin} userId={userId} />
         ) : (
           <div>No data available</div>
         )}

@@ -1,14 +1,15 @@
 import React, { useState, useCallback } from "react";
 import ViewAction from "./ViewAction";
-import { Check, X } from "lucide-react";
+import { Check, X, Trash } from "lucide-react";
 import ConfirmationDialog from "@/components/confirmation-dialog";
-import toast from "react-hot-toast";
 
 interface ActionsProps {
   handleAction: (id: number, statusId: number) => Promise<void>;
   handleRequestLinesChanges: (id: number, updatedRecord: any) => Promise<void>;
   recordId: number;
   currentStatusId: number;
+  isAdmin: boolean;
+  isTheRequester: boolean;
 }
 
 const Actions: React.FC<ActionsProps> = ({
@@ -16,6 +17,8 @@ const Actions: React.FC<ActionsProps> = ({
   handleAction,
   recordId,
   currentStatusId,
+  isAdmin,
+  isTheRequester,
 }) => {
   const [showDialog, setShowDialog] = useState(false);
   const [statusToChange, setStatusToChange] = useState<number | null>(null);
@@ -47,6 +50,10 @@ const Actions: React.FC<ActionsProps> = ({
     }
   }, [handleAction, recordId, statusToChange, closeConfirmationDialog]);
 
+  const handleDeleteAction = useCallback(() => {
+    console.log(`Deleting ID: ${recordId}`);
+  }, [recordId]);
+
   const renderActionButton = (
     statusId: number,
     Icon: React.ElementType,
@@ -73,11 +80,22 @@ const Actions: React.FC<ActionsProps> = ({
         disableStatus={isActionDisabled}
       />
 
-      {/* Action Buttons */}
-      {renderActionButton(4, X, "bg-red-200")}
-      {renderActionButton(3, Check, "bg-green-200")}
+      {isAdmin && (
+        <>
+          {renderActionButton(4, X, "bg-red-200")}
+          {renderActionButton(3, Check, "bg-green-200")}
+        </>
+      )}
 
-      {/* Confirmation Dialog */}
+      {isTheRequester && (
+        <button
+          onClick={handleDeleteAction}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-red-500 text-white cursor-pointer hover:bg-red-600"
+        >
+          <Trash size={20} />
+        </button>
+      )}
+
       <ConfirmationDialog
         isOpen={showDialog}
         title="Confirm Action"
