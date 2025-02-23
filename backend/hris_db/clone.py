@@ -12,6 +12,7 @@ from hris_db.models import (
     HRISHRISSecurityUser,
     HRISEmployeePosition,
 )
+from sqlalchemy.dialects.mysql import insert
 
 # Logger setup
 logger = logging.getLogger(__name__)
@@ -75,8 +76,9 @@ async def _create_or_update_security_users(
     """
     Fetch HRIS security users and update or insert them into the local database.
     """
-    logger.info("Fetching HRIS security users from the HRIS database.")
+    logger.info("Fetching active HRIS security users from the HRIS database.")
     try:
+        # Fetch active and unlocked HRIS security users
         statement = select(HRISHRISSecurityUser).where(
             HRISHRISSecurityUser.is_deleted == False,
             HRISHRISSecurityUser.is_locked == False,
@@ -92,48 +94,56 @@ async def _create_or_update_security_users(
             f"Retrieved {len(hris_sec_users)} security users from HRIS."
         )
 
-        new_users = []
         for hris_sec_user in hris_sec_users:
-            statement = select(HRISSecurityUser).where(
-                or_(
-                    HRISSecurityUser.id == hris_sec_user.id,
-                    HRISSecurityUser.username == hris_sec_user.name,
+            try:
+                # Check if the user exists in the local database
+                statement = select(HRISSecurityUser).where(
+                    or_(
+                        HRISSecurityUser.id == hris_sec_user.id,
+                        HRISSecurityUser.username == hris_sec_user.name,
+                    )
                 )
-            )
-            result = await app_session.execute(statement)
-            sec_user = result.scalars().first()
+                result = await app_session.execute(statement)
+                sec_user = result.scalars().first()
 
-            if sec_user:
-                logger.info(
-                    f"Updating security user: {sec_user.username} (ID: {sec_user.id})"
-                )
-                sec_user.username = hris_sec_user.name
-                sec_user.is_deleted = hris_sec_user.is_deleted
-                sec_user.is_locked = hris_sec_user.is_locked
-            else:
-                logger.info(
-                    f"Inserting new security user: {hris_sec_user.name} (ID: {hris_sec_user.id})"
-                )
-                new_users.append(
-                    HRISSecurityUser(
+                if sec_user:
+                    # Update existing user
+                    logger.info(
+                        f"Updating security user: {sec_user.username} (ID: {sec_user.id})"
+                    )
+                    sec_user.username = hris_sec_user.name
+                    sec_user.is_deleted = hris_sec_user.is_deleted
+                    sec_user.is_locked = hris_sec_user.is_locked
+                else:
+                    new_user = HRISSecurityUser(
                         id=hris_sec_user.id,
                         username=hris_sec_user.name,
                         is_deleted=hris_sec_user.is_deleted,
                         is_locked=hris_sec_user.is_locked,
                     )
+
+                    app_session.add(new_user)
+                    await app_session.commit()
+                    
+                    # Prepare new user for insertion
+                    logger.info(
+                        f"Inserting new security user: {hris_sec_user.name} (ID: {hris_sec_user.id})"
+                    )
+            except Exception as e:
+                logger.error(
+                    f"Error processing security user {hris_sec_user.id}: {e}"
                 )
 
-        if new_users:
-            await add_and_commit(app_session, new_users)
         else:
+            # Commit updates to existing users
             await app_session.commit()
-
-        logger.info(
-            "Security users successfully updated in the local database."
-        )
+            logger.info(
+                "No new users to insert; committed updates to existing users."
+            )
 
     except Exception as e:
         logger.error(f"Error updating security users: {e}", exc_info=True)
+        await app_session.rollback()
 
 
 async def _create_or_update_departments(
@@ -189,9 +199,9 @@ async def _create_or_update_employees(
     """
     Fetch HRIS employees and update or insert them into the local database.
     """
-    logger.info("Fetching HRIS employees from the HRIS database.")
-
+    logger.info("Fetching active HRIS employees from the HRIS database.")
     try:
+        # Fetch active HRIS employees with their positions
         statement = (
             select(
                 HRISEmployee.id,
@@ -216,7 +226,14 @@ async def _create_or_update_employees(
 
         result = await hris_session.execute(statement)
         hris_employees_with_positions = result.all()
-        new_employees = []
+
+        if not hris_employees_with_positions:
+            logger.info("No active HRIS employees found.")
+            return
+
+        logger.info(
+            f"Retrieved {len(hris_employees_with_positions)} employees from HRIS."
+        )
 
         for emp_data in hris_employees_with_positions:
             full_name = " ".join(
@@ -231,40 +248,35 @@ async def _create_or_update_employees(
                 )
             ).strip()
 
-            statement = select(Employee).where(Employee.id == emp_data.id)
-            result = await app_session.execute(statement)
-            exist_employee = result.scalars().first()
+            # Prepare the insert statement with ON DUPLICATE KEY UPDATE
+            insert_stmt = insert(Employee).values(
+                id=emp_data.id,
+                code=emp_data.code,
+                name=full_name,
+                title=emp_data.title,
+                is_active=True,
+                department_id=emp_data.org_unit_id,
+            )
 
-            if exist_employee:
-                logger.info(
-                    f"Updating employee: {exist_employee.name} (ID: {exist_employee.id})"
-                )
-                exist_employee.code = emp_data.code
-                exist_employee.name = full_name
-                exist_employee.title = emp_data.title
-                exist_employee.is_active = True
-                exist_employee.department_id = emp_data.org_unit_id
-            else:
-                logger.info(
-                    f"Inserting new employee: {full_name} (ID: {emp_data.id})"
-                )
-                new_employees.append(
-                    Employee(
-                        id=emp_data.id,
-                        code=emp_data.code,
-                        name=full_name,
-                        title=emp_data.title,
-                        is_active=True,
-                        department_id=emp_data.org_unit_id,
-                    )
-                )
+            # Define the update statement for duplicate keys
+            update_stmt = {
+                "code": insert_stmt.inserted.code,
+                "name": insert_stmt.inserted.name,
+                "title": insert_stmt.inserted.title,
+                "is_active": insert_stmt.inserted.is_active,
+                "department_id": insert_stmt.inserted.department_id,
+            }
 
-        if new_employees:
-            await add_and_commit(app_session, new_employees)
-        else:
-            await app_session.commit()
+            # Combine insert and update statements
+            upsert_stmt = insert_stmt.on_duplicate_key_update(update_stmt)
 
-        logger.info("Employees successfully updated in the local database.")
+            # Execute the upsert statement
+            await app_session.execute(upsert_stmt)
+
+        # Commit the transaction
+        await app_session.commit()
+        logger.info("Upserted employees successfully.")
 
     except Exception as e:
         logger.error(f"Error updating employees: {e}", exc_info=True)
+        await app_session.rollback()

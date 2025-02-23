@@ -7,11 +7,15 @@ import DataTableDateRange from "@/components/data-table/DataTableRangePicker";
 import LiveButton from "./LiveButton";
 import RefreshWithCounter from "./RefreshWithCounter";
 import { useSearchParams } from "next/navigation";
+interface DataTableHeaderProps {
+  isOrderTaker: boolean;
+}
 
-export default function DataTableHeader() {
+const DataTableHeader: React.FC<DataTableHeaderProps> = ({ isOrderTaker }) => {
   const searchParams = useSearchParams();
   const isLive = searchParams.get("live") === "true"; // Check if Live mode is active
-
+  console.log(isOrderTaker)
+  
   return (
     <div>
       {/* Top Section */}
@@ -23,19 +27,21 @@ export default function DataTableHeader() {
         </div>
 
         {/* Right Section */}
-        <div className="flex items-center gap-4">
-          {/* Show RefreshWithCounter only when Live mode is active */}
-          {isLive && (
-            <div className="flex justify-center">
-              <RefreshWithCounter />
-            </div>
-          )}
-          <LiveButton />
-          <ExportTable />
-        </div>
+        {isOrderTaker && (
+          <div className="flex items-center gap-4">
+            {/* Show RefreshWithCounter only when Live mode is active */}
+            {isLive && (
+              <div className="flex justify-center">
+                <RefreshWithCounter />
+              </div>
+            )}
+            <LiveButton />
+            <ExportTable />
+          </div>
+        )}
       </div>
-
-
     </div>
   );
-}
+};
+
+export default DataTableHeader;

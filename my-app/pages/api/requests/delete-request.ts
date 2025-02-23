@@ -29,8 +29,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const apiResponse = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/requests/${id}`, {
-      method: 'DELETE',
+    const apiResponse = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/requests/delete/${id}`, {
+      method: 'PUT',
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`, // Ensure token is passed

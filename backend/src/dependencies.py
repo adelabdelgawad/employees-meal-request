@@ -24,7 +24,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 async def decrypt(token: str):
-
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload

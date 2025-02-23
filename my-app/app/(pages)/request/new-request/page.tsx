@@ -2,6 +2,7 @@ import SubmitRequestButton from "./_components/SubmitRequest";
 import DepartmentColumn from "./DepartmentColumn";
 import EmployeeColumn from "./EmployeeColumn";
 import SelectedEmployeesColumn from "./SelectedEmployeesColumn";
+
 export default function Page() {
   return (
     <div className="flex flex-col h-screen bg-gray-50 px-12 py-4">

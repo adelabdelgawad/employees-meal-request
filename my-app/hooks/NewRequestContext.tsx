@@ -52,6 +52,7 @@ export function NewRequestProvider({
       try {
         const fetchedDepartments = await getDepartments();
         setDepartments(fetchedDepartments);
+        console.log(fetchedDepartments)
 
         const fetchedEmployees = await getEmployees();
         setEmployees(fetchedEmployees);

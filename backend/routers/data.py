@@ -7,6 +7,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from db.database import get_application_session
 from db.models import Employee, Department, Meal
+from icecream import ic
 
 # Create API Router
 router = APIRouter()
@@ -29,6 +30,7 @@ async def read_departments_with_employees(session: SessionDep):
 
         result = await session.execute(statement)
         departments = result.scalars().all()
+
         return departments
 
     except Exception as e:
@@ -53,6 +55,7 @@ async def read_employees(session: SessionDep):
 
         result = await session.execute(statement)
         employees = result.scalars().all()
+        ic(employees)
         return employees
 
     except Exception as e:

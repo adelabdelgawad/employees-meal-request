@@ -205,7 +205,9 @@ async def read_requests(
             Account.full_name.ilike(f"%{requester_name}%")
         )
     # Exclude future request_time records
-    count_stmt = count_stmt.where(Request.request_time <= current_time)
+    count_stmt = count_stmt.where(
+        Request.request_time <= current_time, Request.is_deleted == False
+    )
 
     # Execute the total count query
     total_rows_result = await session.execute(count_stmt)
@@ -268,7 +270,9 @@ async def read_requests(
         )
 
     # Exclude future request_time records
-    data_stmt = data_stmt.where(Request.request_time <= current_time)
+    data_stmt = data_stmt.where(
+        Request.request_time <= current_time, Request.is_deleted == False
+    )
 
     # Apply pagination if not downloading
     if not download:

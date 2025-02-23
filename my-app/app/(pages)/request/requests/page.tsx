@@ -32,6 +32,10 @@ export default async function Page({
   const userRoles: string[] = session?.user?.roles || [];
   const userId: number = session?.user?.userId || 0;
   const isAdmin = userRoles.includes("Admin");
+  const rolesToCheck = ["Admin", "OrderTaker"];
+  const isOrderTaker = userRoles.some(role => rolesToCheck.includes(role));
+  
+
 
   // 2. Fetch data (server-side)
   let data = null;
@@ -57,7 +61,7 @@ export default async function Page({
     <div className="flex flex-col m-2">
       {/* Header */}
       <div>
-        <DataTableHeader />
+        <DataTableHeader isOrderTaker={isOrderTaker}/>
       </div>
 
       {/* Table */}

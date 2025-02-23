@@ -19,7 +19,8 @@ from collections import defaultdict
 from routers.utils.request import continue_processing_meal_request
 from pydantic import BaseModel
 from collections import defaultdict
-from types import SimpleNamespace
+from sqlmodel import select
+from db.models import Request
 
 # Default timezone
 cairo_tz = pytz.timezone("Africa/Cairo")
@@ -144,9 +145,17 @@ async def create_request_endpoint(
         ) from e
 
 
-@router.delete("/requests/{request_id}")
-async def delete_request(current_user: CurrentUserDep, request_id: int):
-    ic(current_user, request_id)
+@router.put("/requests/delete/{request_id}")
+async def delete_request(
+    current_user: CurrentUserDep, session: SessionDep, request_id: int
+):
+    statement = select(Request).where(Request.id == request_id)
+    results = await session.execute(statement)
+    request = results.scalars().first()
+    ic(request)
+    request.is_deleted = True
+    session.add(request)
+    await session.commit()
 
     return {"message": "Request deleted successfully."}
 
