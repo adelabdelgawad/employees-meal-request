@@ -73,12 +73,12 @@ export async function deleteSession() {
   cookieStore.delete('session')
 }
 
-export async function login(prevState: any, formData: FormData) {
-  const username = formData.get("username")?.toString() || "";
-  const password = formData.get("password")?.toString() || "";
+export async function login(formData: FormData) {
+  const username = formData.get("username") as string;
+  const password = formData.get("password") as string;
 
   try {
-    const response = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/login`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_FASTAPI_URL}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
@@ -100,11 +100,10 @@ export async function login(prevState: any, formData: FormData) {
       return { errors: { general: errorMessage } };
     }
 
-    // If response is successful, parse user data
+    // Parse user data and store session
     const user = await response.json();
     await createSession(user);
 
-    // Instead of redirecting, return a success flag
     return { success: true };
   } catch (error) {
     console.error("Error logging in:", error);

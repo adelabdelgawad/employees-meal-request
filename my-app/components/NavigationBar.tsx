@@ -6,10 +6,11 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import UserAvatarServer from "./UserAvatarServer";
 import { getSession } from "@/lib/session";
+import Image from 'next/image';
+import logo from '@/public/logo.png';
 
 interface SidebarItem {
   title: string;
@@ -162,7 +163,7 @@ export default async function NavigationBar() {
     <nav className="flex items-center justify-between h-20 px-6 shadow-md bg-white sticky top-0 z-50">
       {/* Left Side: Logo/Icon */}
       <div className="flex items-center space-x-2">
-        <span className="text-xl font-bold">MyApp</span>
+      <Image src={logo} alt="MyApp Logo" width={210} height={40} />
       </div>
 
       {/* Center: Navigation Menu */}

@@ -1,115 +1,99 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
-import { useRouter } from "next/navigation"; // Import router for navigation
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { login } from "@/lib/session"; // Assume this is your login function
+import Image from "next/image";
 
-import LoadingButton from "@/components/loading-button";
-
-import { login } from "@/lib/session";
-
-export type FormValues = {
+type FormValues = {
   username: string;
   password: string;
 };
 
 export function LoginForm(): JSX.Element {
-  const router = useRouter(); // Initialize router
-  const [state, handleLogin] = useActionState(login, undefined);
-  const form = useForm<FormValues>({
-    defaultValues: { username: "", password: "" },
-  });
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormValues>();
 
-  // Use useEffect to navigate after login success
-  useEffect(() => {
-    if (state?.success) {
-      router.push("/"); // Perform navigation only after state updates
+  /**
+   * Handles form submission, sending login data to the server.
+   * @param data - The username and password entered by the user.
+   */
+  const onSubmit = async (data: FormValues) => {
+    setLoading(true);
+    setError(null);
+  
+    try {
+      // Convert data object into FormData
+      const formData = new FormData();
+      formData.append("username", data.username);
+      formData.append("password", data.password);
+  
+      const result = await login(formData); // Ensure login receives FormData
+      if (result.success) {
+        router.push("/");
+      } else {
+        setError(result.errors?.general || "Invalid credentials.");
+      }
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  }, [state?.success, router]); // Runs only when `state.success` changes
-
+  };
+  
   return (
-    <div className="flex items-center justify-center min-h-screen p-4">
-      <Card className="mx-auto max-w-sm">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Login</CardTitle>
-          <CardDescription>
-            Enter your username and password to login to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form action={handleLogin} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="Enter your username"
-                        autoComplete="off"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage>
-                      {form.formState.errors.username?.message}
-                    </FormMessage>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Enter your password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage>
-                      {form.formState.errors.password?.message}
-                    </FormMessage>
-                  </FormItem>
-                )}
-              />
-              {/* Display general error messages */}
-              {state?.errors?.general && (
-                <p className="text-red-500 text-sm text-center">
-                  {state.errors.general}
-                </p>
-              )}
-
-              <LoadingButton pending={form.formState.isSubmitting}>
-                Sign In
-              </LoadingButton>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800">
+      <div className="w-full max-w-md p-8 m-auto bg-white rounded-2xl shadow-md dark:bg-gray-800">
+        <div className="flex items-center justify-center">
+        <Image src="/logo.png" alt="MyApp Logo" width={210} height={40} />
+        </div>
+        <p className="text-center text-gray-500 dark:text-gray-400 pt-4">
+          Please login to your account.
+        </p>
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              type="text"
+              placeholder="Enter your username"
+              {...register("username", { required: "Username is required" })}
+            />
+            {errors.username && (
+              <p className="text-red-500 text-sm">{errors.username.message}</p>
+            )}
+          </div>
+          <div className="relative space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+            </div>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              {...register("password", { required: "Password is required" })}
+            />
+            {errors.password && (
+              <p className="text-red-500 text-sm">{errors.password.message}</p>
+            )}
+          </div>
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
