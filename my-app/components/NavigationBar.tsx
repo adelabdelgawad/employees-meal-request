@@ -10,110 +10,18 @@ import {
 } from "@/components/ui/navigation-menu";
 import UserAvatarServer from "./UserAvatarServer";
 import { getSession } from "@/lib/session";
+import { AppRole, routesConfig } from "@/config/accessConfig";
+import Image from "next/image";
 
-interface SidebarItem {
+interface NavSection {
   title: string;
-  url: string;
-  role: string;
-  icon: React.ElementType | null;
-  description: string;
+  items: {
+    title: string;
+    url: string;
+    description: string;
+  }[];
 }
 
-interface SidebarSection {
-  title: string;
-  role: string;
-  icon: React.ElementType | null;
-  items: SidebarItem[];
-}
-
-const components: SidebarSection[] = [
-  {
-    title: "Request",
-    role: "Admin, User, Ordertaker",
-    icon: null,
-    items: [
-      {
-        title: "New Request",
-        url: "/request/new-request",
-        role: "Admin, User",
-        icon: null,
-        description: "Create a new meal request.",
-      },
-      {
-        title: "Requests",
-        url: "/request/requests",
-        role: "Admin, Ordertaker, User",
-        icon: null,
-        description: "View and manage all submitted requests.",
-      },
-    ],
-  },
-  {
-    title: "Report",
-    role: "Admin",
-    icon: null,
-    items: [
-      {
-        title: "Requests Dashboard",
-        url: "/report/requests-dashboard",
-        role: "Admin",
-        icon: null,
-        description: "Analyze requests with interactive dashboards.",
-      },
-      {
-        title: "Requests Details",
-        url: "/report/details",
-        role: "Admin",
-        icon: null,
-        description: "Detailed breakdown of each request.",
-      },
-      {
-        title: "Meal Plans",
-        url: "/data-management/meal-plans",
-        role: "Admin",
-        icon: null,
-        description: "Manage and organize meal plans.",
-      },
-    ],
-  },
-  {
-    title: "Settings",
-    role: "Admin, Manager",
-    icon: null,
-    items: [
-      {
-        title: "Users",
-        url: "/setting/users",
-        role: "Admin, Manager",
-        icon: null,
-        description: "Manage application users and their roles.",
-      },
-      {
-        title: "Roles",
-        url: "/security/roles",
-        role: "Admin, Manager",
-        icon: null,
-        description: "Configure roles and permissions.",
-      },
-    ],
-  },
-];
-
-/**
- * Checks if the user has at least one of the required roles.
- *
- * @param roleString - A comma-separated string of roles (e.g. "Admin, User").
- * @param userRoles - An array of roles from the session (e.g. ["User", "Admin"]).
- * @returns True if at least one required role exists in the user's roles.
- */
-function hasPermission(roleString: string, userRoles: string[]): boolean {
-  if (!roleString) return true;
-  const requiredRoles = roleString.split(",").map((r) => r.trim().toLowerCase());
-  const normalizedUserRoles = userRoles.map((role) => role.toLowerCase());
-  return requiredRoles.some((role) => normalizedUserRoles.includes(role));
-}
-
-/* ListItem Component */
 function ListItem({
   className = "",
   title,
@@ -139,36 +47,50 @@ function ListItem({
   );
 }
 
-/**
- * NavigationBar component retrieves the current session to determine the user's roles
- * and filters navigation sections and items accordingly.
- *
- * @returns A navigation bar with menu items that the user has permission to view.
- */
 export default async function NavigationBar() {
-  // Retrieve the session (expects session.roles to be an array, e.g. ["User"])
-  const session: Session | null =  await getSession();
-  const userRoles: string[] = session?.user.roles || [];
+  const session = await getSession();
+  const userRoles = (session?.user?.roles || []) as AppRole[];
 
-  // Filter sections and their items based on the user's roles.
-  const filteredComponents = components
-    .map((section) => ({
-      ...section,
-      items: section.items.filter((item) => hasPermission(item.role, userRoles)),
-    }))
-    .filter((section) => hasPermission(section.role, userRoles) && section.items.length > 0);
+  // Group routes into navigation sections
+  const navSections = routesConfig.reduce((acc, route) => {
+    // Skip routes without navigation metadata or missing permissions
+    if (
+      !route.navSection ||
+      !route.navTitle ||
+      !route.roles.some(role => userRoles.includes(role))
+    ) {
+      return acc;
+    }
+
+    const existingSection = acc.find(s => s.title === route.navSection);
+    const navItem = {
+      title: route.navTitle,
+      url: route.path,
+      description: route.navDescription || ""
+    };
+
+    if (existingSection) {
+      existingSection.items.push(navItem);
+    } else {
+      acc.push({
+        title: route.navSection,
+        items: [navItem]
+      });
+    }
+    return acc;
+  }, [] as NavSection[]);
 
   return (
     <nav className="flex items-center justify-between h-20 px-6 shadow-md bg-white sticky top-0 z-50">
       {/* Left Side: Logo/Icon */}
       <div className="flex items-center space-x-2">
-        <span className="text-xl font-bold">MyApp</span>
+        <Image src="/logo.png" alt="MyApp Logo" width={210} height={40} />
       </div>
 
       {/* Center: Navigation Menu */}
       <NavigationMenu>
         <NavigationMenuList>
-          {filteredComponents.map((section) => (
+          {navSections.map((section) => (
             <NavigationMenuItem key={section.title}>
               <NavigationMenuTrigger>{section.title}</NavigationMenuTrigger>
               <NavigationMenuContent>

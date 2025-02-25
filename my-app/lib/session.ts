@@ -73,12 +73,12 @@ export async function deleteSession() {
   cookieStore.delete('session')
 }
 
-export async function login(prevState: any, formData: FormData) {
-  const username = formData.get("username")?.toString() || "";
-  const password = formData.get("password")?.toString() || "";
+export async function login(formData: FormData) {
+  const username = formData.get("username") as string;
+  const password = formData.get("password") as string;
 
   try {
-    const response = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/login`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_FASTAPI_URL}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
@@ -100,11 +100,10 @@ export async function login(prevState: any, formData: FormData) {
       return { errors: { general: errorMessage } };
     }
 
-    // If response is successful, parse user data
+    // Parse user data and store session
     const user = await response.json();
     await createSession(user);
 
-    // Instead of redirecting, return a success flag
     return { success: true };
   } catch (error) {
     console.error("Error logging in:", error);
@@ -115,16 +114,16 @@ export async function login(prevState: any, formData: FormData) {
     };
   }
 }
-
-export async function getSession(): Promise<JWTPayload | null> {
+export async function getSession() {
   const cookieStore = await cookies();
-  const cookie = cookieStore.get("session")?.value;
-  if (!cookie) return null;
-  const session = await decrypt(cookie);
-  return session;
+  const sessionCookie = cookieStore.get('session')?.value;
+  if (!sessionCookie) return null;
+  const payload = await decrypt(sessionCookie);
+  if (payload) {
+    return payload; // Ensure this returns an object with a 'token' property
+  }
+  return null;
 }
-
-
 
 
 export async function logout() {

@@ -15,7 +15,7 @@ interface SearchParams {
 }
 
 export default async function Page({
-  searchParams = {},
+  searchParams = Promise.resolve({}),
 }: {
   searchParams?: Promise<SearchParams>; // Mark searchParams as a Promise
 }) {
@@ -32,8 +32,6 @@ export default async function Page({
   const userRoles: string[] = session?.user?.roles || [];
   const userId: number = session?.user?.userId || 0;
   const isAdmin = userRoles.includes("Admin");
-  const rolesToCheck = ["Admin", "OrderTaker"];
-  const isOrderTaker = userRoles.some(role => rolesToCheck.includes(role));
   
 
 
@@ -61,7 +59,7 @@ export default async function Page({
     <div className="flex flex-col m-2">
       {/* Header */}
       <div>
-        <DataTableHeader isOrderTaker={isOrderTaker}/>
+        <DataTableHeader/>
       </div>
 
       {/* Table */}

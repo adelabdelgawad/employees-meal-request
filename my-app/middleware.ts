@@ -1,92 +1,96 @@
+// src/middleware.ts
 import { NextResponse, type NextRequest } from "next/server";
-import {  getSession } from "./lib/session";
-
-// Ensure the secret is available and consistent with your backend
-const SESSION_SECRET = new TextEncoder().encode(process.env.SESSION_SECRET!);
-
-// ✅ Define role-based access control mapping
-const roleBasedAccess: Record<string, string[]> = {
-  Admin: [
-    "/",
-    "/request/new-request",
-    "/request/requests",
-    "/report/requests-dashboard",
-    "/report/details",
-    "/data-management/meal-plans",
-    "/setting/users",
-    "/security/roles",
-  ],
-  User: ["/", "/request/new-request", "/request/requests"],
-  Ordertaker: ["/", "/request/requests"],
-  Manager: ["/", "/setting/users", "/security/roles"],
-};
-
-// ✅ List of public pages that anyone can access
-const publicPages = ["/access-denied", "/login"];
+import { getSession } from "@/lib/session";
+import { routesConfig, publicPaths, AppRole } from "@/config/accessConfig";
 
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
+  const { nextUrl, cookies } = request;
+  const pathname = nextUrl.pathname;
 
-  // Allow public pages and static assets (and API routes)
+  // 1. Allow public paths and static assets
   if (
-    publicPages.includes(pathname) ||
+    publicPaths.includes(pathname) ||
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next") ||
-    pathname.endsWith(".png")
+    pathname.match(/\.(png|jpg|jpeg|gif|ico)$/)
   ) {
     return NextResponse.next();
   }
 
-  // 🔒 Get the session token from cookies (raw JWT)
-  const sessionToken = request.cookies.get("session")?.value;
-
-  // 1. Check for a valid session token; if missing, redirect to login
+  // 2. Check for existing session
+  const sessionToken = cookies.get("session")?.value;
+  
+  // Redirect to login if no session token
   if (!sessionToken) {
-    console.warn("No session token found - redirecting to login");
-    return NextResponse.redirect(new URL("/login", request.url));
+    return redirectToLogin(request);
   }
 
-  // 2. Prevent access to the signin page for authenticated users
+  // 3. Prevent authenticated users from accessing login page
   if (pathname === "/login") {
-    return NextResponse.redirect(new URL("/", request.url));
+    return redirectToHome(request);
   }
 
-  // 3. Validate the access token using jose and extract the session payload
-  let session = null;
-
-  // Decrypt and retrieve the session
-  session = await await getSession();
-
-  if (!session) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  // 4. Validate session and roles
+  const session = await getSession();
+  
+  // Redirect if no valid session
+  if (!session?.user) {
+    return redirectToLogin(request);
   }
 
-  // 4. Role-based access control: verify that the session has roles
-  if (!session || !session?.user?.roles) {
-    console.warn("No roles found in session - access denied");
-    return NextResponse.redirect(new URL("/access-denied", request.url));
+  // 5. Normalize user roles
+  const userRoles = normalizeRoles(session.user.roles);
+
+  // 6. Check route access permissions
+  const isAllowed = checkPathAccess(pathname, userRoles);
+
+  // 7. Handle unauthorized access
+  if (!isAllowed) {
+    console.warn(`Access denied for ${session.user.email} to ${pathname}`);
+    return redirectToAccessDenied(request);
   }
 
-  // Normalize roles to an array
-  const userRoles: string[] = Array.isArray(session?.user?.roles)
-    ? session?.user?.roles
-    : [session?.user?.roles];
-
-  // Derive allowed paths for the user based on their roles
-  const allowedPaths = userRoles.flatMap((role) => roleBasedAccess[role] || []);
-
-  // If the current pathname is not in the list of allowed paths, deny access
-  if (!allowedPaths.includes(pathname)) {
-    console.warn(
-      `Access denied for ${session.username} - Redirecting to /access-denied`
-    );
-    return NextResponse.redirect(new URL("/access-denied", request.url));
-  }
-
-  // If all checks pass, allow the request to proceed
   return NextResponse.next();
 }
 
+// Helper function to check path access
+function checkPathAccess(path: string, userRoles: AppRole[]): boolean {
+  // Find matching route configuration
+  const routeConfig = routesConfig.find(rc => rc.path === path);
+
+  // Allow access if no specific config exists (public by default)
+  if (!routeConfig) return true;
+
+  // Check if user has any required role
+  return routeConfig.roles.some(role => userRoles.includes(role));
+}
+
+// Helper to normalize roles array
+function normalizeRoles(roles: unknown): AppRole[] {
+  if (!roles) return [];
+  if (Array.isArray(roles)) {
+    return roles.filter((r): r is AppRole => 
+      typeof r === "string" && isAppRole(r)
+    );
+  }
+  return typeof roles === "string" && isAppRole(roles) ? [roles] : [];
+}
+
+// Type guard for AppRole
+function isAppRole(role: string): role is AppRole {
+  return ["Admin", "User", "Ordertaker", "Manager"].includes(role);
+}
+
+// Redirection helpers
+const redirectToLogin = (request: NextRequest) => 
+  NextResponse.redirect(new URL("/login", request.url));
+
+const redirectToHome = (request: NextRequest) =>
+  NextResponse.redirect(new URL("/", request.url));
+
+const redirectToAccessDenied = (request: NextRequest) =>
+  NextResponse.redirect(new URL("/access-denied", request.url));
+
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|.*\\.png$).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

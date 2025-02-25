@@ -33,6 +33,7 @@ async def decrypt(token: str):
 
 
 async def get_current_user(request: Request):
+    ic(request.cookies)
     token = request.cookies.get("session")  # Try to get from cookies
 
     if not token:
