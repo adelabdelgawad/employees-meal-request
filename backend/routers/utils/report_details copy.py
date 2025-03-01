@@ -11,6 +11,35 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+DATE_FORMAT = "%m/%d/%Y, %I:%M:%S %p"
+
+
+def parse_date_range(
+    start_time: Optional[str], end_time: Optional[str]
+) -> Tuple[Optional[datetime], Optional[datetime]]:
+    """
+    Parse the start and end time strings into datetime objects adjusted to
+    the start and end of the day.
+
+    :param start_time: Start date (format: 'MM/DD/YYYY, HH:MM:SS AM/PM')
+    :param end_time: End date (format: 'MM/DD/YYYY, HH:MM:SS AM/PM')
+    :return: Tuple of (start_dt, end_dt) or (None, None) if not provided.
+    :raises ValueError: If the date strings cannot be parsed.
+    """
+    if start_time and end_time:
+        try:
+            start_dt = datetime.strptime(start_time, DATE_FORMAT).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            end_dt = datetime.strptime(end_time, DATE_FORMAT).replace(
+                hour=23, minute=59, second=59, microsecond=0
+            )
+            return start_dt, end_dt
+        except ValueError:
+            raise ValueError(
+                "Invalid date format. Expected 'MM/DD/YYYY, HH:MM:SS AM/PM'."
+            )
+    return None, None
 
 
 def apply_common_filters(
@@ -60,7 +89,8 @@ async def read_request_lines(
 ):
     stmt = select(RequestLine).where(RequestLine.is_accepted == True)
     if start_time and end_time:
-        stmt = stmt.where(Request.request_time.between(start_time, end_time))
+        start_dt, end_dt = parse_date_range(start_time, end_time)
+        stmt = stmt.where(Request.request_time.between(start_dt, end_dt))
     if employee_name:
         stmt = stmt.where(Employee.name.ilike(f"%{employee_name}%"))
     rows = await session.execute(stmt)
@@ -91,6 +121,7 @@ async def read_request_lines_with_attendance(
     :return: A dictionary containing paginated data and metadata.
     """
     # Parse dates (if provided)
+    start_dt, end_dt = parse_date_range(start_time, end_time)
 
     # Calculate offset for pagination
     offset = (page - 1) * page_size
@@ -99,7 +130,7 @@ async def read_request_lines_with_attendance(
     count_query = select(func.count()).select_from(RequestLine)
     count_query = build_joined_query(count_query)
     count_query = apply_common_filters(
-        count_query, start_time, end_time, employee_name
+        count_query, start_dt, end_dt, employee_name
     )
 
     total_rows_result = await session.execute(count_query)
@@ -124,7 +155,7 @@ async def read_request_lines_with_attendance(
     )
     data_query = build_joined_query(data_query)
     data_query = apply_common_filters(
-        data_query, start_time, end_time, employee_name
+        data_query, start_dt, end_dt, employee_name
     )
 
     # Apply pagination if not in download mode

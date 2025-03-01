@@ -1,11 +1,10 @@
 import logging
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.models import Request
+from db.models import Request, RequestLine
 from routers.cruds.request import (
-    create_meal_request_lines,
-    update_request_lines,
-    update_request_request_time,
+    add_attendance_and_shift_to_request_line,
+    confirm_request_creation,
 )
 from datetime import datetime
 import pytz
@@ -16,34 +15,44 @@ cairo_tz = pytz.timezone("Africa/Cairo")
 logger = logging.getLogger(__name__)
 
 
-async def continue_processing_meal_request(
-    maria_session: AsyncSession,
+async def create_request_lines_and_confirm(
+    session: AsyncSession,
     hris_session: AsyncSession,
     request: Request,
-    request_lines: List[dict],
-    request_time: Optional[datetime] = None,
-    request_timing_option=Optional[str],
+    request_lines: List[RequestLine],
+    request_time: datetime,
+    request_status_id: int,
 ):
-    request_lines = await create_meal_request_lines(
-        maria_session, request, request_lines
-    )
-    ic(request_lines)
-    # Set the request time if it hasn't been provided and the timing option is "request_now"
-    if request_timing_option == "save_for_later":
-        request_time = None
-    if not request_time and request_timing_option == "request_now":
-        request_time = datetime.now(cairo_tz)
+    try:
+        create_request_lines = [
+            RequestLine(
+                request_id=request.id,
+                employee_id=line["employee_id"],
+                employee_code=line["employee_code"],
+                department_id=line["department_id"],
+                notes=line["notes"],
+                meal_id=request.meal_id,
+                is_accepted=True,
+            )
+            for line in request_lines
+        ]
+        session.add_all(create_request_lines)
+        await session.commit()
 
-    if request_timing_option == "request_now":
-        request_time = datetime.now(cairo_tz)
-        await update_request_lines(
-            maria_session=maria_session,
-            hris_session=hris_session,
-            request_lines=request_lines,
+        # add The attendance and shift to the request line if the request is Pending
+        if request_status_id == 1:
+            await add_attendance_and_shift_to_request_line(
+                session=session,
+                hris_session=hris_session,
+                request_lines=create_request_lines,
+                attendance_in=True,
+            )
+
+        await confirm_request_creation(
+            session,
+            request_id=request.id,
+            request_time=request_time,
         )
-
-    await update_request_request_time(
-        maria_session,
-        request_id=request.id,
-        request_time=request_time,
-    )
+    except Exception as e:
+        logger.error(f"Error creating request lines: {e}")
+        raise e

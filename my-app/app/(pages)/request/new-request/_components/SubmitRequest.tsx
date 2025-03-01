@@ -5,31 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
-import { Clock, Calendar, Bookmark } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Clock, Calendar as CalendarIcon } from "lucide-react";
 import { useNewRequest } from "@/hooks/NewRequestContext";
 import toast from "react-hot-toast";
 import { debounce } from "@/lib/utils";
 import { getSession } from "@/lib/session";
+import { format } from "date-fns";
 
-/**
- * RequestForm component that handles submission of requests.
- * It includes timing options, notes input, and a submit button.
- *
- * This component uses a debounced submit handler to avoid multiple rapid submissions.
- */
-export default function RequestForm() {
+export default function SubmitRequest() {
   const [requestStatus, setRequestStatus] = useState("request_now");
-  const [scheduleDate, setScheduleDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [time, setTime] = useState<string>(format(new Date(), "HH:mm"));
   const { submittedEmployees, resetSubmittedEmployees } = useNewRequest();
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState("");
   const isDisabled = submittedEmployees.length === 0 || loading;
 
-  /**
-   * Handles request submission with enhanced error checking for JSON responses.
-   * @param event - The form submission event.
-   */
   const handleRequestSubmission = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
@@ -40,8 +34,26 @@ export default function RequestForm() {
         throw new Error("Session token not found. Please log in again.");
       }
 
+      let requestTime = new Date();
+      if (requestStatus === "schedule_request") {
+        if (!selectedDate || !time) {
+          toast.error("Please select a valid date and time.");
+          setLoading(false);
+          return;
+        }
+        const [hours, minutes] = time.split(":").map(Number);
+        requestTime = new Date(selectedDate);
+        requestTime.setHours(hours);
+        requestTime.setMinutes(minutes);
+
+        if (requestTime < new Date()) {
+          toast.error("Scheduled time cannot be in the past.");
+          setLoading(false);
+          return;
+        }
+      }
+
       const response = await fetch("/api/requests/submit-request", {
-        // Adjusted endpoint
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -52,18 +64,11 @@ export default function RequestForm() {
           requests: submittedEmployees,
           notes,
           request_timing_option: requestStatus,
-          request_time: scheduleDate,
+          request_time: requestTime,
         }),
       });
 
-      let result;
-      const contentType = response.headers.get("Content-Type") || "";
-      if (contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        const textResult = await response.text();
-        throw new Error(textResult || "Unexpected response format");
-      }
+      const result = await response.json();
 
       if (!response.ok) {
         toast.error(result.detail || "Failed to submit requests");
@@ -72,7 +77,7 @@ export default function RequestForm() {
 
       toast.success(result.message || "Requests submitted successfully!");
       resetSubmittedEmployees();
-      setNotes(""); // Clear notes after successful submission
+      setNotes("");
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
     } finally {
@@ -80,20 +85,15 @@ export default function RequestForm() {
     }
   };
 
-  // Use debounce to limit the rate of submissions
-  const debouncedHandleRequestSubmission = debounce(
-    handleRequestSubmission,
-    300
-  );
+  const debouncedHandleRequestSubmission = debounce(handleRequestSubmission, 300);
 
   return (
     <div className="flex items-stretch gap-2 rounded-md h-full">
-      {/* Left Section: Timing Options and DateTimePicker */}
       <div className="flex flex-col space-y-2 w-1/3 h-full">
         <div className="p-2 rounded-md bg-white h-full">
           <RadioGroup
             defaultValue="request_now"
-            onValueChange={setRequestStatus}
+            onValueChange={(value) => setRequestStatus(value)}
             className="flex flex-row gap-4"
           >
             {[
@@ -105,13 +105,8 @@ export default function RequestForm() {
               {
                 value: "schedule_request",
                 label: "Schedule",
-                icon: <Calendar className="w-4 h-4" />,
+                icon: <CalendarIcon className="w-4 h-4" />,
               },
-              // {
-              //   value: "save_for_later",
-              //   label: "Save for Later",
-              //   icon: <Bookmark className="w-4 h-4" />,
-              // },
             ].map((option) => (
               <div key={option.value} className="flex items-center space-x-2">
                 <RadioGroupItem value={option.value} id={option.value} />
@@ -126,16 +121,59 @@ export default function RequestForm() {
             ))}
           </RadioGroup>
         </div>
-        <div className="rounded-md bg-white">
-          <DateTimePicker
-            selectedDateTime={scheduleDate}
-            onChange={setScheduleDate}
-            disabled={requestStatus !== "schedule_request"}
-          />
-        </div>
+        {requestStatus === "schedule_request" && (
+          <div className="rounded-md bg-white p-4">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                >
+                  {selectedDate
+                    ? format(selectedDate, "PPP")
+                    : "Pick a date"}{" "}
+                  {time}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate || undefined}
+                  onSelect={(date) => setSelectedDate(date || null)}
+                  disabled={(date) =>
+                    date < new Date(new Date().setHours(0, 0, 0, 0))
+                  }
+                  initialFocus
+                />
+                <div className="mt-4">
+                  <label
+                    htmlFor="time"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Time
+                  </label>
+                  <Input
+                    type="time"
+                    id="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    className="mt-1 block w-full"
+                    min={
+                      selectedDate &&
+                      selectedDate.toDateString() ===
+                        new Date().toDateString()
+                        ? new Date().toISOString().slice(11, 16)
+                        : undefined
+                    }
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
       </div>
 
-      {/* Middle Section: Notes Input */}
+      {/* Notes Section */}
       <div className="w-1/3 h-full">
         <Textarea
           placeholder="Add your request notes here [optional]..."

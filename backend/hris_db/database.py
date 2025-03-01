@@ -15,19 +15,16 @@ SQL_DSN = (
     f"PWD={os.getenv("HRIS_DB_PASSWORD")}"
 )
 
+haris_db_engine = create_async_engine(
+    "mssql+aioodbc:///?odbc_connect=" + SQL_DSN, echo=False
+)
+
 
 async def get_hris_session() -> AsyncGenerator[AsyncSession, None]:
-    engine = create_async_engine(
-        "mssql+aioodbc:///?odbc_connect=" + SQL_DSN, echo=False
-    )
 
     # Set up the session
     AsyncSessionLocal = sessionmaker(
-        bind=engine, class_=AsyncSession, expire_on_commit=False
+        bind=haris_db_engine, class_=AsyncSession, expire_on_commit=False
     )
-
-    try:
-        async with AsyncSessionLocal() as session:
-            yield session
-    finally:
-        await engine.dispose()
+    async with AsyncSessionLocal() as session:
+        yield session

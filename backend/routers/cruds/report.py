@@ -3,10 +3,12 @@ from datetime import datetime
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, func, case
+from sqlalchemy import func, cast, Date, tuple_
 
 # Project-Specific Imports
 from db.models import Department, Request, RequestLine, Employee, Account, Meal
 from services.http_schema import ReportDashboardResponse, ReportDetailsResponse
+from hris_db.models import HRISEmployeeAttendanceWithDetails
 
 
 async def read_requests_data(
@@ -161,7 +163,7 @@ async def read_request_lines_with_attendance(
             Account.title.label("requester_title"),
             Request.request_time,
             Meal.name.label("meal"),
-            RequestLine.attendance.label("attendance_in"),
+            RequestLine.attendance_in.label("attendance_in"),
             RequestLine.shift_hours,
             RequestLine.notes,
         )

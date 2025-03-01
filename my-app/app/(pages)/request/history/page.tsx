@@ -1,29 +1,31 @@
-// app/page.tsx
-import React from 'react';
-import DataTableHeader from './_components/DataTableHeader';
-import DataTable from './_components/DataTable';
-import { getHistoryRequests } from '@/lib/services/request-history';
+// app/history/page.js
+import axiosInstance from '@/lib/axiosInstance';
+import HistoryDataTable from './_components/HistoryDataTable';
+
+async function fetchUserHistory() {
+  try {
+    const response = await axiosInstance.get('/history');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching history:', error);
+    throw new Error('Failed to fetch history');
+  }
+}
 
 export default async function Page() {
   try {
-    const data = await getHistoryRequests();
-
+    const historyData = await fetchUserHistory();
     return (
       <div className="flex flex-col m-2">
-        {/* Header */}
-        <div>
-          <DataTableHeader />
-        </div>
 
-        {/* Table */}
-        <div>
-          <DataTable initialData={data.data} />
-        </div>
+      {/* Table */}
+      <div>
+        <HistoryDataTable initialData={historyData}/>
       </div>
+    </div>
     );
   } catch (error) {
-    console.error('Error rendering page:', error);
-    // Handle error appropriately, e.g., show an error message or redirect
-    return <div>Error loading data</div>;
+    console.error('Error rendering history page:', error);
   }
 }
+

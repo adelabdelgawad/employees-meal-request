@@ -30,17 +30,6 @@ class LiveBase(SQLModel):
 
 
 class HRISEmployeeAttendanceWithDetails(LiveBase, table=True):
-    """
-    Maps to 'TmsEmployeeAttendenceWithDetails' table in the live database.
-
-    Attributes:
-        id (int): Primary key, maps to 'Id' column.
-        employee_code (str): Maps to 'EmployeeCode' column.
-        date (datetime): Attendance date, maps to 'Date'.
-        date_in (datetime): Clock-in time, maps to 'DateIn'.
-        date_out (datetime): Clock-out time, maps to 'DateOut'.
-    """
-
     __tablename__ = "TmsEmployeeAttendenceWithDetails"
 
     id: Optional[int] = Field(

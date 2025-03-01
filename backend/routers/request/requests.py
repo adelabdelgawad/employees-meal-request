@@ -1,87 +1,126 @@
 from datetime import datetime
-from fastapi import HTTPException, status, APIRouter
-from typing import Optional
+from collections import defaultdict
+from typing import List, Optional, Dict, Tuple
+
+import pytz
 import traceback
 import logging
-from typing import List, Optional, Dict
+
 from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Query
+
 from routers.cruds import request as crud
 from routers.cruds.request_lines import (
     read_request_lines,
     update_request_lines,
 )
-from services.http_schema import RequestBody, RequestLineRespose
-import pytz
-from services.http_schema import UpdateRequestLinesPayload
+from services.http_schema import (
+    RequestLineRespose,
+    RequestPayload,
+    UpdateRequestLinesPayload,
+    UpdateRequestStatusPayload,
+)
 from src.dependencies import HRISSessionDep, SessionDep, CurrentUserDep
-from icecream import ic
-from collections import defaultdict
-from routers.utils.request import continue_processing_meal_request
-from pydantic import BaseModel
-from collections import defaultdict
-from sqlmodel import select
+from routers.utils.request import create_request_lines_and_confirm
 from db.models import Request
+from icecream import ic
 
-# Default timezone
+# Default timezone for Cairo
 cairo_tz = pytz.timezone("Africa/Cairo")
 
 # Logger setup
 logger = logging.getLogger(__name__)
 
-
 router = APIRouter()
 
 
-class RequestItem(BaseModel):
+def get_request_time_and_status(
+    payload: RequestPayload,
+) -> Tuple[Optional[datetime], int]:
     """
-    Represents a single request item.
+    Determine the request time and status id based on the payload's timing option.
 
-    Attributes:
-        employee_id (int): The unique ID of the employee.
-        employee_code (str): The employee's code.
-        name (str): The name of the employee.
-        department_id (int): The identifier for the department.
-        meal_id (int): The identifier for the meal.
-        meal_name (str): The name of the meal.
-        notes (Optional[str]): Any additional notes.
+    Returns:
+        Tuple[Optional[datetime], int]: A tuple containing the request_time and status_id.
     """
-
-    employee_id: int
-    employee_code: int
-    name: str
-    department_id: int
-    meal_id: int
-    meal_name: str
-    notes: Optional[str] = None
-
-
-class RequestPayload(BaseModel):
-    """
-    Represents the payload for the request endpoint.
-
-    Attributes:
-        requests (List[RequestItem]): A list of request items.
-        request_time (Optional[datetime]): The time of the request in ISO format.
-    """
-
-    requests: List[RequestItem]
+    # Default: pending, and using current time (if needed)
+    request_status_id: int = 1  # Pending
     request_time: Optional[datetime] = None
-    notes: Optional[str] = None
-    request_timing_option: Optional[str] = None
+
+    if payload.request_timing_option == "schedule_request":
+        request_time = payload.request_time
+        request_status_id = 2  # Scheduled
+    elif payload.request_timing_option == "save_for_later":
+        request_time = None
+    else:  # "request_now"
+        request_time = None
+
+    return request_time, request_status_id
+
+
+def group_requests_by_meal(
+    requests: List,
+) -> Dict[int, List[Dict]]:
+    """
+    Group request lines by meal_id.
+
+    Returns:
+        Dict[int, List[Dict]]: A dictionary mapping meal_id to a list of request data.
+    """
+    meal_groups = defaultdict(list)
+    for req in requests:
+        meal_groups[req.meal_id].append(req.model_dump())
+    return meal_groups
+
+
+async def create_and_schedule_meal_group(
+    meal_id: int,
+    req_list: List[Dict],
+    user: CurrentUserDep,
+    payload: RequestPayload,
+    request_time: Optional[datetime],
+    request_status_id: int,
+    session: SessionDep,
+    background_tasks: BackgroundTasks,
+    hris_session: HRISSessionDep,
+) -> None:
+    """
+    Create a new Request for a specific meal group, commit it to the database,
+    and schedule the background task for processing request lines.
+    """
+    new_request = Request(
+        requester_id=user.id,
+        meal_id=meal_id,
+        notes=payload.notes,
+        status_id=request_status_id,
+        request_time=request_time,
+    )
+    session.add(new_request)
+    await session.commit()
+    await session.refresh(new_request)
+
+    background_tasks.add_task(
+        create_request_lines_and_confirm,
+        session=session,
+        hris_session=hris_session,
+        request=new_request,
+        request_lines=req_list,
+        request_time=payload.request_time,
+        request_status_id=request_status_id,
+    )
 
 
 @router.post("/request")
 async def create_request_endpoint(
     payload: RequestPayload,
-    maria_session: SessionDep,
+    session: SessionDep,
     background_tasks: BackgroundTasks,
     hris_session: HRISSessionDep,
-    current_user: CurrentUserDep,
+    user: CurrentUserDep,
 ):
     """
     Create requests grouped by meal_id and process them in separate background tasks.
 
-    Expects a JSON object with the following structure:
+    Expected JSON payload structure:
     {
         "requests": [ { ... }, ... ],
         "notes": "Optional notes",
@@ -94,43 +133,32 @@ async def create_request_endpoint(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No request lines provided",
         )
-    if payload.request_timing_option == "request_now":
-        request_time = datetime.now(cairo_tz)
-    elif payload.request_timing_option == "schedule_request":
-        request_time = payload.request_time
-    elif payload.request_timing_option == "save_for_later":
-        request_time = None
 
-    # Group requests by meal_id
-    meal_groups = defaultdict(list)
-    for req in payload.requests:
-        # Convert each RequestBody to a dict if needed
-        meal_groups[req.meal_id].append(req.model_dump())
+    # Determine the request time and status based on the payload.
+    request_time, request_status_id = get_request_time_and_status(payload)
+
+    # Group requests by meal_id.
+    meal_groups = group_requests_by_meal(payload.requests)
+    total_requests = sum(len(req_list) for req_list in meal_groups.values())
 
     try:
-        logger.info(f"Processing {len(meal_groups)} meal groups")
-        # Process each meal group in a background task
+        logger.info(f"Processing {len(meal_groups)} meal group(s)")
+        # Process each meal group in a background task.
         for meal_id, req_list in meal_groups.items():
-            created_request = await crud.create_request(
-                maria_session,
-                current_user.id,
-                meal_id,
-                payload.notes,
-                request_time,
-            )
-
-            background_tasks.add_task(
-                continue_processing_meal_request,
-                maria_session=maria_session,
+            await create_and_schedule_meal_group(
+                meal_id=meal_id,
+                req_list=req_list,
+                user=user,
+                payload=payload,
+                request_time=request_time,
+                request_status_id=request_status_id,
+                session=session,
+                background_tasks=background_tasks,
                 hris_session=hris_session,
-                request=created_request,
-                request_lines=req_list,
-                request_time=payload.request_time,
-                request_timing_option=payload.request_timing_option,
             )
 
         return {
-            "message": f"{len(payload.requests) * len(meal_groups)} Request(s) created successfully",
+            "message": f"{total_requests} Request(s) created successfully",
             "meal_groups": {
                 meal_id: {"count": len(req_list)}
                 for meal_id, req_list in meal_groups.items()
@@ -142,22 +170,7 @@ async def create_request_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error processing meal groups",
-        ) from e
-
-
-@router.put("/requests/delete/{request_id}")
-async def delete_request(
-    current_user: CurrentUserDep, session: SessionDep, request_id: int
-):
-    statement = select(Request).where(Request.id == request_id)
-    results = await session.execute(statement)
-    request = results.scalars().first()
-    ic(request)
-    request.is_deleted = True
-    session.add(request)
-    await session.commit()
-
-    return {"message": "Request deleted successfully."}
+        )
 
 
 @router.get(
@@ -166,7 +179,9 @@ async def delete_request(
     status_code=status.HTTP_200_OK,
 )
 async def get_requests(
-    maria_session: SessionDep,
+    session: SessionDep,
+    hris_session: HRISSessionDep,
+    background_tasks: BackgroundTasks,
     user_id: int,
     is_admin: bool = Query(False, description="Admin status"),
     start_time: Optional[str] = Query(
@@ -180,12 +195,18 @@ async def get_requests(
     query: Optional[str] = Query(None, description="Search parameters"),
     download: bool = Query(False, description="Download status"),
 ):
+    """
+    Retrieve a paginated list of requests with optional filtering.
+    """
     try:
-        if is_admin == True:
+        if is_admin:
             user_id = None
+        background_tasks.add_task(
+            crud.prepare_scheduled_requests, session, hris_session
+        )
 
         requests = await crud.read_requests(
-            session=maria_session,
+            session=session,
             requester_id=user_id,
             start_time=start_time,
             end_time=end_time,
@@ -207,19 +228,42 @@ async def get_requests(
         )
 
 
+@router.put("/requests/delete/{request_id}")
+async def delete_request(
+    current_user: CurrentUserDep, session: SessionDep, request_id: int
+):
+    """
+    Soft-delete a request by marking it as deleted.
+    """
+    # Use session.get() for direct lookup (if available) to improve performance :contentReference[oaicite:0]{index=0}.
+    request_obj = await session.get(Request, request_id)
+    if not request_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Request not found",
+        )
+    request_obj.is_deleted = True
+    session.add(request_obj)
+    await session.commit()
+
+    return {"message": "Request deleted successfully."}
+
+
 @router.put("/update-request-status")
 async def update_order_status_endpoint(
-    request_id: int,
-    status_id: int,
-    maria_session: SessionDep,
+    payload: UpdateRequestStatusPayload,
+    session: SessionDep,
     current_user: CurrentUserDep,
 ):
     """
     Update the status of a request by its ID.
     """
     try:
+        request_id: int = payload.request_id
+        status_id: int = payload.status_id
+
         result = await crud.update_request_status(
-            maria_session, current_user.id, request_id, status_id
+            session, current_user.id, request_id, status_id
         )
         return {
             "status": "success",
@@ -242,21 +286,14 @@ async def update_order_status_endpoint(
     status_code=status.HTTP_200_OK,
 )
 async def get_request_lines_endpoint(
-    maria_session: SessionDep, request_id: int
+    session: SessionDep, request_id: int
 ) -> List[RequestLineRespose]:
     """
-    API endpoint to retrieve request lines for a specific request ID.
-
-    Args:
-        maria_session (Session): Database session for the application.
-        request_id (int): ID of the request to retrieve lines for.
-
-    Returns:
-        List[RequestLineRespose]: A list of request lines.
+    Retrieve request lines for a specific request ID.
     """
-    logger.info(f"reading request lines for request_id: {request_id}")
+    logger.info(f"Reading request lines for request_id: {request_id}")
     try:
-        lines = await read_request_lines(maria_session, request_id)
+        lines = await read_request_lines(session, request_id)
         if not lines:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -276,19 +313,11 @@ async def get_request_lines_endpoint(
 
 @router.put("/update-request-lines", status_code=status.HTTP_200_OK)
 async def update_request_lines_endpoint(
-    maria_session: SessionDep,
+    session: SessionDep,
     payload: UpdateRequestLinesPayload,
 ):
     """
-    API endpoint to update the status of request lines.
-
-    Args:
-        maria_session (Session): Database session for the application.
-        request_id (int): ID of the request to update.
-        changed_statuses (List[dict]): List of changes to apply.
-
-    Returns:
-        dict: Confirmation message upon successful update.
+    Update the status of request lines.
     """
     try:
         request_id = payload.request_id
@@ -298,11 +327,11 @@ async def update_request_lines_endpoint(
             f"Updating {len(changed_statuses)} request lines for request_id {request_id}"
         )
 
-        # Validate and transform the data if needed
-        await update_request_lines(maria_session, changed_statuses)
+        # Validate and update the request lines
+        await update_request_lines(session, changed_statuses)
 
-        # Fetch the updated request details
-        response = await crud.read_request_by_id(maria_session, request_id)
+        # Retrieve the updated request details
+        response = await crud.read_request_by_id(session, request_id)
         return {
             "message": "Request lines updated successfully",
             "data": response,

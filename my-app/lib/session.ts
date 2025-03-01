@@ -126,6 +126,8 @@ export async function getSession() {
 }
 
 
+
+
 export async function logout() {
   deleteSession()
   redirect('/login')

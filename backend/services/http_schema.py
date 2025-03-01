@@ -49,7 +49,7 @@ class RequestLineRespose(BaseModel):
     title: str
     code: int
     notes: str | None = None
-    attendance: datetime | None = None
+    attendance_in: datetime | None = None
     shift_hours: int | None = None
     is_accepted: bool
 
@@ -177,5 +177,57 @@ class UserData(BaseModel):
     title: str | None = None
     email: str | None = None
     roles: List[str] | None = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+## Request Endpoint
+class RequestItem(BaseModel):
+    employee_id: int
+    employee_code: int
+    name: str
+    department_id: int
+    meal_id: int
+    meal_name: str
+    notes: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RequestPayload(BaseModel):
+    requests: List[RequestItem]
+    request_time: datetime | None = None
+    notes: str | None = None
+    request_timing_option: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UpdateRequestStatusPayload(BaseModel):
+    request_id: int
+    status_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+## Hsitory Endpoint
+# ✅ RequestResponse Model
+class RequestHistoryRecordResponse(BaseModel):
+    id: int
+    status_name: str
+    status_id: int
+    meal: Optional[str] = None
+    request_time: Optional[datetime] = None
+    closed_time: Optional[datetime] = None
+    notes: str | None = None
+    total_lines: int
+    accepted_lines: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ScheduleRequest(BaseModel):
+    request_id: int
+    scheduled_time: datetime
 
     model_config = ConfigDict(from_attributes=True)

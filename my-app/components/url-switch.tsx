@@ -1,6 +1,7 @@
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
 
 interface URLSwitchProps {
   placeholder: string;
@@ -21,18 +22,30 @@ export function URLSwitch({
   const { replace } = useRouter();
   const pathname = usePathname();
 
-  const params = new URLSearchParams(searchParams?.toString() || "");
-
   const handleChange = (newValue: boolean) => {
-    // Update local state
-    setValue(newValue);
+    const params = new URLSearchParams(searchParams?.toString() || "");
 
-    // Update URL parameters
     if (newValue) {
+      // Validate that both "start_time" and "end_time" exist before toggling on.
+      if (!params.has("start_time")) {
+        toast.error("Please Pick a Request date range ");
+        return;
+      }
+      if (!params.has("end_time")) {
+        toast.error("Select a valid EndTime");
+        return;
+      }
+      // Set the toggle parameter.
       params.set(paramName, newValue.toString());
     } else {
+      // When turning off, remove the toggle and time parameters.
       params.delete(paramName);
+      params.delete("start_time");
+      params.delete("end_time");
     }
+
+    // Update local state and URL.
+    setValue(newValue);
     replace(`${pathname}?${params.toString()}`);
   };
 

@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"; // your button component
  * User data type.
  */
 export interface User {
+  id: number;
   username: string;
   fullName: string;
   title: string;
@@ -26,16 +27,15 @@ export interface User {
 
 interface UserSelectionProps {
   /** List of users to select from */
-  users: User[];
+  users: DomainUser[];
   /** Callback fired when a user is selected */
-  onUserSelect: (user: User) => void;
+  onUserSelect: (user: DomainUser | null) => void;
 }
 
 export function UserSelection({ users, onUserSelect }: UserSelectionProps) {
   const [open, setOpen] = React.useState(false);
+  const [filteredUsers, setFilteredUsers] = React.useState<DomainUser[]>(users);
   const [inputValue, setInputValue] = React.useState("");
-  const [filteredUsers, setFilteredUsers] = React.useState<User[]>(users);
-
   // Ref for the CommandList component
   const commandListRef = React.useRef<HTMLDivElement>(null);
 

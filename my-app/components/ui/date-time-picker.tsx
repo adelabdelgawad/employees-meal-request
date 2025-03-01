@@ -36,6 +36,14 @@ export function DateTimePicker({
       : format(new Date(), "HH:mm")
   );
 
+  // Synchronize internal state with selectedDateTime prop.
+  React.useEffect(() => {
+    if (selectedDateTime) {
+      setDate(selectedDateTime);
+      setTime(format(selectedDateTime, "HH:mm"));
+    }
+  }, [selectedDateTime]);
+
   // When either the date or time changes, combine them into a new Date.
   React.useEffect(() => {
     if (date && time) {
@@ -44,6 +52,8 @@ export function DateTimePicker({
       updatedDate.setHours(hours);
       updatedDate.setMinutes(minutes);
       onChange(updatedDate);
+    } else {
+      onChange(null); // or handle the null case as needed
     }
   }, [date, time, onChange]);
 
@@ -54,6 +64,7 @@ export function DateTimePicker({
           variant="outline"
           className="w-[280px] justify-start text-left font-normal"
           disabled={disabled}
+          aria-label="Select date and time"
         >
           {date ? format(date, "PPP") : "Pick a date"} {time}
         </Button>
@@ -64,6 +75,7 @@ export function DateTimePicker({
             mode="single"
             selected={date || undefined}
             onSelect={(day) => setDate(day || null)}
+            disabled={(date) => date < new Date().setHours(0, 0, 0, 0)} // Disable past dates
             initialFocus
           />
           <div className="mt-4">
@@ -79,6 +91,11 @@ export function DateTimePicker({
               value={time}
               onChange={(e) => setTime(e.target.value)}
               className="mt-1 block w-full"
+              min={
+                date && date.toDateString() === new Date().toDateString()
+                  ? new Date().toISOString().slice(11, 16)
+                  : undefined
+              } // Disable past times if today is selected
             />
           </div>
         </div>

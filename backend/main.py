@@ -6,11 +6,13 @@ from routers import auth, data, report, security
 from routers.request.history import router as request_history_router
 from routers.request.requests import router as request_requests_router
 from dotenv import load_dotenv
-from routers import request
 from services.startup import lifespan
 import logging
 from src.middleware import TokenRenewalMiddleware
+from hris_db.database import haris_db_engine
+import logfire
 
+logfire.configure()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -52,6 +54,17 @@ app.add_middleware(
 )
 
 app.add_middleware(TokenRenewalMiddleware)
+
+
+# Define lifespan event handler for FastAPI
+async def lifespan(app: FastAPI):
+    # Startup: could include additional initialization logic here
+    yield
+    # Shutdown: dispose the haris_db_engine to clean up pooled connections
+    await haris_db_engine.dispose()
+
+
+logfire.instrument_fastapi(app, capture_headers=True)
 
 # Include additional routers
 app.include_router(data.router, tags=["Data"])

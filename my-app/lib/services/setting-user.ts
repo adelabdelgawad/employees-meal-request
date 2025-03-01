@@ -1,3 +1,6 @@
+import toast from "react-hot-toast";
+import clientAxiosInstance from "../clientAxiosInstance";
+
 const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
 
 // 1. Fetch roles (returns the roles examples)
@@ -21,18 +24,21 @@ export async function fetchRoles(): Promise<Role[]> {
   }
 }
 
+
+
 // 2. Fetch domain users (returns the users examples)
 export async function fetchDomainUsers() {
   try {
-    const response = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/domain-users`, {
-      cache: "no-store",
-    });
+    const response = await clientAxiosInstance.get("/domain-users")
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch roles");
+    if (response.status === 200) {
+      console.log("Domain users loaded successfully.");
+      return await response.data;
+    } else {
+      toast.error("Failed to get the Domain users the request.");
+      return [];
     }
 
-    return await response.json();
   } catch (error) {
     console.error("Error fetching roles:", error);
     return [];
@@ -75,24 +81,17 @@ export async function submitAddUser(
   roles: number[]
 ) {
   try {
-    const fastApiResponse = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/user`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const response = await clientAxiosInstance.post(
+      '/user',
+      {
         username,
         full_name: fullName,
         title,
         roles,
-      }),
-    });
+      }
+    );
 
-    if (!fastApiResponse.ok) {
-      throw new Error("Failed to fetch roles");
-    }
-
-    return await fastApiResponse.json();
+    return await response.data;
   } catch (error) {
     console.error("Error fetching roles:", error);
     return [];

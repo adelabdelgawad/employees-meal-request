@@ -1,26 +1,23 @@
-from datetime import datetime
 from fastapi import HTTPException, status, APIRouter
-from typing import Optional
 import traceback
 import logging
-from typing import List, Optional
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Query
+from typing import List
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks
 from routers.cruds import request as crud
 from routers.cruds.request_lines import (
-    read_request_lines,
     update_request_lines,
 )
-from services.http_schema import RequestBody, RequestLineRespose
+from services.http_schema import RequestHistoryRecordResponse
 import pytz
-from services.http_schema import UpdateRequestLinesPayload
-from src.dependencies import HRISSessionDep, SessionDep, CurrentUserDep
+from services.http_schema import UpdateRequestLinesPayload, ScheduleRequest
+from src.dependencies import SessionDep, CurrentUserDep, HRISSessionDep
 from icecream import ic
-from collections import defaultdict
-from routers.utils.request import continue_processing_meal_request
-from pydantic import BaseModel
-from collections import defaultdict
-from sqlmodel import select
-from db.models import Request
+from sqlmodel import select, func, case
+from sqlalchemy import desc
+from sqlalchemy.exc import SQLAlchemyError
+from db.models import Request, RequestStatus, Meal, RequestLine
+from routers.utils.request import create_request_lines_and_confirm
+from routers.cruds.request_lines import read_request_lines_by_request_id
 
 # Default timezone
 cairo_tz = pytz.timezone("Africa/Cairo")
@@ -34,128 +31,231 @@ router = APIRouter()
 
 @router.get(
     "/history",
-    response_model=dict,
+    response_model=List[RequestHistoryRecordResponse],
     status_code=status.HTTP_200_OK,
 )
-async def get_histyro_requests(
+async def get_history_requests(
     user: CurrentUserDep,
-    maria_session: SessionDep,
-    start_time: Optional[str] = Query(
-        None, description="Start date (YYYY-MM-DD)"
-    ),
-    end_time: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
-    page: int = Query(1, ge=1, description="Page number (1-based)"),
-    page_size: int = Query(
-        10, ge=1, le=100, description="Number of rows per page"
-    ),
-    query: Optional[str] = Query(None, description="Search parameters"),
-    download: bool = Query(False, description="Download status"),
-):
-    try:
-        ic(user)
-        return await crud.read_requests(
-            session=maria_session,
-            start_time=start_time,
-            end_time=end_time,
-            requester_id=user.id,
-            page=page,
-            page_size=page_size,
-            download=download,
-        )
-    except HTTPException as http_exc:
-        logger.error(f"HTTP error occurred: {http_exc.detail}")
-        raise http_exc
-    except Exception as err:
-        logger.error(f"Unexpected error: {err}")
-        logger.error(traceback.format_exc())
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error while retrieving request details.",
-        )
-
-@router.put("/history/delete/{request_id}")
-async def delete_request(
-    current_user: CurrentUserDep, session: SessionDep, request_id: int
-):
-    statement = select(Request).where(Request.id == request_id)
-    results = await session.execute(statement)
-    request = results.scalars().first()
-    ic(request)
-    request.is_deleted = True
-    session.add(request)
-    await session.commit()
-
-    return {"message": "Request deleted successfully."}
-
-
-@router.put("/update-request-status")
-async def update_order_status_endpoint(
-    request_id: int,
-    status_id: int,
-    maria_session: SessionDep,
-    current_user: CurrentUserDep,
+    session: SessionDep,
 ):
     """
-    Update the status of a request by its ID.
-    """
-    try:
-        result = await crud.update_request_status(
-            maria_session, current_user.id, request_id, status_id
-        )
-        return {
-            "status": "success",
-            "message": "Request updated successfully",
-            "data": result,
-        }
-    except HTTPException as http_exc:
-        raise http_exc
-    except Exception as e:
-        logger.error(f"Error updating request status: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error while updating request.",
-        )
-
-
-@router.put("/update-request-lines", status_code=status.HTTP_200_OK)
-async def update_request_lines_endpoint(
-    maria_session: SessionDep,
-    payload: UpdateRequestLinesPayload,
-):
-    """
-    API endpoint to update the status of request lines.
+    Retrieve the history of requests made by the current user.
 
     Args:
-        maria_session (Session): Database session for the application.
-        request_id (int): ID of the request to update.
-        changed_statuses (List[dict]): List of changes to apply.
+        user (dict): The current authenticated user.
+        session (AsyncSession): The asynchronous database session.
 
     Returns:
-        dict: Confirmation message upon successful update.
+        List[RequestHistoryRecordResponse]: A list of request history records.
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the data.
     """
     try:
-        request_id = payload.request_id
-        changed_statuses = payload.changed_statuses
-
-        logger.info(
-            f"Updating {len(changed_statuses)} request lines for request_id {request_id}"
+        stmt = (
+            select(
+                Request.id,
+                RequestStatus.name.label("status_name"),
+                RequestStatus.id.label("status_id"),
+                Meal.name.label("meal"),
+                Request.request_time,
+                Request.closed_time,
+                Request.notes,
+                func.count(RequestLine.id).label("total_lines"),
+                func.sum(
+                    case((RequestLine.is_accepted == True, 1), else_=0)
+                ).label("accepted_lines"),
+            )
+            .join(RequestStatus, Request.status_id == RequestStatus.id)
+            .outerjoin(RequestLine, Request.id == RequestLine.request_id)
+            .outerjoin(Meal, RequestLine.meal_id == Meal.id)
+            .where(
+                Request.is_deleted == False,
+                Request.requester_id == user.id,
+            )
+            .group_by(
+                Request.id,
+                RequestStatus.name,
+                RequestStatus.id,
+                Meal.name,
+                Request.request_time,
+                Request.closed_time,
+                Request.notes,
+            )
+            .having(func.count(RequestLine.id) > 0)
+            .order_by(desc(Request.request_time))
         )
 
-        # Validate and transform the data if needed
-        await update_request_lines(maria_session, changed_statuses)
+        # Execute the query
+        results = await session.execute(stmt)
+        requests = results.all()
 
-        # Fetch the updated request details
-        response = await crud.read_request_by_id(maria_session, request_id)
-        return {
-            "message": "Request lines updated successfully",
-            "data": response,
-        }
+        # Transform results into the response model
+        response = [
+            RequestHistoryRecordResponse(
+                id=row.id,
+                status_name=row.status_name,
+                status_id=row.status_id,
+                meal=row.meal,
+                request_time=row.request_time,
+                closed_time=row.closed_time,
+                notes=row.notes,
+                total_lines=row.total_lines,
+                accepted_lines=row.accepted_lines,
+            )
+            for row in requests
+        ]
 
-    except HTTPException as http_exc:
-        raise http_exc
-    except Exception as e:
-        logger.error(f"Unexpected error while updating request lines: {e}")
+        return response
+
+    except SQLAlchemyError as db_err:
+        logger.error(f"Database error occurred: {str(db_err)}")
+        logger.debug(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error while updating request lines.",
+            detail="An error occurred while retrieving request history.",
+        )
+    except Exception as err:
+        logger.error(f"Unexpected error: {str(err)}")
+        logger.debug(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred.",
+        )
+
+
+@router.post(
+    "/history/copy-request",
+    status_code=status.HTTP_200_OK,
+)
+async def schedule_request(
+    user: CurrentUserDep,
+    session: SessionDep,
+    schedule_request: ScheduleRequest,
+):
+    """
+    Copy an existing request along with its associated request lines and schedule it.
+
+    This endpoint retrieves the original request using the provided request_id
+    from the ScheduleRequest. It then creates a new request scheduled at the
+    specified scheduled_time and duplicates all the associated request lines by
+    updating their request_id to that of the newly created request.
+
+    Parameters:
+    - user: The currently authenticated user.
+    - session: The database session.
+    - schedule_request: A ScheduleRequest object containing:
+        - request_id: ID of the original request to copy.
+        - scheduled_time: The time at which the new request should be scheduled.
+
+    Returns:
+    - A JSON response with a success message if the request is copied successfully.
+
+    Raises:
+    - HTTPException 404: If the original request is not found.
+    - HTTPException 500: For any unexpected errors during processing.
+    """
+    try:
+        scheduled_time = schedule_request.scheduled_time
+        request_id = schedule_request.request_id
+
+        # Retrieve the original request from the database
+        original_request = await session.get(Request, request_id)
+        if not original_request:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Request not found.",
+            )
+
+        # Create a new request based on the original
+        new_request = Request(
+            requester_id=user.id,
+            meal_id=original_request.meal_id,
+            notes=original_request.notes,
+            status_id=2,  # Updated status for the new request
+            request_time=scheduled_time,
+        )
+        session.add(new_request)
+        await session.commit()
+        await session.refresh(new_request)
+
+        # Retrieve the request lines for the original request
+        request_lines = await read_request_lines_by_request_id(
+            session, request_id
+        )
+
+        # Duplicate each request line and assign it to the new request
+        new_request_lines = [
+            RequestLine(
+                request_id=new_request.id,  # Associate with new request
+                employee_id=line.employee_id,
+                employee_code=line.employee_code,
+                department_id=line.department_id,
+                meal_id=line.meal_id,
+                notes=line.notes,
+                is_accepted=True,  # Mark as accepted for the new request
+            )
+            for line in request_lines
+        ]
+        session.add_all(new_request_lines)
+        await session.commit()
+
+        logger.info(
+            f"user: {user.username} - scheduled_time: {scheduled_time} - original request_id: {request_id} - new request_id: {new_request.id}"
+        )
+
+        return {"message": "Request copied successfully."}
+
+    except HTTPException as http_ex:
+        # Re-raise HTTP exceptions to be handled by FastAPI
+        raise http_ex
+
+    except Exception as ex:
+        # Log the exception and return a generic error message
+        print(f"Error copying request: {ex}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while copying the request.",
+        )
+
+
+@router.delete("/history/request-line/{id}")
+async def delete_request_line(
+    current_user: CurrentUserDep, session: SessionDep, id: int
+):
+    """
+    Delete a RequestLine by its ID.
+
+    Args:
+        id (int): The ID of the RequestLine to delete.
+        session (Session): The database session dependency.
+        current_user (str): The current authenticated user.
+
+    Returns:
+        dict: A message indicating the result of the deletion.
+
+    Raises:
+        HTTPException: If the RequestLine with the given ID is not found or if a database error occurs.
+    """
+    try:
+        # Retrieve the RequestLine by ID
+        user = await session.get(RequestLine, id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        await session.delete(user)
+        await session.commit()
+        logger.info(
+            f"User {current_user} successfully deleted RequestLine wsith id {id}."
+        )
+        return {"message": "RequestLine deleted successfully."}
+
+    except Exception as e:
+        logger.error(
+            f"Database error occurred while user {current_user} attempted to delete RequestLine with id {id}: {e}"
+        )
+        session.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while deleting the RequestLine.",
         )

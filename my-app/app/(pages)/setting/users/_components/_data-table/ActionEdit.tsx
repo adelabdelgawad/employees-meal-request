@@ -18,6 +18,7 @@ import {
 import { useSettingUserContext } from "@/hooks/SettingUserContext";
 import toast from "react-hot-toast";
 import { PencilIcon } from "lucide-react";
+import clientAxiosInstance from "@/lib/clientAxiosInstance";
 
 export default function ActionEdit({ userId }: { userId: number }) {
   // State variables
@@ -92,7 +93,12 @@ export default function ActionEdit({ userId }: { userId: number }) {
 
     startTransition(async () => {
       try {
-        await updateUserRoles(userId, addedRoles, removedRoles);
+        const data = {
+          added_roles: addedRoles,
+          removed_roles: removedRoles
+        };
+
+        await clientAxiosInstance.put(`/user/${userId}/roles`, data);
         toast.success("User roles updated successfully!");
         setOriginalRoles(selectedRoles);
         setIsDialogOpen(false);

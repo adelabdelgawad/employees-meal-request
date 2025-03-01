@@ -79,11 +79,26 @@ async def add_attendance_and_shift_to_request_line(
             f"Start Getting Shifts and Attendance for: {len(request_lines)} request lines"
         )
 
+        employee_codes = [line.employee_code for line in request_lines]
         employee_ids = [line.employee_id for line in request_lines]
 
+        # Read attendance and shift data from HRIS
+        recent_attendances = await read_attendances_from_hris(
+            hris_session, employee_codes
+        )
         today_shifts = await read_shifts_from_hris(hris_session, employee_ids)
 
         for line in request_lines:
+            # Get the entire attendance record for the employee
+            attendance_record = next(
+                (
+                    att
+                    for att in recent_attendances
+                    if att.employee_code == str(line.employee_code)
+                ),
+                None,
+            )
+
             # Get the shift hours for the employee
             shift_hours = next(
                 (
@@ -93,6 +108,14 @@ async def add_attendance_and_shift_to_request_line(
                 ),
                 None,
             )
+
+            # Update attendance fields based on the provided flags
+            if attendance_record:
+
+                if attendance_in:
+                    line.attendance_in = attendance_record.date_in
+                if attendance_out:
+                    line.attendance_out = attendance_record.date_out
 
             # Update shift hours if available
             if shift_hours is not None:

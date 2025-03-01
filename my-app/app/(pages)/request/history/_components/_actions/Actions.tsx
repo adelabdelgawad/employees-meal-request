@@ -1,26 +1,22 @@
+"use client"
 import React, { useState, useCallback } from "react";
 import ViewAction from "./ViewAction";
-import { Check, X } from "lucide-react";
-import ConfirmationDialog from "@/components/confirmation-dialog";
 import DeleteAction from "./DeleteAction";
+import CopyAction from "./CopyAction";
 
 interface ActionsProps {
-  handleAction: (id: number, newStatusId: number) => Promise<void>;
-  handleRequestLinesChanges: (id: number, updatedRecord: any) => Promise<void>;
+
   recordId: number;
   currentStatusId: number;
 
 }
 
 const Actions: React.FC<ActionsProps> = ({
-  handleAction,
-  handleRequestLinesChanges,
   recordId,
   currentStatusId,
-
 }) => {
   // If the current status is not 1, disable action buttons.
-  const disableActions = currentStatusId !== 1;
+  const disableActions = currentStatusId !== 1 && currentStatusId !== 2;
 
   // State to control the confirmation dialog and the new status value.
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -31,22 +27,7 @@ const Actions: React.FC<ActionsProps> = ({
     setConfirmDialogOpen(true);
   }, []);
 
-  const closeConfirmDialog = useCallback(() => {
-    setConfirmDialogOpen(false);
-    setSelectedStatusId(null);
-  }, []);
 
-  const handleConfirmAction = useCallback(async () => {
-    if (selectedStatusId !== null) {
-      try {
-        await handleAction(recordId, selectedStatusId);
-      } catch (error) {
-        console.error(`Failed to update status to ${selectedStatusId} for record ${recordId}:`, error);
-      } finally {
-        closeConfirmDialog();
-      }
-    }
-  }, [handleAction, recordId, selectedStatusId, closeConfirmDialog]);
 
   // Component for rendering an action button with an icon.
   const ActionButton: React.FC<{
@@ -68,24 +49,16 @@ const Actions: React.FC<ActionsProps> = ({
   );
 
   return (
-    <div className="flex gap-2 items-center justify-center">
+    <div className="flex gap-2 items-center align-middle justify-center text-center">
+      <CopyAction requestId={recordId} />
+
       <ViewAction
-        handleRequestLinesChanges={handleRequestLinesChanges}
         id={recordId}
         disableStatus={disableActions}
       />
     
       <DeleteAction id={recordId} disableStatus={disableActions}/>
 
-      <ConfirmationDialog
-        isOpen={isConfirmDialogOpen}
-        title="Confirm Action"
-        message="Are you sure you want to proceed with this action?"
-        confirmLabel="Yes, Confirm"
-        cancelLabel="Cancel"
-        onConfirm={handleConfirmAction}
-        onCancel={closeConfirmDialog}
-      />
     </div>
   );
 };

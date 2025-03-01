@@ -3,8 +3,6 @@ import ExportTable from "@/components/data-table/DataTableExport";
 import DataTableRangePicker from "@/components/data-table/DataTableRangePicker";
 import DataTableSearch from "@/components/data-table/DataTableSearch";
 import { URLSwitch } from "@/components/url-switch";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useRouter } from "next/router";
 import React, { useState } from "react";
 
 export default function DataTableHeader() {

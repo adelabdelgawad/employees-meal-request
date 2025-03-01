@@ -6,13 +6,11 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import UserAvatarServer from "./UserAvatarServer";
 import { getSession } from "@/lib/session";
 import { AppRole, routesConfig } from "@/config/accessConfig";
-import Image from "next/image";
-
+      
 interface NavSection {
   title: string;
   items: {
@@ -84,7 +82,6 @@ export default async function NavigationBar() {
     <nav className="flex items-center justify-between h-20 px-6 shadow-md bg-white sticky top-0 z-50">
       {/* Left Side: Logo/Icon */}
       <div className="flex items-center space-x-2">
-        <Image src="/logo.png" alt="MyApp Logo" width={210} height={40} />
       </div>
 
       {/* Center: Navigation Menu */}

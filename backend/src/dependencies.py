@@ -33,7 +33,6 @@ async def decrypt(token: str):
 
 
 async def get_current_user(request: Request):
-    ic(request.cookies)
     token = request.cookies.get("session")  # Try to get from cookies
 
     if not token:
@@ -44,7 +43,6 @@ async def get_current_user(request: Request):
             token = auth_header.split(" ")[1]
 
     if not token:
-        ic("🚨 No token found!")
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     try:
@@ -59,7 +57,6 @@ async def get_current_user(request: Request):
             title=user["title"],
         )
     except Exception as e:
-        ic("🚨 Invalid token:", e)
         raise HTTPException(status_code=401, detail="Invalid token")
 
 

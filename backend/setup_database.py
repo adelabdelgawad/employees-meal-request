@@ -241,7 +241,7 @@ async def seed_request_status(session: AsyncSession) -> None:
     if not existing_meal_request_status.all():
         request_status = [
             RequestStatus(name="Pending"),
-            RequestStatus(name="Hold"),
+            RequestStatus(name="Scheduled"),
             RequestStatus(name="Approved"),
             RequestStatus(name="Rejected"),
         ]

@@ -61,7 +61,6 @@ async def login_for_access_token(
             windows_account = await authenticate_and_get_user(
                 username, password
             )
-            print(windows_account)
             if not windows_account:
                 raise InvalidCredentialsException()
 

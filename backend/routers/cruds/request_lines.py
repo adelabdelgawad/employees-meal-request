@@ -9,6 +9,39 @@ from services.http_schema import UpdateRequestStatus, RequestLineRespose
 logger = logging.getLogger(__name__)
 
 
+async def read_request_lines_by_request_id(
+    session: AsyncSession, request_id: int
+) -> List[RequestLine]:
+    """
+    Reads request lines for a given request ID.
+
+    Args:
+        session (AsyncSession): Database session.
+        request_id (int): ID of the request.
+
+    Returns:
+        List[RequestLineRespose]: List of request lines.
+    """
+    try:
+        statement = select(RequestLine).where(
+            RequestLine.request_id == request_id
+        )
+
+        result = await session.execute(statement)
+        request_lines = result.scalars().all()
+
+        if not request_lines:
+            logger.info(f"No request lines found for request_id: {request_id}")
+            return []
+
+        return request_lines
+    except Exception as e:
+        logger.error(
+            f"Error reading request lines for request_id {request_id}: {e}"
+        )
+        raise
+
+
 async def read_request_lines(
     session: AsyncSession, request_id: int
 ) -> List[RequestLineRespose]:
@@ -30,7 +63,7 @@ async def read_request_lines(
                 Employee.title.label("title"),
                 Employee.code.label("code"),
                 RequestLine.notes,
-                RequestLine.attendance,
+                RequestLine.attendance_in,
                 RequestLine.is_accepted,
                 RequestLine.shift_hours,
             )

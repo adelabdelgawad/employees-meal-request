@@ -206,11 +206,11 @@ class RequestLine(SQLModel, table=True):
     department_id: int = Field(foreign_key="department.id", nullable=False)
     request_id: int = Field(foreign_key="request.id", nullable=False)
     meal_id: int = Field(foreign_key="meal.id", nullable=False)
-    attendance: Optional[datetime] = Field(default=None)
+    attendance_in: Optional[datetime] = Field(default=None)
+    attendance_out: Optional[datetime] = Field(default=None)
     notes: Optional[str] = Field(default=None, max_length=256)
     is_accepted: bool = Field(default=True)
     shift_hours: Optional[int] = Field(default=None)
-    data_collected: bool = Field(default=False)
     is_deleted: bool = Field(default=False)
 
     # Relationships
@@ -240,8 +240,6 @@ class LogRolePermission(SQLModel, table=True):
     role_id: int = Field(foreign_key="role.id", nullable=False)
     admin_id: int = Field(foreign_key="account.id", nullable=False)
     action: str = Field(nullable=False, max_length=32)
-    is_successful: bool = Field(nullable=False)
-    result: Optional[str] = Field(default=None)
     timestamp: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
 
     # Relationships
@@ -272,22 +270,6 @@ class LogRequestLine(SQLModel, table=True):
     account: Optional["Account"] = Relationship(
         back_populates="request_line_logs"
     )
-
-
-class LogTraffic(SQLModel, table=True):
-    """
-    Represents logs for HTTP traffic, tracking requests, responses, and statuses.
-    """
-
-    __tablename__ = "log_traffic"
-
-    id: Optional[int] = Field(default=None, primary_key=True)
-    ip_address: str = Field(nullable=False, max_length=64)
-    path: Optional[str] = Field(default=None, max_length=256)
-    status: str = Field(nullable=False, max_length=64)
-    result: Optional[str] = Field(default=None, max_length=256)
-    request_body: Optional[str] = Field(default=None)
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
 
 
 class Email(SQLModel, table=True):

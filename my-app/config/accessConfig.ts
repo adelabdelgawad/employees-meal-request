@@ -60,14 +60,7 @@ export const routesConfig: RouteConfig[] = [
     navSection: "Settings",
     navTitle: "Users",
     navDescription: "Manage application users and their roles.",
-  },
-  {
-    path: "/security/roles",
-    roles: ["Admin", "Manager"],
-    navSection: "Settings",
-    navTitle: "Roles",
-    navDescription: "Configure roles and permissions.",
-  },
+  }
 ];
 
 // Publicly accessible paths

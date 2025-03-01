@@ -66,7 +66,7 @@ const RequestLinesTable: React.FC<RequestLinesTableProps> = ({
                 className={`hover:bg-gray-50 ${
                   !line.is_accepted
                     ? "bg-red-100"
-                    : !line.attendance
+                    : !line.attendance_in
                     ? "bg-yellow-100"
                     : ""
                 }`}
@@ -84,8 +84,8 @@ const RequestLinesTable: React.FC<RequestLinesTableProps> = ({
 
                 {/* Attendance */}
                 <TableCell className="text-center px-4 py-2">
-                  {line.attendance
-                    ? format(new Date(line.attendance), "yyyy-MM-dd HH:mm:ss")
+                  {line.attendance_in
+                    ? format(new Date(line.attendance_in), "yyyy-MM-dd HH:mm:ss")
                     : "N/A"}
                 </TableCell>
 

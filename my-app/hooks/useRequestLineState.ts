@@ -1,14 +1,9 @@
 import { useState, useCallback } from "react";
 import {
   getRequestLineById,
-  updateRequestLine,
 } from "@/lib/services/request-requests";
 
-/**
- * Hook to manage request line state, including fetching, updating, and tracking changes.
- * @param id The ID of the request line to manage.
- * @returns Object containing state and actions for request line management.
- */
+
 const useRequestLineState = (id: number | undefined) => {
   const [data, setData] = useState<any[]>([]);
   const [originalData, setOriginalData] = useState<any[]>([]);
