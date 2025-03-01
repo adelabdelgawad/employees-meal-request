@@ -1,11 +1,12 @@
 import logging
 from typing import List, Optional
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, time
 import pytz
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func
 from sqlalchemy.orm import selectinload
+from time import sleep
 from icecream import ic
 
 from hris_db.models import (
@@ -47,10 +48,11 @@ async def update_request_lines_with_attendance(
     hris_session: AsyncSession,
     start_time: Optional[datetime] = None,
     end_time: Optional[datetime] = None,
-    employee_name: Optional[str] = None,
     page: int = 1,
     page_size: int = 10,
     download: Optional[bool] = False,
+    request_line_ids: List[int] = None,
+    employee_name: Optional[str] = None,
 ) -> List[RequestLine]:
     """
     Updates RequestLine records with attendance_in and attendance_out values from
@@ -65,7 +67,6 @@ async def update_request_lines_with_attendance(
         hris_session (AsyncSession): Session used for querying the attendance table.
         start_time (Optional[datetime]): Start datetime for filtering.
         end_time (Optional[datetime]): End datetime for filtering.
-        employee_name (Optional[str]): (Not used currently) Employee name to filter by.
         page (int): Pagination page number.
         page_size (int): Number of records per page.
         download (Optional[bool]): Flag to bypass pagination.
@@ -85,13 +86,27 @@ async def update_request_lines_with_attendance(
         .join(Request, Request.id == RequestLine.request_id)
     )
 
+    if request_line_ids:
+        download = True
+        stmt = stmt.where(RequestLine.id.in_(request_line_ids))
+        today = datetime.now(cairo_tz).date()
+        min_request_time = datetime.combine(today, time.min)  # 00:00:00
+        max_request_time = datetime.combine(today, time.max)  # 23:59:59
+
     if start_time and end_time:
         # Filter by Request.request_time
         stmt = stmt.where(Request.request_time.between(start_time, end_time))
-    else:
-        raise ValueError(
-            "Either target_date or both start_time and end_time must be provided."
+        # Get min and max request_time from the filtered Requests.
+        min_request_time, max_request_time = await get_min_and_max_time(
+            session, start_time, end_time
         )
+        min_request_time = datetime.combine(min_request_time, time.min)
+        max_request_time = datetime.combine(max_request_time, time.max)
+
+        ic(min_request_time, max_request_time)
+    if not min_request_time or not max_request_time:
+        raise ValueError("Could not determine the min/max request times.")
+
     if not download:
         stmt = stmt.offset(offset).limit(page_size)
 
@@ -102,16 +117,8 @@ async def update_request_lines_with_attendance(
     if not request_lines:
         return []  # Nothing to update.
 
-    # Get min and max request_time from the filtered Requests.
-    min_request_time, max_request_time = await get_min_and_max_time(
-        session, start_time, end_time
-    )
     if not min_request_time or not max_request_time:
         raise ValueError("Could not determine the min/max request times.")
-
-    # Convert min and max request times to dates for matching attendance records.
-    min_request_date = min_request_time.date()
-    max_request_date = max_request_time.date()
 
     # Collect employee_codes from the RequestLine records.
     employee_codes = {str(rl.employee_code) for rl in request_lines}
@@ -124,7 +131,7 @@ async def update_request_lines_with_attendance(
         )
         .where(
             HRISEmployeeAttendanceWithDetails.date.between(
-                min_request_date, max_request_date
+                min_request_time, max_request_time
             )
         )
     )
@@ -141,15 +148,20 @@ async def update_request_lines_with_attendance(
     # Update each RequestLine with the matching attendance record.
     for rl in request_lines:
         # Ensure the associated Request and its request_time are available.
-        if not rl.request or not rl.request.request_time:
-            continue
+
         # Extract the date portion of the Request's request_time.
-        request_date = rl.request.request_time.date()
+        if request_line_ids:
+            if not rl.request or not rl.request.created_time:
+                continue
+            request_date = rl.request.created_time.astimezone(cairo_tz).date()
+        else:
+            if not rl.request or not rl.request.request_time:
+                continue
+            request_date = rl.request.request_time.astimezone(cairo_tz).date()
+
         key = (str(rl.employee_code), request_date)
         attendance_record = attendance_map.get(key)
-        ic(attendance_record)
         if attendance_record:
-            ic(attendance_record.date_in, attendance_record.date_out)
             rl.attendance_in = attendance_record.date_in
             rl.attendance_out = attendance_record.date_out
             session.add(rl)

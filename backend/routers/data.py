@@ -109,7 +109,7 @@ async def read_meals(session: SessionDep):
     logger.debug("Entered read_meals endpoint.")
     try:
         # Construct SQL query to select all meal records.
-        statement = select(Meal)
+        statement = select(Meal).where(Meal.is_active == True)
 
         # Execute the query asynchronously.
         result = await session.execute(statement)

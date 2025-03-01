@@ -8,6 +8,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Query
 
+from db.crud import read_account
 from routers.cruds import request as crud
 from routers.cruds.request_lines import (
     read_request_lines,
@@ -20,7 +21,10 @@ from services.http_schema import (
     UpdateRequestStatusPayload,
 )
 from src.dependencies import HRISSessionDep, SessionDep, CurrentUserDep
-from routers.utils.request import create_request_lines_and_confirm
+from routers.utils.request import (
+    create_request_lines_and_confirm,
+    send_confirmation_notification,
+)
 from db.models import Request
 from icecream import ic
 
@@ -47,7 +51,12 @@ def get_request_time_and_status(
     request_time: Optional[datetime] = None
 
     if payload.request_timing_option == "schedule_request":
-        request_time = payload.request_time
+        if payload.request_time is not None:
+            # If the datetime is naive, assume it is in Cairo time.
+            if payload.request_time.tzinfo is None:
+                request_time = payload.request_time.replace(tzinfo=cairo_tz)
+            else:
+                request_time = payload.request_time.astimezone(cairo_tz)
         request_status_id = 2  # Scheduled
     elif payload.request_timing_option == "save_for_later":
         request_time = None
@@ -87,25 +96,32 @@ async def create_and_schedule_meal_group(
     Create a new Request for a specific meal group, commit it to the database,
     and schedule the background task for processing request lines.
     """
-    new_request = Request(
-        requester_id=user.id,
-        meal_id=meal_id,
-        notes=payload.notes,
-        status_id=request_status_id,
-        request_time=request_time,
-    )
+    if request_time:
+        new_request = Request(
+            requester_id=user.id,
+            meal_id=meal_id,
+            notes=payload.notes,
+            status_id=request_status_id,
+            request_time=request_time,
+        )
+    else:
+        new_request = Request(
+            requester_id=user.id,
+            meal_id=meal_id,
+            notes=payload.notes,
+            status_id=request_status_id,
+        )
     session.add(new_request)
     await session.commit()
     await session.refresh(new_request)
-
     background_tasks.add_task(
         create_request_lines_and_confirm,
         session=session,
         hris_session=hris_session,
         request=new_request,
         request_lines=req_list,
-        request_time=payload.request_time,
         request_status_id=request_status_id,
+        requester=user.username,
     )
 
 
@@ -228,32 +244,12 @@ async def get_requests(
         )
 
 
-@router.put("/requests/delete/{request_id}")
-async def delete_request(
-    current_user: CurrentUserDep, session: SessionDep, request_id: int
-):
-    """
-    Soft-delete a request by marking it as deleted.
-    """
-    # Use session.get() for direct lookup (if available) to improve performance :contentReference[oaicite:0]{index=0}.
-    request_obj = await session.get(Request, request_id)
-    if not request_obj:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Request not found",
-        )
-    request_obj.is_deleted = True
-    session.add(request_obj)
-    await session.commit()
-
-    return {"message": "Request deleted successfully."}
-
-
 @router.put("/update-request-status")
 async def update_order_status_endpoint(
     payload: UpdateRequestStatusPayload,
     session: SessionDep,
     current_user: CurrentUserDep,
+    background_tasks: BackgroundTasks,
 ):
     """
     Update the status of a request by its ID.
@@ -262,13 +258,28 @@ async def update_order_status_endpoint(
         request_id: int = payload.request_id
         status_id: int = payload.status_id
 
-        result = await crud.update_request_status(
+        request = await crud.update_request_status(
             session, current_user.id, request_id, status_id
         )
+        requester = await read_account(session, request.requester_id)
+        """
+        Email Sender
+        """
+        await send_confirmation_notification(
+            session=session,
+            request=request,
+            requester_name=requester.full_name,
+        )
+        # background_tasks.add_task(
+        #     send_confirmation_notification,
+        #     session=session,
+        #     request=request,
+        # )
+
         return {
             "status": "success",
             "message": "Request updated successfully",
-            "data": result,
+            "data": request,
         }
     except HTTPException as http_exc:
         raise http_exc

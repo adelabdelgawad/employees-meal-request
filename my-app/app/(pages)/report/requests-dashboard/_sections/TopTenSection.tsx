@@ -1,9 +1,8 @@
 import React, { Suspense } from "react";
-import { DashboardRecord } from "@/pages/definitions";
 import DepartmentTable from "../_components/TopTenTable";
 
 interface TopTenSectionProps {
-  records: DashboardRecord[];
+  records: any;
 }
 
 const TopTenSection: React.FC<TopTenSectionProps> = ({ records }) => {

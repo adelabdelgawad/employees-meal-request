@@ -1,5 +1,4 @@
 import React, { Suspense } from "react";
-import { DashboardRecord } from "@/pages/definitions";
 import DepartmentChart from "../_components/DepartmentChart";
 
 interface ChartSectionProps {

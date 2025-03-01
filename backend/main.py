@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -12,7 +13,19 @@ from src.middleware import TokenRenewalMiddleware
 from hris_db.database import haris_db_engine
 import logfire
 
-logfire.configure()
+# Load environment variables from .env file
+load_dotenv()
+
+
+logfire_api_key = os.getenv("LOGFIRE_TOKEN")
+logfire_env = os.getenv("LOGFIRE_ENV", "development")
+
+# Configure Logfire using the API key
+if logfire_api_key:
+    logfire.configure(token=logfire_api_key, environment=logfire_env)
+else:
+    raise ValueError("LOGFIRE_TOKEN is not set in the environment.")
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,9 +33,6 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
-
-# Load environment variables from .env file
-load_dotenv()
 
 
 # Initialize FastAPI app with custom lifespan

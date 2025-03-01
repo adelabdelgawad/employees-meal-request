@@ -12,7 +12,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-
 def apply_common_filters(
     query,
     start_dt: Optional[datetime],
@@ -28,7 +27,9 @@ def apply_common_filters(
     :param employee_name: Partial employee name for case-insensitive search.
     :return: The query with filters applied.
     """
+    query = query.where(Request.status_id == 3)
     query = query.where(RequestLine.is_accepted == True)
+
     if start_dt and end_dt:
         query = query.where(Request.request_time.between(start_dt, end_dt))
     if employee_name:

@@ -197,6 +197,7 @@ async def seed_meals(session: AsyncSession) -> None:
         meals = [
             Meal(name="Lunch"),
             Meal(name="Dinner"),
+            Meal(name="Iftart", is_active=False),
         ]
         session.add_all(meals)
         print("Default meal types added.")

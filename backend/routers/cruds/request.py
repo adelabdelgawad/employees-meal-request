@@ -13,6 +13,7 @@ from db.models import (
 from routers.cruds.attendance_and_shift import (
     read_attendances_from_hris,
     read_shifts_from_hris,
+    update_request_lines_with_attendance,
 )
 from services.http_schema import RequestPageRecordResponse
 import pytz
@@ -26,40 +27,10 @@ logger = logging.getLogger(__name__)
 # continue_processing_meal_request
 
 
-async def create_request(
-    session: AsyncSession,
-    requester_id: int,
-    meal_id: int,
-    notes: str,
-    request_status_id: int,
-    request_time: Optional[datetime] = None,
-) -> Request:
-    try:
-        new_request = Request(
-            requester_id=requester_id,
-            meal_id=meal_id,
-            notes=notes,
-            status_id=request_status_id,
-        )
-        if request_time:
-            new_request.request_time = request_time
-        session.add(new_request)
-        await session.commit()
-        await session.refresh(new_request)
-
-        await session.commit()
-        return new_request
-    except Exception as e:
-        logger.error(f"Error creating request lines: {e}")
-        raise e
-
-
 async def add_attendance_and_shift_to_request_line(
     session: AsyncSession,
     hris_session: AsyncSession,
     request_lines: List[RequestLine],
-    attendance_in: bool = True,
-    attendance_out: bool = False,
 ) -> List[RequestLine]:
     """
     Update request lines with attendance details and shift hours.
@@ -79,6 +50,11 @@ async def add_attendance_and_shift_to_request_line(
             f"Start Getting Shifts and Attendance for: {len(request_lines)} request lines"
         )
 
+        await update_request_lines_with_attendance(
+            session=session,
+            hris_session=hris_session,
+            request_line_ids=[r.id for r in request_lines],
+        )
         employee_ids = [line.employee_id for line in request_lines]
 
         today_shifts = await read_shifts_from_hris(hris_session, employee_ids)
@@ -311,38 +287,10 @@ async def update_request_status(
         if status_id == 4:  # Additional logic for status 4
             await update_request_lines_status(session, request_id)
 
-        return await read_request_by_id(session, request_id)
+        return request
     except Exception as e:
         logger.error(f"Error updating request status: {e}")
         raise e
-
-
-async def confirm_request_creation(
-    session: AsyncSession, request_id: int, request_time: datetime
-) -> Request:
-    """Update request time for a specific request"""
-
-    try:
-        # Get request
-        request = await session.get(Request, request_id)
-
-        if not request:
-            logger.warning(f"Request {request_id} not found")
-            raise HTTPException(status_code=404, detail="Request not found")
-
-        # Update and commit
-        request.request_time = request_time
-        session.add(request)
-        await session.commit()
-        await session.refresh(request)
-
-        logger.info(f"Request {request_id} time updated successfully")
-        return request
-
-    except Exception as e:
-        logger.error(f"Failed to update request {request_id}: {str(e)}")
-        await session.rollback()
-        raise HTTPException(status_code=500, detail="Update failed") from e
 
 
 async def update_request_lines_status(session: AsyncSession, request_id: int):

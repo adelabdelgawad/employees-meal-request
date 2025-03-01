@@ -1,9 +1,6 @@
 "use client";
 
 import React, { useEffect, useState, Suspense } from "react";
-import { Table, TableHeader } from "@/components/ui/table";
-
-import TablePagination from "@/components/data-table/TablePagination";
 
 interface DetailsTableProps {
   records: ReportRequestRecord[];

@@ -6,7 +6,6 @@ import * as ScrollArea from "@radix-ui/react-scroll-area";
 import { Input } from "@/components/ui/input";
 import MealOption from "./MealOption";
 import { useNewRequest } from "@/hooks/NewRequestContext";
-import { EmployeeType, Meal } from "@/pages/definitions";
 import { Button } from "@/components/ui/button";
 import { Rubik } from "next/font/google";
 import { X } from "lucide-react";
@@ -129,7 +128,7 @@ const EmployeesSelectionDialog: FC<EmployeeSelectionDialogProps> = ({
                   itemCount={selectedEmployees.length}
                   itemSize={100}
                 >
-                  {({ index, style }) => {
+                  {({ index, style }: { index: number; style: React.CSSProperties }) => {
                     const emp = selectedEmployees[index];
                     return (
                       <div

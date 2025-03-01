@@ -13,7 +13,6 @@ from exchangelib import (
     Configuration,
 )
 
-from icecream import ic
 # Load environment variables from .env file
 load_dotenv()
 
@@ -45,8 +44,10 @@ class EmailSender:
         """
         value = os.getenv(var_name)
         if not value:
-            raise ValueError(f"Environment variable '{
-                             var_name}' is missing or empty.")
+            raise ValueError(
+                f"Environment variable '{
+                             var_name}' is missing or empty."
+            )
         return value
 
     def create_account(self) -> Account:
@@ -112,8 +113,10 @@ class EmailSender:
                 body=HTMLBody(body),
                 to_recipients=[Mailbox(email_address=to_recipient)],
                 cc_recipients=(
-                    [Mailbox(email_address=recipient)
-                     for recipient in cc_recipients]
+                    [
+                        Mailbox(email_address=recipient)
+                        for recipient in cc_recipients
+                    ]
                     if cc_recipients
                     else None
                 ),

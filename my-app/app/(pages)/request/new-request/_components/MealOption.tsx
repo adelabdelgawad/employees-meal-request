@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label"; // Adjust the import path based on your project
-import { Meal } from "@/pages/definitions";
 
 interface MealProps {
   Meals: Meal[];

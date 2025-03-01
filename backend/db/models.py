@@ -95,6 +95,7 @@ class Meal(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(nullable=False, max_length=64)
+    is_active: Optional[bool] = True
 
     # Relationships
     request_lines: List["RequestLine"] = Relationship(back_populates="meal")
@@ -162,7 +163,9 @@ class Request(SQLModel, table=True):
     )
     requester_id: int = Field(foreign_key="account.id", nullable=False)
     meal_id: int = Field(foreign_key="meal.id", nullable=False)
-    request_time: Optional[datetime] = Field(default=None)
+    request_time: datetime = Field(
+        default_factory=lambda: datetime.now(cairo_tz)
+    )
     created_time: datetime = Field(
         default_factory=lambda: datetime.now(cairo_tz)
     )
