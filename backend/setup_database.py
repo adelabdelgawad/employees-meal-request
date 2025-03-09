@@ -42,8 +42,8 @@ load_dotenv()
 
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_SERVER = os.getenv("DB_SERVER", "localhost")
-DB_NAME = os.getenv("DB_NAME", "mealrequestdb")
+DB_SERVER = os.getenv("DB_SERVER")
+DB_NAME = os.getenv("DB_NAME")
 if not DB_USER or not DB_PASSWORD or not DB_SERVER or not DB_NAME:
     raise ValueError(
         "Missing required environment variables for the database connection."

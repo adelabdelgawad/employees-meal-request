@@ -17,6 +17,7 @@ from routers.cruds.request_lines import (
 from services.http_schema import (
     RequestLineRespose,
     RequestPayload,
+    RequestsResponse,
     UpdateRequestLinesPayload,
     UpdateRequestStatusPayload,
 )
@@ -191,7 +192,7 @@ async def create_request_endpoint(
 
 @router.get(
     "/requests",
-    response_model=dict,
+    response_model=RequestsResponse,
     status_code=status.HTTP_200_OK,
 )
 async def get_requests(
@@ -210,7 +211,7 @@ async def get_requests(
     ),
     query: Optional[str] = Query(None, description="Search parameters"),
     download: bool = Query(False, description="Download status"),
-):
+) -> RequestsResponse:
     """
     Retrieve a paginated list of requests with optional filtering.
     """

@@ -10,7 +10,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 // Utility function to generate pagination range
 export const generatePagination = (currentPage: number, totalPages: number) => {
@@ -63,8 +63,7 @@ interface TablePaginationProps {
   totalPages: number;
 }
 
-const TablePagination = React.memo(({ totalPages }: TablePaginationProps) => {
-  const searchParams = useSearchParams();
+const TablePagination = React.memo(function TablePagination({ totalPages }: TablePaginationProps) {  const searchParams = useSearchParams();
   const params = new URLSearchParams(searchParams?.toString() || "");
   const pathname = usePathname();
   const currentPage = Number(params.get("page")) || 1;
@@ -130,5 +129,6 @@ const TablePagination = React.memo(({ totalPages }: TablePaginationProps) => {
     </div>
   );
 });
+TablePagination.displayName = 'TablePagination';
 
 export default TablePagination;

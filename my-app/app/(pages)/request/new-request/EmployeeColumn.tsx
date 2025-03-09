@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState, useMemo, useCallback, useEffect } from "react";
-import { FixedSizeList as List } from "react-window";
+import { FixedSizeList, FixedSizeList as List } from "react-window";
 import * as Checkbox from "@radix-ui/react-checkbox";
 import { Rubik } from "next/font/google";
 import { CheckIcon } from "lucide-react";
@@ -25,7 +25,7 @@ export default function EmployeeColumn() {
   } = useNewRequest();
 
   const [search, setSearch] = useState("");
-  const listRef = useRef<{ scrollToItem: (index: number) => void } | null>(null);
+  const listRef = useRef<FixedSizeList>(null);
 
   const departmentMealFilteredEmployees = useMemo(() => {
     return employees.filter((emp) => {
@@ -61,7 +61,7 @@ export default function EmployeeColumn() {
   }, [finalFilteredEmployees]);
 
   const toggleEmployee = useCallback(
-    (empId) => {
+    (empId: number) => {
       setSelectedEmployees((prev) => {
         const exists = prev.some((emp) => emp.id === empId);
         if (exists) {

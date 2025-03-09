@@ -78,8 +78,9 @@ export default function SubmitRequest() {
       toast.success(result.message || "Requests submitted successfully!");
       resetSubmittedEmployees();
       setNotes("");
-    } catch (error: any) {
-      toast.error(error.message || "An error occurred");
+    } catch (error) {
+      console.log(error)
+      toast.error("An error occurred");
     } finally {
       setLoading(false);
     }

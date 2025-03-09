@@ -14,7 +14,7 @@ export default function ExportTable({
   const searchParams = useSearchParams();
 
   // Helper function to generate CSV
-  const generateCSV = (data: any[], excludedRows: string[]) => {
+  const generateCSV = (data: ReportDetailsRecord[], excludedRows: string[]) => {
     const filteredData = excludedRows.length
       ? data.map((row) =>
           Object.fromEntries(
@@ -65,7 +65,7 @@ export default function ExportTable({
     try {
       setIsLoading(true);
 
-      const response = await fetchReportDetails({
+      const response: ReportDetailsResponse = await fetchReportDetails({
         download: true,
         query,
         startTime,
@@ -74,14 +74,14 @@ export default function ExportTable({
 
       if (
         !response ||
-        !Array.isArray(response.data) ||
-        response.data.length === 0
+        !Array.isArray(response.request_lines) ||
+        response.request_lines.length === 0
       ) {
         console.warn("No data found to export.");
         return;
       }
 
-      const csvContent = generateCSV(response.data, excludedRows);
+      const csvContent = generateCSV(response.request_lines, excludedRows);
       downloadFile(csvContent, "table_data.csv");
     } catch (error) {
       console.error("Error exporting table:", error);

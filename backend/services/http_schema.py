@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict, field_serializer, Field
 from datetime import datetime
 from typing import Optional, List, Dict
+from services.schema import ReportDetailsRecord
 
 
 # ✅ DepartmentResponse Model
@@ -120,30 +121,6 @@ class UpdateRolesRequest(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ReportDetailsResponse(BaseModel):
-    id: int
-    employee_code: int | None = None
-    employee_name: str | None = None
-    employee_title: str | None = None
-    department: str | None = None
-    requester_name: str | None = None
-    requester_title: str | None = None
-    request_time: datetime | None = None
-    meal: str | None = None
-    attendance_in: datetime | None = None
-    attendance_out: datetime | None = None
-    shift_hours: int | None = None
-    notes: str | None = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-    @field_serializer("attendance_in", "attendance_out", "request_time")
-    def customize_datetime_format(self, value: datetime) -> str | None:
-        if value is None:
-            return None
-        return value.isoformat(sep=" ", timespec="seconds")
-
-
 class UpdateRequestLinesPayload(BaseModel):
     request_id: int
     changed_statuses: List[UpdateRequestStatus]
@@ -203,6 +180,16 @@ class RequestPayload(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class RequestsResponse(BaseModel):
+    data: List[RequestPageRecordResponse]
+    current_page: int
+    page_size: int
+    total_pages: int
+    total_rows: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class UpdateRequestStatusPayload(BaseModel):
     request_id: int
     status_id: int
@@ -229,5 +216,15 @@ class RequestHistoryRecordResponse(BaseModel):
 class ScheduleRequest(BaseModel):
     request_id: int
     scheduled_time: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ReportDetailsResponse(BaseModel):
+    request_lines: List[ReportDetailsRecord] | None = None
+    current_pages: int | None = None
+    page_size: int | None = None
+    total_pages: int | None = None
+    total_rows: int | None = None
 
     model_config = ConfigDict(from_attributes=True)

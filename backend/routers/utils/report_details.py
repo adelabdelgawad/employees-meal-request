@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 # Import models from both databases
 from db.models import RequestLine, Employee, Department, Request, Account, Meal
+from services.schema import ReportDetailsRecord
 from services.http_schema import ReportDetailsResponse
 import logging
 
@@ -78,7 +79,7 @@ async def read_request_lines_with_attendance(
     page: int = 1,
     page_size: int = 10,
     download: Optional[bool] = False,
-) -> dict:
+) -> ReportDetailsResponse:
     """
     Retrieves paginated request data with optional filters.
 
@@ -136,12 +137,12 @@ async def read_request_lines_with_attendance(
     rows = result.fetchall()
 
     # Transform rows into the expected response format
-    request_lines = [ReportDetailsResponse.model_validate(row) for row in rows]
+    request_lines = [ReportDetailsRecord.model_validate(row) for row in rows]
 
-    return {
-        "data": request_lines,
-        "current_page": page,
-        "page_size": page_size,
-        "total_pages": total_pages,
-        "total_rows": total_rows,
-    }
+    return ReportDetailsResponse(
+        request_lines=request_lines,
+        current_page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+        total_rows=total_rows,
+    )

@@ -50,7 +50,7 @@ const DepartmentChart: React.FC<DepartmentChartProps> = ({ data }) => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top',
+        position: 'top' as const,
       },
     },
   };

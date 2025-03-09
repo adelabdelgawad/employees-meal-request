@@ -45,6 +45,7 @@ export function LoginForm(): JSX.Element {
         setError(result.errors?.general || "Invalid credentials.");
       }
     } catch (err) {
+      console.log(err)
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);

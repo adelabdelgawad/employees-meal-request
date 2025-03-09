@@ -10,7 +10,7 @@ import { useSearchParams } from "next/navigation";
 
 const DataTableHeader = () => {
   const searchParams = useSearchParams();
-  const isLive = searchParams.get("live") === "true"; // Check if Live mode is active
+  const isLive = searchParams?.get("live") === "true"; // Check if Live mode is active
   
   return (
     <div>

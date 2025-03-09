@@ -13,19 +13,13 @@ export interface RequestParams {
   endTime?: string;
 }
 
-export interface RequestResponse {
-  data: any[]; // Update to a specific type if you know the data structure
-  total_pages: number;
-  total_rows: number;
-}
-
 export async function getRequests({
   query = "",
   currentPage = 1,
   pageSize = 20,
   startTime = "",
   endTime = "",
-}: RequestParams = {}): Promise<RequestResponse> {
+}: RequestParams = {}): Promise<RequestsResponse> {
   const baseUrl = `${NEXT_PUBLIC_FASTAPI_URL}/requests`;
 
   try {

@@ -2,6 +2,15 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL
 
+type Item = {
+  id: number;
+  code: number;
+  name: string;
+  department_id: number;
+  meal_id: number;
+  meal_name: string;
+  notes: string;
+}
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({
@@ -27,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const transformedRequests = req.body.requests.map((item: any) => ({
+    const transformedRequests = req.body.requests.map((item: Item) => ({
       employee_id: item.id,
       employee_code: item.code,
       name: item.name,

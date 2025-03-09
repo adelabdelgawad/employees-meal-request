@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
 interface RequestLinesTableProps {
-  data: any[];
+  data: RequestLineRespose[];
   disableStatus: boolean;
   onSwitchChange: (lineId: number, checked: boolean) => void;
   onSave: () => void; // Function for Save button

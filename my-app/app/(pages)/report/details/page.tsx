@@ -34,10 +34,10 @@ export default async function Page({
   // 2. Fetch data (server-side)
   const currentPage = parseInt(page, 10);
   const pageSize = parseInt(page_size, 10);
-  let data = null;
+  let response = null;
 
   try {
-    data = await fetchReportDetails({
+    response = await fetchReportDetails({
       query,
       currentPage,
       pageSize,
@@ -50,7 +50,7 @@ export default async function Page({
   }
 
   // 3. Use totalPages from fetched data if available
-  const totalPages = data?.total_pages || 1;
+  const totalPages = response?.total_pages || 1;
 
   return (
     <div className="flex flex-col m-2">
@@ -62,7 +62,7 @@ export default async function Page({
       {/* Table */}
       <div>
         <Suspense key={`${query}-${currentPage}-${pageSize}`}>
-          {data ? <DataTable data={data.data} /> : <div>No data available</div>}
+          {response ? <DataTable data={response} /> : <div>No data available</div>}
         </Suspense>
       </div>
 
@@ -73,7 +73,7 @@ export default async function Page({
           currentPage={currentPage}
           totalPages={totalPages}
           rowsPerPage={pageSize}
-          totalRows={data?.total_rows || 0}
+          totalRows={response?.total_rows || 0}
         />
       </div>
     </div>

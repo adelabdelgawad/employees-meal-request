@@ -13,7 +13,7 @@ import { updateRequestLine } from "@/lib/services/request-requests";
 interface ViewActionProps {
   id?: number;
   disableStatus: boolean;
-  handleRequestLinesChanges: (id: number, updatedRecord: any) => Promise<void>;
+  handleRequestLinesChanges: (id: number, updatedRecord: Request) => Promise<void>;
 }
 
 const ViewAction: React.FC<ViewActionProps> = ({
@@ -53,6 +53,7 @@ const ViewAction: React.FC<ViewActionProps> = ({
         toast.success("Request lines updated successfully.");
         setIsDrawerOpen(false);
       } catch (error) {
+        console.log(error)
         toast.error("Failed to save changes. Please try again.");
       }
     } else {

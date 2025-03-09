@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, status, Query, Request
 from routers.cruds.attendance_and_shift import (
     update_request_lines_with_attendance,
 )
-from services.http_schema import ReportDashboardResponse
+from services.http_schema import ReportDashboardResponse, ReportDetailsResponse
 from routers.utils.report_details import (
     read_request_lines_with_attendance,
     read_request_lines,
@@ -95,7 +95,7 @@ async def get_requests(
 
 @router.get(
     "/report-details",
-    response_model=dict,
+    response_model=ReportDetailsResponse,
     status_code=status.HTTP_200_OK,
 )
 async def get_requests_data(
@@ -114,7 +114,7 @@ async def get_requests_data(
         False, description="Update attendance status"
     ),
     download: bool = Query(False, description="Download status"),
-):
+) -> ReportDetailsResponse:
     """
     Retrieve paginated request data with optional date filtering and search query.
 

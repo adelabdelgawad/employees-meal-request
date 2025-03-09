@@ -28,11 +28,11 @@ export default async function Page({
   const pageSize = Number(resolvedSearchParams.page_size) || 20; // Default rows per page
   const startTime = resolvedSearchParams.start_time || "";
   const endTime = resolvedSearchParams.end_time || "";
-  const session = await getSession();
-  const userRoles: string[] = session?.user?.roles || [];
-  const userId: number = session?.user?.userId || 0;
-  const isAdmin = userRoles.includes("Admin");
+
   
+  const session: Session | null = await getSession();
+  const userRoles: Role[] = session?.user?.roles || [];
+  const isAdmin = userRoles.some(role => role.name === "Admin");  
 
 
   // 2. Fetch data (server-side)
@@ -69,7 +69,7 @@ export default async function Page({
             Failed to load data. Please try again later.
           </div>
         ) : data ? (
-          <DataTable initialData={data.data} isAdmin={isAdmin} userId={userId} />
+          <DataTable initialData={data.data} isAdmin={isAdmin} />
         ) : (
           <div>No data available</div>
         )}

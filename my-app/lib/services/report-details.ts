@@ -10,7 +10,7 @@ export async function fetchReportDetails({
   endTime = "",
   download = false,
   update_attendance = false,
-} = {}) {
+} = {}): Promise<ReportDetailsResponse> {
   try {
     const baseUrl = `${NEXT_PUBLIC_FASTAPI_URL}/report-details`;
     const url = new URL(baseUrl);
@@ -21,7 +21,7 @@ export async function fetchReportDetails({
     url.searchParams.append("page_size", pageSize.toString());
     url.searchParams.append("start_time", startTime);
     url.searchParams.append("end_time", endTime);
-    url.searchParams.append("update_attendance", update_attendance);
+    url.searchParams.append("update_attendance", update_attendance.toString());
 
     if (download) {
       url.searchParams.append("download", "true");

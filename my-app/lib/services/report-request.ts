@@ -28,7 +28,7 @@ export async function fetchReportRequestRecords(
   const data = await res.json();
 
   // Convert snake_case to camelCase
-  return data.map((record: any) => ({
+  return data.map((record: ReportDashboardResponse) => ({
     id: record.id,
     department: record.department,
     dinnerRequests: record.dinner_requests,

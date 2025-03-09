@@ -2,7 +2,11 @@ import React, { Suspense } from "react";
 import DepartmentTable from "../_components/TopTenTable";
 
 interface TopTenSectionProps {
-  records: any;
+  records: {
+    department: string;
+    dinnerRequests: number;
+    lunchRequests: number;
+  }[];
 }
 
 const TopTenSection: React.FC<TopTenSectionProps> = ({ records }) => {

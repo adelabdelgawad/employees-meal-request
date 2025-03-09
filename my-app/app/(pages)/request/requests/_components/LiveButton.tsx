@@ -38,7 +38,7 @@ const LiveButton: React.FC = () => {
     }
 
     const queryString = newParams.toString();
-    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname || "";
     router.replace(newUrl);
   };
 

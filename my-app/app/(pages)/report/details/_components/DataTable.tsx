@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/table";
 import React from "react";
 
-export default function DataTable({ data }: { data: any[] }) {
+export default function DataTable({ data }: { data: ReportDetailsResponse}) {
   return (
     <div>
       <Table className="relative overflow-x-auto border border-neutral-200 bg-white text-sm text-neutral-700 whitespace-nowrap">
@@ -39,8 +39,8 @@ export default function DataTable({ data }: { data: any[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data && data.length > 0 ? (
-            data.map((item) => (
+          {data && data.request_lines.length > 0 ? (
+            data.request_lines.map((item) => (
               <TableRow
                 key={item.id}
                 className="hover:bg-neutral-50 text-neutral-700"
@@ -64,7 +64,7 @@ export default function DataTable({ data }: { data: any[] }) {
                   {item.requester_title || "-"}
                 </TableCell>
                 <TableCell className="px-4 py-2 text-center">
-                  {item.request_time || "-"}
+                  {item.request_time ? item.request_time.toLocaleString() : "-"}
                 </TableCell>
                 <TableCell className="px-4 py-2 text-center">
                   {item.meal || "-"}

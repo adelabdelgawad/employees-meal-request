@@ -38,7 +38,6 @@ async def send_email(
     Raises:
         Exception: Propagates any exception encountered during the email sending process.
     """
-    ic(session, to_recipient, body_html, subject, cc_receipients_role_id)
     try:
         email_sender = EmailSender()
 
@@ -46,7 +45,6 @@ async def send_email(
         emails = await read_email_with_role(
             session, role_id=cc_receipients_role_id
         )
-        print(emails)
         cc_recipients = [email.address for email in emails] if emails else None
         logger.info("CC recipients fetched: %s", cc_recipients)
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Eye, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import RequestLinesTable from "./RequestLinesTable";
@@ -15,20 +15,22 @@ interface ViewActionProps {
 const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [requestLines, setRequestLine] = useState([]);
+  const [requestLines, setRequestLine] = useState<RequestLineRespose[]>([]);
   const [loading, setLoading] = useState(false);
 
-    const fetchRequests = async () => {
-      try {
-        const response = await clientAxiosInstance.get(`/request-lines?request_id=${id}`);
-        setRequestLine(response.data);
-        setLoading(true)
-      } catch (error) {
-        console.error("Error fetching requests:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchRequests = async () => {
+    try {
+      const response = await clientAxiosInstance.get(
+        `/request-lines?request_id=${id}`
+      );
+      setRequestLine(response.data);
+      setLoading(true);
+    } catch (error) {
+      console.error("Error fetching requests:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLineDelete = async (id: number) => {
     try {
@@ -43,7 +45,6 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
   const handleDrawerOpen = () => {
     setIsDrawerOpen(true);
     fetchRequests();
-
   };
 
   const handleDrawerClose = () => {

@@ -28,9 +28,10 @@ export default function ActionButtons({ recordId, onDelete }: ActionButtonsProps
 
         setDeleteDialogOpen(false);
       }
-    } catch (error: any) {
-      if (error.response) {
-        toast.error(`Failed to delete: ${error.response.data.detail || 'Unknown error'}`);
+    } catch (error) {
+      if (error) {
+        console.log(error)
+        toast.error(`Faild to delete`);
       } else {
         toast.error('Failed to delete the record. Please try again.');
       }

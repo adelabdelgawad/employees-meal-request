@@ -15,7 +15,7 @@ from routers.cruds.attendance_and_shift import (
     read_shifts_from_hris,
     update_request_lines_with_attendance,
 )
-from services.http_schema import RequestPageRecordResponse
+from services.http_schema import RequestPageRecordResponse, RequestsResponse
 import pytz
 from fastapi import HTTPException, status
 from icecream import ic
@@ -113,7 +113,7 @@ async def read_requests(
     page: int = 1,
     page_size: int = 10,
     download: Optional[bool] = False,
-) -> Dict:
+) -> RequestsResponse:
     """
     Retrieves paginated request data with optional filters.
 
@@ -223,13 +223,13 @@ async def read_requests(
         for row in rows
     ]
 
-    return {
-        "data": items,
-        "current_page": page,
-        "page_size": page_size,
-        "total_pages": total_pages,
-        "total_rows": total_rows,
-    }
+    return RequestsResponse(
+        data=items,
+        current_page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+        total_rows=total_rows,
+    )
 
 
 async def prepare_scheduled_requests(

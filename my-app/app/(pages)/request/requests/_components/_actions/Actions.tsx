@@ -6,20 +6,17 @@ import RejectButton from './RejectButton';
 
 interface ActionsProps {
   handleAction: (id: number, newStatusId: number) => Promise<void>;
-  handleRequestLinesChanges: (id: number, updatedRecord: any) => Promise<void>;
+  handleRequestLinesChanges: (recordId: number, updatedRecord: Partial<Request>) => Promise<void>;
   recordId: number;
   currentStatusId: number;
   isAdmin: boolean;
-  isTheRequester: boolean;
 }
-
 const Actions: React.FC<ActionsProps> = ({
   handleAction,
   handleRequestLinesChanges,
   recordId,
   currentStatusId,
   isAdmin,
-  isTheRequester,
 }) => {
   const disableActions = currentStatusId !== 1;
 

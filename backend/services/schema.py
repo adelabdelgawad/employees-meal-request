@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_serializer
 from datetime import datetime
 from sqlmodel import SQLModel, Field
 
@@ -161,3 +161,26 @@ class LoginRequest(BaseModel):
     password: str
 
     model_config = ConfigDict(from_attributes=True)
+
+class ReportDetailsRecord(BaseModel):
+    id: int
+    employee_code: int | None = None
+    employee_name: str | None = None
+    employee_title: str | None = None
+    department: str | None = None
+    requester_name: str | None = None
+    requester_title: str | None = None
+    request_time: datetime | None = None
+    meal: str | None = None
+    attendance_in: datetime | None = None
+    attendance_out: datetime | None = None
+    shift_hours: int | None = None
+    notes: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer("attendance_in", "attendance_out", "request_time")
+    def customize_datetime_format(self, value: datetime) -> str | None:
+        if value is None:
+            return None
+        return value.isoformat(sep=" ", timespec="seconds")

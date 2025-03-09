@@ -17,26 +17,16 @@ import toast from "react-hot-toast";
 
 const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
-interface RequestLine {
-  id: number;
-  name: string;
-  title: string;
-  code: string;
-  attendance?: string;
-  shift_hours?: string;
-  notes?: string;
-  is_accepted: boolean;
-}
 
 interface RequestLinesTableProps {
-  data: RequestLine[];
+  data: RequestLineRespose[];
   disableStatus: boolean;
   onCancel: () => void;
   onDelete?: (id: number) => Promise<void>;
 }
 
 const TableRowComponent: React.FC<{
-  line: RequestLine;
+  line: RequestLineRespose;
   disableStatus: boolean;
   onDeleteClick: (id: number) => void;
 }> = ({ line, disableStatus, onDeleteClick }) => {
@@ -110,6 +100,7 @@ const RequestLinesTable: React.FC<RequestLinesTableProps> = ({
       await onDelete(pendingDeleteId);
       toast.success("Request line deleted successfully");
     } catch (error) {
+      console.error('An error occurred:', error);
       toast.error("Failed to delete entry. Please try again.");
     } finally {
       setPendingDeleteId(null);

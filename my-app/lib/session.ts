@@ -5,8 +5,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { JWTPayload } from "jose";
 
-const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
-
 // Ensure the SESSION_SECRET environment variable is defined
 const secretKey = process.env.SESSION_SECRET;
 if (!secretKey) {
@@ -34,7 +32,7 @@ export async function decrypt(session = "") {
   }
 }
 
-export async function createSession(user: string) {
+export async function createSession(user: User) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const session = await encrypt({ user, expiresAt });
   const cookieStore = await cookies();
@@ -69,8 +67,8 @@ export async function updateSession() {
 }
 
 export async function deleteSession() {
-  const cookieStore = await cookies()
-  cookieStore.delete('session')
+  const cookieStore = await cookies();
+  cookieStore.delete("session");
 }
 
 export async function login(formData: FormData) {
@@ -78,11 +76,14 @@ export async function login(formData: FormData) {
   const password = formData.get("password") as string;
 
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_FASTAPI_URL}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_FASTAPI_URL}/login`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      }
+    );
 
     if (!response.ok) {
       let errorMessage = "Authentication failed";
@@ -114,21 +115,26 @@ export async function login(formData: FormData) {
     };
   }
 }
-export async function getSession() {
+
+export async function getSession(): Promise<Session | null> {
   const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('session')?.value;
+  const sessionCookie = cookieStore.get("session")?.value;
   if (!sessionCookie) return null;
   const payload = await decrypt(sessionCookie);
+
   if (payload) {
-    return payload; // Ensure this returns an object with a 'token' property
+    // If payload.expiresAt is stored as a string, you might need to convert it:
+    // const expiresAt = new Date(payload.expiresAt);
+    return {
+      ...payload,
+      token: sessionCookie,
+    } as Session;
   }
+
   return null;
 }
 
-
-
-
 export async function logout() {
-  deleteSession()
-  redirect('/login')
+  deleteSession();
+  redirect("/login");
 }

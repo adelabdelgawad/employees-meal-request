@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import toast from "react-hot-toast";
 const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
 
 // API Route to handle the submission of requests
@@ -44,11 +45,12 @@ export default async function handler(
       message: "Requests submitted successfully!",
       created_meal_request_ids: result.created_meal_request_ids,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error handling requests:", error);
+    toast.error("Error handling requests")
     return res.status(500).json({
       message:
-        error.message || "An error occurred while processing the request",
+        error || "An error occurred while processing the request",
     });
   }
 }

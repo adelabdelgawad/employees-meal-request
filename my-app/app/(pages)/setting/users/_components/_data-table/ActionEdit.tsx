@@ -13,7 +13,6 @@ import { Switch } from "@/components/ui/switch";
 import {
   fetchUsers,
   fetchRoles,
-  updateUserRoles,
 } from "@/lib/services/setting-user";
 import { useSettingUserContext } from "@/hooks/SettingUserContext";
 import toast from "react-hot-toast";

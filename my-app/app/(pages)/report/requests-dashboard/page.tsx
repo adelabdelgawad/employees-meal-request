@@ -5,7 +5,7 @@ import ChartSection from "./_sections/ChartSection";
 import TopTenSection from "./_sections/TopTenSection";
 import { useReportRequest } from "@/hooks/ReportRequestContext";
 
-export default function page() {
+export default function Page() {
   // Fetch dashboard data
   const { filteredRequests: requests } = useReportRequest();
 
@@ -21,7 +21,7 @@ export default function page() {
   const totalRequests = totalDinnerRequests + totalLunchRequests;
 
   return (
-    <div className=" bg-gray-100 p-2">
+    <div className="bg-gray-100 p-2">
       {/* Header */}
       <div className="p-2"></div>
       {/* Stats Section */}

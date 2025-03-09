@@ -31,13 +31,11 @@ interface Request {
 interface DataTableProps {
   initialData: Request[];
   isAdmin: boolean;
-  userId: number;
 }
 
 const DataTable: React.FC<DataTableProps> = ({
   initialData,
   isAdmin,
-  userId,
 }) => {
   const [data, setData] = useState<Request[]>(initialData);
 
@@ -163,7 +161,6 @@ const DataTable: React.FC<DataTableProps> = ({
                     recordId={record.id}
                     currentStatusId={record.status_id ?? 0}
                     isAdmin={isAdmin}
-                    isTheRequester={record.requester_id === userId}
                   />
                 </TableCell>
               </TableRow>
