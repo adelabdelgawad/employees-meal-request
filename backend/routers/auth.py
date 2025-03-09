@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, HTTPException, status
 from src.dependencies import SessionDep
 from services.schema import LoginRequest
@@ -13,6 +14,7 @@ from services.active_directory import authenticate_and_get_user
 from src.exceptions import InvalidCredentialsException, InternalServerException
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/login", response_model=UserData)
@@ -20,51 +22,71 @@ async def login_for_access_token(
     session: SessionDep, form_data: LoginRequest
 ) -> UserData:
     """
-    Authenticate the user and return user data.
-
-    Args:
-        session (SessionDep): Database session dependency.
-        form_data (LoginRequest): Login credentials (username and password).
-
-    Raises:
-        InvalidCredentialsException: If the credentials are incorrect.
-        InternalServerException: If an unexpected error occurs.
-
-    Returns:
-        UserData: Authenticated user's data.
+    Authenticate the user and return user data with enhanced logging.
     """
     try:
+        logger.info(
+            f"Login attempt initiated for username: {form_data.username}"
+        )
+
         if not form_data or not form_data.username or not form_data.password:
+            logger.warning("Missing username or password in request")
             raise InvalidCredentialsException()
 
         username = form_data.username
         password = form_data.password
-        login_type: str = "local"
+        login_type = "local"
 
-        # Check if user exists in HRIS database
+        # Check user existence in HRIS and local DB
         hris_user = await read_hirs_account_by_username(session, username)
-        autherized_user = None
+        authorized_user = await read_account_by_username(session, username)
+        logger.debug(
+            f"HRIS user check: {hris_user is not None}, Local user check: {authorized_user is not None}"
+        )
 
         if hris_user:
             login_type = "domain"
-        else:
-            autherized_user = await read_account_by_username(session, username)
-            if autherized_user and autherized_user.is_domain_user:
-                login_type = "domain"
+            logger.debug(
+                f"HRIS user found, login type set to domain for {username}"
+            )
+        elif authorized_user and authorized_user.is_domain_user:
+            login_type = "domain"
+            logger.debug(
+                f"Local domain user found, login type set to domain for {username}"
+            )
 
-        # If user does not exist in both HRIS and local DB
-        if not hris_user and not autherized_user:
+        # Validate user existence
+        if not hris_user and not authorized_user:
+            logger.warning(
+                f"User {username} not found in HRIS or local database"
+            )
             raise InvalidCredentialsException()
 
-        # Authenticate Domain Users (Active Directory)
+        logger.info(
+            f"Authentication type determined as {login_type} for {username}"
+        )
+
+        # Domain User Authentication
         if login_type == "domain":
+            logger.debug(
+                f"Attempting Active Directory authentication for {username}"
+            )
             windows_account = await authenticate_and_get_user(
                 username, password
             )
+
             if not windows_account:
+                logger.warning(
+                    f"Active Directory authentication failed for {username}"
+                )
                 raise InvalidCredentialsException()
 
-            # Create or update the user in the database
+            logger.info(
+                f"Active Directory authentication successful for {username}"
+            )
+
+            # Sync user with local database
+            logger.debug(f"Syncing domain user {username} with local database")
             user = await create_or_update_user(
                 session,
                 windows_account.username,
@@ -72,24 +94,37 @@ async def login_for_access_token(
                 windows_account.title,
             )
             if not user:
+                logger.error(
+                    f"Failed to create/update domain user {username} in database"
+                )
                 raise InternalServerException()
 
-        else:  # Authenticate Local Users
+            logger.info(f"Domain user {username} synchronized successfully")
+
+        # Local User Authentication
+        else:
+            logger.debug(f"Attempting local authentication for {username}")
             user = await validate_user_name_and_password(
                 session, username, password
             )
+
             if not user:
+                logger.warning(f"Local authentication failed for {username}")
                 raise InvalidCredentialsException()
 
-        # Retrieve User Roles
+            logger.info(f"Local authentication successful for {username}")
+
+        # Retrieve user roles
+        logger.debug(f"Retrieving roles for user {user.id}")
         roles = (
             await read_roles(session)
             if user.is_super_admin
             else await read_roles(session, user.id)
         )
+        logger.info(f"Retrieved {len(roles)} roles for user {user.id}")
 
-        # Return user data
-        return UserData(
+        # Prepare response
+        user_data = UserData(
             userId=user.id,
             username=user.username,
             email=f"{user.username}@andalusiagroup.net",
@@ -98,8 +133,16 @@ async def login_for_access_token(
             roles=roles,
         )
 
+        logger.info(f"Login successful for {username}")
+        return user_data
+
     except InvalidCredentialsException as e:
-        raise e  # Return 401 Unauthorized
+        logger.warning(f"Authentication failed for {username}: {str(e)}")
+        raise e
 
     except Exception as e:
-        raise InternalServerException()  # Return 500 Internal Server Error
+        logger.error(
+            f"Unexpected error during login for {username}: {str(e)}",
+            exc_info=True,
+        )
+        raise InternalServerException()

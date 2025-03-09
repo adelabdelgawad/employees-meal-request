@@ -45,8 +45,10 @@ function ListItem({
 }
 
 export default async function NavigationBar() {
+  console.log("HERE")
   const session = await getSession();
-  const userRoles = (session?.user?.roles || []) as AppRole[];
+  const userRoles = (session?.user?.roles || []) as unknown as AppRole[];
+  console.log(userRoles)
 
   // Group routes into navigation sections
   const navSections = routesConfig.reduce((acc, route) => {

@@ -150,6 +150,7 @@ async def read_requests(
 
     # Build common filter conditions
     filters = []
+
     if start_dt and end_dt:
         filters.append(Request.request_time.between(start_dt, end_dt))
     if requester_id is not None:
@@ -202,6 +203,9 @@ async def read_requests(
             Request.closed_time,
             Request.notes,
         )
+        .having(
+            func.count(RequestLine.id) > 0
+        )  # Use HAVING for aggregate conditions
         .order_by(desc(Request.request_time))
     )
 

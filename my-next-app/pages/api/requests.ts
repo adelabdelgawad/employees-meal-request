@@ -1,0 +1,56 @@
+import { NextApiRequest, NextApiResponse } from "next";
+import toast from "react-hot-toast";
+const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
+
+// API Route to handle the submission of requests
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "Method Not Allowed" });
+  }
+
+  try {
+    const { requests } = req.body;
+
+    // Validate that requests exist
+    if (!requests || !Array.isArray(requests) || requests.length === 0) {
+      return res.status(400).json({ message: "No requests provided" });
+    }
+
+    const fastApiResponse = await fetch(
+      `${NEXT_PUBLIC_FASTAPI_URL}/submit-request`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requests),
+      }
+    );
+
+    if (!fastApiResponse.ok) {
+      const errorData = await fastApiResponse.json();
+      throw new Error(
+        errorData.detail || "Failed to process requests at FastAPI"
+      );
+    }
+
+    // Parse FastAPI response
+    const result = await fastApiResponse.json();
+
+    // ✅ Return the created meal request IDs directly from the result
+    return res.status(200).json({
+      message: "Requests submitted successfully!",
+      created_meal_request_ids: result.created_meal_request_ids,
+    });
+  } catch (error) {
+    console.error("Error handling requests:", error);
+    toast.error("Error handling requests")
+    return res.status(500).json({
+      message:
+        error || "An error occurred while processing the request",
+    });
+  }
+}

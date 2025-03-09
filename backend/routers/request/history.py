@@ -239,11 +239,14 @@ async def delete_request_line(
     """
     try:
         # Retrieve the RequestLine by ID
-        user = await session.get(RequestLine, id)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        request_line = await session.get(RequestLine, id)
+        if not request_line:
+            raise HTTPException(
+                status_code=404, detail="Request Line not found"
+            )
 
-        await session.delete(user)
+        request_line.is_deleted = True
+        session.add(request_line)
         await session.commit()
         logger.info(
             f"User {current_user} successfully deleted RequestLine wsith id {id}."
@@ -258,4 +261,48 @@ async def delete_request_line(
         raise HTTPException(
             status_code=500,
             detail="An error occurred while deleting the RequestLine.",
+        )
+
+
+@router.delete("/history/delete/{id}")
+async def delete_request(
+    current_user: CurrentUserDep, session: SessionDep, id: int
+):
+    """
+    Delete a Request by its ID.
+
+    Args:
+        id (int): The ID of the Request to delete.
+        session (Session): The database session dependency.
+        current_user (str): The current authenticated user.
+
+    Returns:
+        dict: A message indicating the result of the deletion.
+
+    Raises:
+        HTTPException: If the Request with the given ID is not found or if a database error occurs.
+    """
+    try:
+        # Retrieve the Request by ID
+        request = await session.get(Request, id)
+        ic(request)
+        if not request:
+            raise HTTPException(status_code=404, detail="request not found")
+
+        request.is_deleted = True
+        session.add(request)
+        await session.commit()
+        logger.info(
+            f"User {current_user.username} successfully deleted Request wsith id {id}."
+        )
+        return {"message": "Request deleted successfully."}
+
+    except Exception as e:
+        logger.error(
+            f"Database error occurred while request {current_user.username} attempted to delete Request with id {id}: {e}"
+        )
+        session.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while deleting the Request.",
         )

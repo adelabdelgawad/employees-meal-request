@@ -158,7 +158,7 @@ async def get_requests_data(
         )
 
         # Log the number of records returned from the data retrieval.
-        data_count = len(request_lines.get("data", []))
+        data_count = len(request_lines.request_lines)
         logger.info(
             "Successfully retrieved report details for page %d with %d records.",
             page,
