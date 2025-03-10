@@ -10,19 +10,16 @@ import {
 } from "@radix-ui/react-dialog";
 import { DialogHeader } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import {
-  fetchUsers,
-  fetchRoles,
-} from "@/lib/services/setting-user";
 import { useSettingUserContext } from "@/hooks/SettingUserContext";
 import toast from "react-hot-toast";
 import { PencilIcon } from "lucide-react";
 import clientAxiosInstance from "@/lib/clientAxiosInstance";
 
+
 export default function ActionEdit({ userId }: { userId: number }) {
   // State variables
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User>();
   const [allRoles, setAllRoles] = useState<Role[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
   const [originalRoles, setOriginalRoles] = useState<number[]>([]);
@@ -35,31 +32,26 @@ export default function ActionEdit({ userId }: { userId: number }) {
     if (!isDialogOpen) return;
 
     const fetchData = async () => {
+      console.log("here")
       try {
         setIsLoading(true);
-
-        const roles = await fetchRoles();
-        setAllRoles(roles);
-
-        const userData = await fetchUsers(userId);
-        if (userData) {
-          setUser(userData);
-
-          const roleIds = userData.roles.map((role: Role) => role.id);
-          setSelectedRoles(roleIds);
-          setOriginalRoles(roleIds);
-        }
-      } catch {
-        toast.error("Error fetching user data.");
-      } finally {
-        setIsLoading(false);
+        // Retrieve all available roles.
+        const response = await clientAxiosInstance.get(`/setting/user-info/${userId}`);
+        const data = await response.data;
+        const roleIds = data.user_roles_ids.map((role: Role) => role.id);
+        setUser(data.user)
+        setAllRoles(data.all_roles)
+        setSelectedRoles(roleIds);
+      } catch (error) {
+        console.error("Error Setting User Info:", error);
+        toast.error("Something went Wrong")
       }
     };
 
     fetchData();
   }, [isDialogOpen, userId]);
 
-  // Handle role toggle
+  // Handle toggling of roles.
   const handleRoleToggle = (roleId: number) => {
     setSelectedRoles((prev) =>
       prev.includes(roleId)
@@ -68,8 +60,8 @@ export default function ActionEdit({ userId }: { userId: number }) {
     );
   };
 
-  // Check if roles have changed
-  const hasChanges = () => {
+  // Check whether there are changes compared to the original roles.
+  const hasChanges = (): boolean => {
     const addedRoles = selectedRoles.filter(
       (roleId) => !originalRoles.includes(roleId)
     );
@@ -79,7 +71,7 @@ export default function ActionEdit({ userId }: { userId: number }) {
     return addedRoles.length > 0 || removedRoles.length > 0;
   };
 
-  // Handle form submission
+  // Handle form submission.
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -90,11 +82,12 @@ export default function ActionEdit({ userId }: { userId: number }) {
       (roleId) => !selectedRoles.includes(roleId)
     );
 
+    // Use startTransition for low priority state updates.
     startTransition(async () => {
       try {
         const data = {
           added_roles: addedRoles,
-          removed_roles: removedRoles
+          removed_roles: removedRoles,
         };
 
         await clientAxiosInstance.put(`/user/${userId}/roles`, data);
@@ -102,7 +95,7 @@ export default function ActionEdit({ userId }: { userId: number }) {
         setOriginalRoles(selectedRoles);
         setIsDialogOpen(false);
         await mutate();
-      } catch {
+      } catch (error) {
         toast.error("Failed to update user roles. Please try again.");
       }
     });
@@ -130,20 +123,15 @@ export default function ActionEdit({ userId }: { userId: number }) {
                 <span className="font-medium">Username:</span> {user.username}
               </div>
               <div>
-                <span className="font-medium">Full Name:</span> {user.fullName}
+                <span className="font-medium">Full Name:</span> {user.fullname}
               </div>
 
               <h3 className="text-md font-medium mt-4">User Roles</h3>
 
               {allRoles.map((role) => (
-                <div
-                  key={role.id}
-                  className="flex items-start justify-between mb-4"
-                >
+                <div key={role.id} className="flex items-start justify-between mb-4">
                   <div>
-                    <div className="font-medium flex items-start">
-                      {role.name}
-                    </div>
+                    <div className="font-medium">{role.name}</div>
                     <div className="text-sm text-gray-500">
                       {role.description}
                     </div>
@@ -159,7 +147,7 @@ export default function ActionEdit({ userId }: { userId: number }) {
                 <Button
                   type="submit"
                   className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md ${
-                    !hasChanges() && "opacity-50 cursor-not-allowed"
+                    !hasChanges() ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                   disabled={!hasChanges()}
                 >

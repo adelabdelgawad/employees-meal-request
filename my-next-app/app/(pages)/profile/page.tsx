@@ -11,7 +11,7 @@ export default async function ProfilePage() {
     <main style={{ padding: "2rem" }}>
       <h1>Profile</h1>
       <UserInfo label="ID" value={userId || "N/A"} />
-      {/* <UserInfo label="Name" value={user?.fullName || "N/A"} />
+      {/* <UserInfo label="Name" value={user?.fullname || "N/A"} />
       <UserInfo label="Title" value={user?.userTitle || "N/A"} /> */}
       {/* <UserInfo
         label="Role"

@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button"; // your button component
 export interface User {
   id: number;
   username: string;
-  fullName: string;
+  fullname: string;
   title: string;
 }
 
@@ -51,7 +51,7 @@ export function UserSelection({ users, onUserSelect }: UserSelectionProps) {
     const filtered = users.filter(
       (user) =>
         user.username.toLowerCase().includes(search) ||
-        user.fullName.toLowerCase().includes(search) ||
+        user.fullname.toLowerCase().includes(search) ||
         user.title.toLowerCase().includes(search)
     );
     setFilteredUsers(filtered);
@@ -66,7 +66,7 @@ export function UserSelection({ users, onUserSelect }: UserSelectionProps) {
 
   function handleSelect(user: User) {
     onUserSelect(user);
-    setInputValue(`${user.fullName} (${user.username})`);
+    setInputValue(`${user.fullname} (${user.username})`);
     setOpen(false);
   }
 
@@ -90,11 +90,11 @@ export function UserSelection({ users, onUserSelect }: UserSelectionProps) {
               {filteredUsers.map((user) => (
                 <CommandItem
                   key={user.username}
-                  value={`${user.username} ${user.fullName} ${user.title}`}
+                  value={`${user.username} ${user.fullname} ${user.title}`}
                   onSelect={() => handleSelect(user)}
                 >
                   <div>
-                    <div className="font-medium">{user.fullName}</div>
+                    <div className="font-medium">{user.fullname}</div>
                     <div className="text-sm text-gray-500">
                       @{user.username} - {user.title}
                     </div>

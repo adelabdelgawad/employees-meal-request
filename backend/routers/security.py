@@ -3,10 +3,15 @@ import logging
 from fastapi import APIRouter, HTTPException, status
 from typing import List, Optional
 from sqlmodel import select
-from sqlalchemy.orm import selectinload
-from db.models import Account, Role, LogRolePermission, RolePermission
-from services.http_schema import DomainUser
-from services.active_directory import read_domain_users
+from db.crud import read_domain_users
+from db.models import (
+    Account,
+    Role,
+    RolePermission,
+)
+from routers.utils.auth import read_roles
+from services.active_directory import read_domain_users_from_ldap
+from services.http_schema import DomainUserResponse, SettingUserInfoResponse
 from sqlalchemy.exc import IntegrityError
 from routers.cruds import security as crud
 from services.http_schema import (
@@ -16,9 +21,7 @@ from services.http_schema import (
     UpdateRolesRequest,
 )
 from src.dependencies import SessionDep, CurrentUserDep
-
 from icecream import ic
-
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -26,22 +29,25 @@ logger = logging.getLogger(__name__)
 
 @router.get(
     "/domain-users",
-    response_model=List[DomainUser],
+    response_model=List[DomainUserResponse],
     status_code=status.HTTP_200_OK,
 )
-async def get_domain_users(user: CurrentUserDep):
+async def get_domain_users(
+    session: SessionDep,
+) -> Optional[List[DomainUserResponse]]:
     """
     Retrieve all domain users from the external Active Directory.
 
     Returns:
-        List[DomainUser]: A list of domain users.
+        List[DomainUserResponse]: A list of domain users.
 
     Raises:
         HTTPException: 500 Internal Server Error if an error occurs during fetching.
     """
     try:
-        users = await read_domain_users()
-        logger.info("Successfully fetched domain users")
+        users = await read_domain_users(session)
+        if not users:
+            return []
         return users
     except Exception as err:
         # Logs the exception with the full stack trace for debugging purposes.
@@ -99,47 +105,29 @@ async def get_roles(session: SessionDep):
 
 
 @router.get(
-    "/user",
-    response_model=List[SettingUserResponse],
+    "/setting/users",
+    response_model=SettingUserResponse,  # you can keep the response_model here
     status_code=status.HTTP_200_OK,
 )
-async def get_users(maria_session: SessionDep, user_id: Optional[int] = None):
-    """
-    Retrieve users from the database. If a user_id is provided, return that specific user.
-
-    Args:
-        session (AsyncSession): The database session dependency.
-        user_id (Optional[int]): The ID of the user to retrieve. Defaults to None.
-
-    Returns:
-        List[SettingUserResponse]: A list of user settings responses.
-
-    Raises:
-        HTTPException: 400 for IntegrityError; 500 for any other internal error.
-    """
+async def get_users(session: SessionDep):
     try:
-        if user_id is not None:
-            users = await crud.read_user(maria_session, user_id)
-            logger.info(f"Fetched user with ID {user_id}")
-            return [users[0]] if users else []
-        else:
-            users = await crud.read_user(maria_session)
-            logger.info("Fetched all users with roles successfully")
-            return users
-    except IntegrityError as e:
-        logger.error(f"IntegrityError in create_user endpoint: {e}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with the given username already exists.",
+        users = await crud.read_user(session)
+        roles = await read_roles(session)
+        domain_users = await read_domain_users(session)
+        logger.info("Setting Users records Read successfully")
+        response = SettingUserResponse(
+            roles=roles, users=users, domain_users=domain_users
         )
+        # Serialize the model to a dict before returning it.
+        return response.model_dump()
     except Exception as e:
-        logger.error(f"Unexpected error in create_user endpoint: {e}")
+        logger.error(f"Unexpected error in Setting Users endpoint: {e}")
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
         )
+
 
 @router.put("/user/{user_id}/roles")
 async def update_user_roles(
@@ -286,6 +274,45 @@ async def create_user(
         )
     except Exception as e:
         logger.exception("Unexpected error in create_user endpoint")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error",
+        )
+
+
+@router.get(
+    "/setting/user-info/{user_id}", response_model=SettingUserInfoResponse
+)
+async def get_user_info(
+    session: SessionDep, user_id: int
+) -> SettingUserInfoResponse:
+    try:
+        user = await session.get(Account, user_id)
+        if not user:
+            logger.warning(f"User with ID {user_id} not found")
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Fetch all roles
+        statement = select(Role)
+        results = await session.execute(statement)
+        roles = results.all()
+        ic(roles)
+
+        # Extract role IDs
+        user_roles_ids = [role.id for role in roles]
+
+        return SettingUserInfoResponse(
+            user_roles_ids=user_roles_ids, user=user, all_roles=roles
+        )
+
+    except IntegrityError:
+        logger.exception("IntegrityError in get_user_info endpoint")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with the given username already exists.",
+        )
+    except Exception as e:
+        logger.exception("Unexpected error in get_user_info endpoint")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",

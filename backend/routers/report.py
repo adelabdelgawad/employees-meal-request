@@ -1,19 +1,15 @@
 import traceback
 import logging
 from typing import List, Optional, Tuple
-from fastapi import APIRouter, HTTPException, status, Query, Request
+from fastapi import APIRouter, HTTPException, status, Query
 from routers.cruds.attendance_and_shift import (
     update_request_lines_with_attendance,
 )
 from services.http_schema import ReportDashboardResponse, ReportDetailsResponse
-from routers.utils.report_details import (
-    read_request_lines_with_attendance,
-    read_request_lines,
-)
+from routers.utils.report_details import read_request_lines_with_attendance
 from datetime import datetime
 from routers.cruds.report import read_requests_data
 from src.dependencies import SessionDep, HRISSessionDep
-from routers.cruds.request import add_attendance_and_shift_to_request_line
 
 # Initialize the API router and logger.
 router = APIRouter()

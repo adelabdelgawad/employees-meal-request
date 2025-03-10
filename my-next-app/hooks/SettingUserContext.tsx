@@ -1,7 +1,9 @@
 'use client';
 
-import { fetchRoles, fetchUsers } from '@/lib/services/setting-user';
+import clientAxiosInstance from '@/lib/clientAxiosInstance';
+import { fetchUsers } from '@/lib/services/setting-user';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 // Define the shape of the context
 interface UserContextType {
@@ -30,22 +32,20 @@ export const SettingUserProvider: React.FC<{ children: React.ReactNode }> = ({
   // Initial data fetch
   useEffect(() => {
     const loadData = async () => {
-      try {
-        const [fetchedRoles, fetchedUsers] = await Promise.all([
-          fetchRoles(),
-          fetchUsers(),
-        ]);
-        setRoles(fetchedRoles);
-        setUsers(fetchedUsers);
-        setDomainUsers(fetchedUsers); // Ensure domainUsers is set initially
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
+        try {
+          const response = await clientAxiosInstance.get(`/setting/users`);
+            const data =  await response.data;
+            setRoles(data.roles);
+            setUsers(data.users);
+            setDomainUsers(data.domain_users);
+          } catch (error) {
+          console.error("Error fetching roles:", error);
+          toast.error("Failed to get the Users.");
+        }
     };
 
     loadData();
+    setLoading(false)
   }, []);
 
   // Mutate function to refresh users

@@ -2,21 +2,17 @@ from fastapi import HTTPException, status, APIRouter
 import traceback
 import logging
 from typing import List
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks
-from routers.cruds import request as crud
-from routers.cruds.request_lines import (
-    update_request_lines,
-)
+from fastapi import APIRouter, HTTPException, status
+
 from services.http_schema import RequestHistoryRecordResponse
 import pytz
-from services.http_schema import UpdateRequestLinesPayload, ScheduleRequest
-from src.dependencies import SessionDep, CurrentUserDep, HRISSessionDep
+from services.http_schema import ScheduleRequest
+from src.dependencies import SessionDep, CurrentUserDep
 from icecream import ic
 from sqlmodel import select, func, case
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
 from db.models import Request, RequestStatus, Meal, RequestLine
-from routers.utils.request import create_request_lines_and_confirm
 from routers.cruds.request_lines import read_request_lines_by_request_id
 
 # Default timezone

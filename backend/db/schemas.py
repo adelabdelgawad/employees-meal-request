@@ -1,14 +1,15 @@
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 # ----- Role Schemas -----
 class RoleRead(BaseModel):
-    id: Optional[int]
+    id: int
     name: str
+    description: str | None
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RoleCreate(BaseModel):
@@ -17,12 +18,12 @@ class RoleCreate(BaseModel):
 
 # ----- HRISSecurityUser Schemas -----
 class HRISSecurityUserRead(BaseModel):
-    id: Optional[int]
+    id: int | None
     username: str
     is_deleted: bool
     is_locked: bool
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class HRISSecurityUserCreate(BaseModel):
@@ -33,10 +34,10 @@ class HRISSecurityUserCreate(BaseModel):
 
 # ----- Department Schemas -----
 class DepartmentRead(BaseModel):
-    id: Optional[int]
+    id: int | None
     name: str
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DepartmentCreate(BaseModel):
@@ -45,14 +46,14 @@ class DepartmentCreate(BaseModel):
 
 # ----- Employee Schemas -----
 class EmployeeRead(BaseModel):
-    id: Optional[int]
+    id: int | None
     code: int
     name: Optional[str]
     title: Optional[str]
     is_active: bool
     department_id: int
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EmployeeCreate(BaseModel):
@@ -65,10 +66,10 @@ class EmployeeCreate(BaseModel):
 
 # ----- RequestStatus Schemas -----
 class RequestStatusRead(BaseModel):
-    id: Optional[int]
+    id: int | None
     name: str
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RequestStatusCreate(BaseModel):
@@ -77,10 +78,10 @@ class RequestStatusCreate(BaseModel):
 
 # ----- Meal Schemas -----
 class MealRead(BaseModel):
-    id: Optional[int]
+    id: int | None
     name: str
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MealCreate(BaseModel):
@@ -89,29 +90,29 @@ class MealCreate(BaseModel):
 
 # ----- Account Schemas -----
 class AccountRead(BaseModel):
-    id: Optional[int]
+    id: int | None
     username: str
-    full_name: Optional[str]
+    fullname: Optional[str]
     title: Optional[str]
     is_domain_user: bool
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AccountCreate(BaseModel):
     username: str
-    full_name: Optional[str]
+    fullname: Optional[str]
     title: Optional[str]
     is_domain_user: Optional[bool] = False
 
 
 # ----- RolePermission Schemas -----
 class RolePermissionRead(BaseModel):
-    id: Optional[int]
+    id: int | None
     role_id: int
     account_id: int
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RolePermissionCreate(BaseModel):
@@ -121,7 +122,7 @@ class RolePermissionCreate(BaseModel):
 
 # ----- Request Schemas -----
 class RequestRead(BaseModel):
-    id: Optional[int]
+    id: int | None
     status_id: int
     requester_id: int
     id: int
@@ -129,9 +130,9 @@ class RequestRead(BaseModel):
     created_time: datetime
     closed_time: Optional[datetime]
     notes: Optional[str]
-    auditor_id: Optional[int]
+    auditor_id: int | None
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RequestCreate(BaseModel):
@@ -142,21 +143,21 @@ class RequestCreate(BaseModel):
     created_time: datetime
     closed_time: Optional[datetime] = None
     notes: Optional[str] = None
-    auditor_id: Optional[int] = None
+    auditor_id: int | None = None
 
 
 # ----- RequestLine Schemas -----
 class RequestLineRead(BaseModel):
-    id: Optional[int]
+    id: int | None
     employee_id: int
     department_id: int
     request_id: int
     attendance: Optional[datetime]
     notes: Optional[str]
     is_accepted: bool
-    shift_hours: Optional[int]
+    shift_hours: int | None
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RequestLineCreate(BaseModel):
@@ -166,12 +167,12 @@ class RequestLineCreate(BaseModel):
     attendance: Optional[datetime] = None
     notes: Optional[str] = None
     is_accepted: bool = True
-    shift_hours: Optional[int] = None
+    shift_hours: int | None = None
 
 
 # ----- LogRolePermission Schemas -----
 class LogRolePermissionRead(BaseModel):
-    id: Optional[int]
+    id: int | None
     account_id: int
     role_id: int
     admin_id: int
@@ -180,7 +181,7 @@ class LogRolePermissionRead(BaseModel):
     result: Optional[str]
     timestamp: datetime
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LogRolePermissionCreate(BaseModel):
@@ -195,7 +196,7 @@ class LogRolePermissionCreate(BaseModel):
 
 # ----- LogRequestLine Schemas -----
 class LogRequestLineRead(BaseModel):
-    id: Optional[int]
+    id: int | None
     request_line_id: int
     account_id: int
     action: str
@@ -203,7 +204,7 @@ class LogRequestLineRead(BaseModel):
     result: Optional[str]
     timestamp: datetime
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LogRequestLineCreate(BaseModel):
@@ -217,7 +218,7 @@ class LogRequestLineCreate(BaseModel):
 
 # ----- LogTraffic Schemas -----
 class LogTrafficRead(BaseModel):
-    id: Optional[int]
+    id: int | None
     ip_address: str
     path: Optional[str]
     status: str
@@ -225,7 +226,7 @@ class LogTrafficRead(BaseModel):
     request_body: Optional[str]
     timestamp: datetime
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LogTrafficCreate(BaseModel):
@@ -239,11 +240,11 @@ class LogTrafficCreate(BaseModel):
 
 # ----- Email Schemas -----
 class EmailRead(BaseModel):
-    id: Optional[int]
+    id: int | None
     address: str
     role_id: int
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EmailCreate(BaseModel):
@@ -253,10 +254,10 @@ class EmailCreate(BaseModel):
 
 # ----- EmailRole Schemas -----
 class EmailRoleRead(BaseModel):
-    id: Optional[int]
+    id: int | None
     name: str
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EmailRoleCreate(BaseModel):

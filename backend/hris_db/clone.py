@@ -3,8 +3,8 @@ from typing import List
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from sqlmodel import select, or_
-from sqlmodel.ext.asyncio.session import AsyncSession
-from db.models import Employee, HRISSecurityUser, Department
+from sqlalchemy.ext.asyncio.session import AsyncSession
+from db.models import DomainUser, Employee, HRISSecurityUser, Department
 from hris_db.models import (
     HRISOrganizationUnit,
     HRISEmployee,
@@ -12,7 +12,10 @@ from hris_db.models import (
     HRISHRISSecurityUser,
     HRISEmployeePosition,
 )
+from services.active_directory import read_domain_users_from_ldap
+from services.schema import DomainUser as DomainUserSchema
 from sqlalchemy.dialects.mysql import insert
+from sqlalchemy import delete, select
 
 # Logger setup
 logger = logging.getLogger(__name__)
@@ -46,6 +49,7 @@ async def replicate(
         await _create_or_update_security_users(hris_session, app_session)
         await _create_or_update_departments(hris_session, app_session)
         await _create_or_update_employees(hris_session, app_session)
+        await _update_domain_users(app_session)
         logger.info("Data replication completed successfully.")
     except Exception as e:
         logger.error(
@@ -236,7 +240,7 @@ async def _create_or_update_employees(
         )
 
         for emp_data in hris_employees_with_positions:
-            full_name = " ".join(
+            fullname = " ".join(
                 filter(
                     None,
                     [
@@ -252,7 +256,7 @@ async def _create_or_update_employees(
             insert_stmt = insert(Employee).values(
                 id=emp_data.id,
                 code=emp_data.code,
-                name=full_name,
+                name=fullname,
                 title=emp_data.title,
                 is_active=True,
                 department_id=emp_data.org_unit_id,
@@ -280,3 +284,27 @@ async def _create_or_update_employees(
     except Exception as e:
         logger.error(f"Error updating employees: {e}", exc_info=True)
         await app_session.rollback()
+
+
+async def _update_domain_users(session: AsyncSession):
+    """
+    Replace all current DomainUser records in the database with newly fetched ones.
+
+    Args:
+        session (AsyncSession): The asynchronous SQLAlchemy session.
+    """
+    # Fetch new domain users
+    domain_users: List[DomainUserSchema] = await read_domain_users_from_ldap()
+    if not domain_users:
+        # No domain users to update; optionally, you could log this state.
+        return
+
+    # Bulk delete all existing DomainUser entries.
+    await session.execute(delete(DomainUser))
+
+    # Create new DomainUser instances from the fetched data.
+    new_users = [DomainUser(**user.model_dump()) for user in domain_users]
+    session.add_all(new_users)
+
+    # Commit the transaction to persist the changes.
+    await session.commit()

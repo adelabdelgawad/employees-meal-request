@@ -3,6 +3,7 @@ from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 from db.models import Account, Role, RolePermission, HRISSecurityUser
+from db.schemas import RoleRead
 from routers.utils.hashing import verify_password
 
 # Configure logging
@@ -59,7 +60,9 @@ async def validate_user_name_and_password(
         return None
 
 
-async def read_user_by_id(session: AsyncSession, user_id: int) -> Optional[Account]:
+async def read_user_by_id(
+    session: AsyncSession, user_id: int
+) -> Optional[Account]:
     """
     Fetch an account by user_id.
 
@@ -83,7 +86,7 @@ async def read_user_by_id(session: AsyncSession, user_id: int) -> Optional[Accou
 
 
 async def create_or_update_user(
-    session: AsyncSession, username: str, full_name: str, title: str
+    session: AsyncSession, username: str, fullname: str, title: str
 ) -> Account:
     """
     Create or update a user account, ensuring the correct role assignment.
@@ -94,7 +97,7 @@ async def create_or_update_user(
     Args:
         session (AsyncSession): The SQLAlchemy async session.
         username (str): The username of the account.
-        full_name (str): The full name of the user.
+        fullname (str): The full name of the user.
         title (str): The job title of the user.
 
     Returns:
@@ -105,12 +108,15 @@ async def create_or_update_user(
     account = result.scalar_one_or_none()
 
     if account:
-        account.full_name = full_name
+        account.fullname = fullname
         account.title = title
         message = f"Updated user '{username}' in database."
     else:
         account = Account(
-            username=username, full_name=full_name, title=title, is_domain_user=True
+            username=username,
+            fullname=fullname,
+            title=title,
+            is_domain_user=True,
         )
         session.add(account)
         message = f"Created new user '{username}' in database."
@@ -143,13 +149,16 @@ async def ensure_user_has_role(
         str: Message indicating role assignment result.
     """
     statement = select(RolePermission).where(
-        RolePermission.account_id == account_id, RolePermission.role_id == role_id
+        RolePermission.account_id == account_id,
+        RolePermission.role_id == role_id,
     )
     result = await session.execute(statement)
     existing_role = result.scalar_one_or_none()
 
     if existing_role:
-        logger.info(f"Role ID {role_id} already assigned to user '{username}'.")
+        logger.info(
+            f"Role ID {role_id} already assigned to user '{username}'."
+        )
         return f"Role already assigned to user '{username}'."
 
     role_permission = RolePermission(role_id=role_id, account_id=account_id)
@@ -173,7 +182,9 @@ async def read_hirs_account_by_username(
     Returns:
         Optional[HRISSecurityUser]: The found HRIS security user instance or None.
     """
-    statement = select(HRISSecurityUser).where(HRISSecurityUser.username == username)
+    statement = select(HRISSecurityUser).where(
+        HRISSecurityUser.username == username
+    )
     result = await session.execute(statement)
     account = result.scalar_one_or_none()
 
@@ -185,7 +196,7 @@ async def read_hirs_account_by_username(
     return account
 
 
-async def read_roles(
+async def read_roles_name(
     session: AsyncSession, account_id: Optional[int] = None
 ) -> List[str]:
     """
@@ -216,3 +227,28 @@ async def read_roles(
         logger.warning(f"User ID {account_id} has no assigned roles.")
 
     return roles
+
+
+async def read_roles(
+    session: AsyncSession, account_id: Optional[int] = None
+) -> List[RoleRead]:
+    """
+    Fetch roles from the database, optionally filtering by account ID.
+
+    Args:
+        session (AsyncSession): The SQLAlchemy asynchronous session.
+        account_id (Optional[int]): The account ID to filter roles.
+
+    Returns:
+        List[RoleRead]: A list of role.
+    """
+    statement = select(Role)
+
+    if account_id:
+        statement = statement.join(RolePermission).where(
+            RolePermission.account_id == account_id
+        )
+
+    results = await session.execute(statement)
+    roles = results.scalars().all()
+    return [RoleRead.model_validate(role) for role in roles]

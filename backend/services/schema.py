@@ -9,20 +9,28 @@ from typing import Optional
 
 class UserAttributes(BaseModel):
     display_name: str
-    telephone: Optional[str] = None
-    mail: Optional[str] = None
-    title: Optional[str] = None
+    telephone: str | None
+    mail: str | None
+    title: str | None
+
+
+class Role(BaseModel):
+    id: int
+    name: str
+    descreption: str | None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RequestSummary(BaseModel):
     request_id: int
     status_name: str
     requester_name: str
-    requester_title: Optional[str] = None
+    requester_title: str | None
     notes: Optional[str]
     request_time: datetime
     closed_time: Optional[datetime]
-    meal: Optional[str] = None
+    meal: str | None
     total_request_lines: int
     accepted_request_lines: Optional[int]
 
@@ -34,18 +42,18 @@ class RequestLineRequest(BaseModel):
     employee_id: int
     employee_code: int
     department_id: int
-    notes: Optional[str] = None
+    notes: str | None
 
 
 class RequestResponse(BaseModel):
     request_id: int
     requester_name: str
     request_time: datetime
-    request_notes: Optional[str] = None
-    total_request_lines: Optional[int] = None
-    accepted_request_lines: Optional[int] = None
+    request_notes: str | None
+    total_request_lines: Optional[int]
+    accepted_request_lines: Optional[int]
     status_name: str
-    close_time: Optional[datetime] = None
+    close_time: Optional[datetime]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -63,11 +71,11 @@ class RequestLineResponse(BaseModel):
     name: str
     title: str
     department: str
-    shift_hours: Optional[int] = None
-    sign_in_time: Optional[datetime] = None
+    shift_hours: Optional[int]
+    sign_in_time: Optional[datetime]
     accepted: Optional[bool] = True
-    notes: Optional[str] = None
-    meal: Optional[str] = None
+    notes: str | None
+    meal: str | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -81,11 +89,11 @@ class RequestDataResponse(BaseModel):
 
 class RequestsPageRecord(BaseModel):
     id: Optional[int]
-    code: Optional[int] = None
-    name: Optional[str] = None
-    title: Optional[str] = None
-    department_id: Optional[int] = None
-    department: Optional[str] = None
+    code: Optional[int]
+    name: str | None
+    title: str | None
+    department_id: Optional[int]
+    department: str | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -111,10 +119,10 @@ class UserUpdateRequest(BaseModel):
 
 
 class UpdateAccountPermissionRequest(BaseModel):
-    requester_id: int = None
+    requester_id: int
     username: str
-    added_roles: Optional[List[int]] = None
-    removed_roles: Optional[List[int]] = None
+    added_roles: Optional[List[int]]
+    removed_roles: Optional[List[int]]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -150,8 +158,8 @@ class Attendance(BaseModel):
 
 class DomainAccount(BaseModel):
     username: str
-    fullName: Optional[str] = None
-    title: Optional[str] = None
+    fullname: str | None
+    title: str | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -162,20 +170,21 @@ class LoginRequest(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class ReportDetailsRecord(BaseModel):
     id: int
-    employee_code: int | None = None
-    employee_name: str | None = None
-    employee_title: str | None = None
-    department: str | None = None
-    requester_name: str | None = None
-    requester_title: str | None = None
-    request_time: datetime | None = None
-    meal: str | None = None
-    attendance_in: datetime | None = None
-    attendance_out: datetime | None = None
-    shift_hours: int | None = None
-    notes: str | None = None
+    employee_code: int | None
+    employee_name: str | None
+    employee_title: str | None
+    department: str | None
+    requester_name: str | None
+    requester_title: str | None
+    request_time: datetime | None
+    meal: str | None
+    attendance_in: datetime | None
+    attendance_out: datetime | None
+    shift_hours: int | None
+    notes: str | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -184,3 +193,48 @@ class ReportDetailsRecord(BaseModel):
         if value is None:
             return None
         return value.isoformat(sep=" ", timespec="seconds")
+
+
+class Department(BaseModel):
+    id: int
+    name: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class Meal(BaseModel):
+    id: int
+    name: str | None
+    is_active: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class Employee(BaseModel):
+    id: int
+    code: int
+    name: str | None
+    title: str | None
+    is_active: bool
+    department_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DomainUser(BaseModel):
+    id: int
+    username: str
+    fullname: str | None
+    title: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserWithRoles(BaseModel):
+    id: int
+    fullname: str | None
+    username: str
+    title: str | None
+    roles: List[Role] | None
+
+    model_config = ConfigDict(from_attributes=True)

@@ -3,12 +3,11 @@ from datetime import datetime
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, func, case
-from sqlalchemy import func, cast, Date, tuple_
+from sqlalchemy import func
 
 # Project-Specific Imports
 from db.models import Department, Request, RequestLine, Employee, Account, Meal
 from services.http_schema import ReportDashboardResponse, ReportDetailsResponse
-from hris_db.models import HRISEmployeeAttendanceWithDetails
 
 
 async def read_requests_data(

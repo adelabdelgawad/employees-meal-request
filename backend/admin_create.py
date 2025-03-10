@@ -9,7 +9,7 @@ from routers.utils.hashing import hash_password
 async def create_user():
     username = input("Enter the new username: ")
     password = getpass("Enter the password: ")
-    full_name = input("Enter the full name: ")
+    fullname = input("Enter the full name: ")
     title = input("Enter the title: ")
     is_super_admin = (
         input("Is this user a super admin? (yes/no): ").strip().lower()
@@ -21,7 +21,7 @@ async def create_user():
         new_user = Account(
             username=username,
             password=hashed_password,
-            full_name=full_name,
+            fullname=fullname,
             title=title,
             is_super_admin=is_super_admin,
         )

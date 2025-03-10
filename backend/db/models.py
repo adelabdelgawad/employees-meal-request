@@ -11,8 +11,8 @@ class Role(SQLModel, table=True):
     __tablename__ = "role"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(nullable=False, max_length=64)
-    description: str = Field(nullable=False, max_length=64)
+    name: str
+    description: str
 
     role_permissions: List["RolePermission"] = Relationship(
         back_populates="role"
@@ -31,8 +31,8 @@ class HRISSecurityUser(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Field(nullable=False, max_length=64, unique=True)
-    is_deleted: bool = Field(default=False)
-    is_locked: bool = Field(default=False)
+    is_deleted: Optional[bool] = None
+    is_locked: Optional[bool] = None
 
 
 class Department(SQLModel, table=True):
@@ -43,7 +43,7 @@ class Department(SQLModel, table=True):
     __tablename__ = "department"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(nullable=False, max_length=64)
+    name: str
 
     # Relationships
     employees: List["Employee"] = Relationship(back_populates="department")
@@ -58,9 +58,9 @@ class Employee(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     code: int = Field(nullable=False, unique=True)
-    name: Optional[str] = Field(default=None, max_length=128)
-    title: Optional[str] = Field(default=None, max_length=128)
-    is_active: bool = Field(nullable=False)
+    name: Optional[str] = None
+    title: Optional[str] = None
+    is_active: bool
     department_id: int = Field(foreign_key="department.id", nullable=False)
 
     # Relationships
@@ -80,10 +80,23 @@ class RequestStatus(SQLModel, table=True):
     __tablename__ = "request_status"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(nullable=False, max_length=64)
+    name: str
 
     # Relationships
     requests: List["Request"] = Relationship(back_populates="status")
+
+
+class DomainUser(SQLModel, table=True):
+    """
+    Represents the status of a Request.
+    """
+
+    __tablename__ = "domain_users"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    username: str
+    fullname: Optional[str] = None
+    title: Optional[str] = None
 
 
 class Meal(SQLModel, table=True):
@@ -94,7 +107,7 @@ class Meal(SQLModel, table=True):
     __tablename__ = "meal"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(nullable=False, max_length=64)
+    name: str
     is_active: Optional[bool] = True
 
     # Relationships
@@ -110,12 +123,12 @@ class Account(SQLModel, table=True):
     __tablename__ = "account"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    username: str = Field(nullable=False, unique=True, max_length=64)
-    full_name: Optional[str] = Field(max_length=128, default=None)
-    password: Optional[str] = Field(default=None, max_length=64)
-    title: Optional[str] = Field(default=None, max_length=64)
-    is_domain_user: bool = Field(default=False)
-    is_super_admin: bool = Field(default=False)
+    username: str
+    fullname: Optional[str] = None
+    password: Optional[str] = None
+    title: Optional[str] = None
+    is_domain_user: Optional[bool] = None
+    is_super_admin: Optional[bool] = None
 
     role_permissions: List["RolePermission"] = Relationship(
         back_populates="account"
@@ -169,9 +182,9 @@ class Request(SQLModel, table=True):
     created_time: datetime = Field(
         default_factory=lambda: datetime.now(cairo_tz)
     )
-    closed_time: Optional[datetime] = Field(default=None)
-    notes: Optional[str] = Field(default=None, max_length=256)
-    is_deleted: bool | None = False
+    closed_time: Optional[datetime] = None
+    notes: Optional[str] = None
+    is_deleted: Optional[bool] | None = False
     auditor_id: Optional[int] = Field(foreign_key="account.id", default=None)
     menu_id: int = Field(foreign_key="menu.id", default=1)
 
@@ -205,16 +218,16 @@ class RequestLine(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     employee_id: int = Field(foreign_key="employee.id", nullable=False)
-    employee_code: int = Field(nullable=False)
+    employee_code: int
     department_id: int = Field(foreign_key="department.id", nullable=False)
     request_id: int = Field(foreign_key="request.id", nullable=False)
     meal_id: int = Field(foreign_key="meal.id", nullable=False)
-    attendance_in: Optional[datetime] = Field(default=None)
-    attendance_out: Optional[datetime] = Field(default=None)
-    notes: Optional[str] = Field(default=None, max_length=256)
-    is_accepted: bool = Field(default=True)
-    shift_hours: Optional[int] = Field(default=None)
-    is_deleted: bool = Field(default=False)
+    attendance_in: Optional[datetime] = None
+    attendance_out: Optional[datetime] = None
+    notes: Optional[str] = None
+    is_accepted: Optional[bool] = True
+    shift_hours: Optional[int] = None
+    is_deleted: Optional[bool] = None
 
     # Relationships
     meal: Optional["Meal"] = Relationship(back_populates="request_lines")
@@ -242,7 +255,7 @@ class LogRolePermission(SQLModel, table=True):
     account_id: int = Field(foreign_key="account.id", nullable=False)
     role_id: int = Field(foreign_key="role.id", nullable=False)
     admin_id: int = Field(foreign_key="account.id", nullable=False)
-    action: str = Field(nullable=False, max_length=32)
+    action: Optional[str] = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
 
     # Relationships
@@ -261,9 +274,9 @@ class LogRequestLine(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     request_line_id: int = Field(foreign_key="request_line.id", nullable=False)
     account_id: int = Field(foreign_key="account.id", nullable=False)
-    action: str = Field(nullable=False, max_length=32)
-    is_successful: bool = Field(nullable=False)
-    result: Optional[str] = Field(default=None)
+    action: Optional[str] = None
+    is_successful: Optional[bool] = None
+    result: Optional[str] = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
 
     # Relationships
@@ -298,7 +311,7 @@ class EmailRole(SQLModel, table=True):
     __tablename__ = "email_role"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(nullable=False, max_length=50)
+    name: str
 
     # Relationships
     emails: List["Email"] = Relationship(back_populates="role")
@@ -313,7 +326,7 @@ class Menu(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(nullable=False, max_length=128, unique=True)
-    details: Optional[str] = Field(default=None, max_length=256)
+    details: Optional[str] = None
 
     # Relationships
     requests: List["Request"] = Relationship(back_populates="menu")

@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
 from dotenv import load_dotenv
-from typing import AsyncGenerator, Any
+from typing import AsyncGenerator
 from old_db.models import Base
 
 # Load environment variables from the .env file

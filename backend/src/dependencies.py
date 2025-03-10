@@ -53,7 +53,7 @@ async def get_current_user(request: Request):
             username=user["username"],
             roles=user["roles"],
             email=user["email"],
-            full_name=user["fullName"],
+            fullname=user["fullname"],
             title=user["title"],
         )
     except Exception as e:

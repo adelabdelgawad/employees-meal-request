@@ -13,15 +13,15 @@ declare global {
 
   type DomainUser = {
     id: number;
-    fullName: string;
+    fullname: string;
     username: string;
     title: string;
   };
 
   type User = {
-    userId: number;
+    id: number;
     username: string;
-    fullName: string;
+    fullname: string;
     title: string;
     email: string;
     roles: string[];

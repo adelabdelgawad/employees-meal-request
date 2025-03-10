@@ -2,7 +2,7 @@ import traceback
 import logging
 import os
 from dotenv import load_dotenv
-from typing import List, Annotated
+from typing import  Annotated
 from fastapi import FastAPI, Depends
 from contextlib import asynccontextmanager
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -11,7 +11,7 @@ from passlib.context import CryptContext
 from db.database import get_application_session
 
 from hris_db.database import get_hris_session
-from hris_db.clone import schedule_replication, scheduler, replicate
+from hris_db.clone import schedule_replication, scheduler
 
 # Load environment variables
 load_dotenv()

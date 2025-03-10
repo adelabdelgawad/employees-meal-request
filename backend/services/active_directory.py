@@ -6,7 +6,7 @@ from typing import List, Optional, Union
 import bonsai
 from bonsai.errors import AuthenticationError, LDAPError
 from dotenv import load_dotenv
-from services.http_schema import DomainUser  # Ensure this path is correct
+from services.schema import DomainUser  # Ensure this path is correct
 
 # Logger configuration
 logger = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ async def search_ldap(
                 return DomainUser(
                     id=0,  # Temporary ID, will be set later
                     username=result.get("sAMAccountName", ["N/A"])[0],
-                    fullName=result.get("displayName", ["N/A"])[0],
+                    fullname=result.get("displayName", ["N/A"])[0],
                     title=result.get("title", ["N/A"])[0],
                 )
 
@@ -85,7 +85,7 @@ async def search_ldap(
                 DomainUser(
                     id=0,  # Temporary ID, will be set later
                     username=entry.get("sAMAccountName", ["N/A"])[0],
-                    fullName=entry.get("displayName", ["N/A"])[0],
+                    fullname=entry.get("displayName", ["N/A"])[0],
                     title=entry.get("title", ["N/A"])[0],
                 )
                 for entry in results
@@ -143,7 +143,7 @@ async def authenticate_and_get_user(
             return DomainUser(
                 id=0,  # Temporary ID
                 username=entry.get("sAMAccountName", ["N/A"])[0],
-                fullName=entry.get("displayName", ["N/A"])[0],
+                fullname=entry.get("displayName", ["N/A"])[0],
                 title=entry.get("title", ["N/A"])[0],
             )
 
@@ -164,7 +164,7 @@ async def authenticate_and_get_user(
     return None
 
 
-async def read_domain_users() -> List[DomainUser]:
+async def read_domain_users_from_ldap() -> List[DomainUser]:
     """
     Perform parallel searches on multiple Organizational Units (OUs) to fetch domain users.
 

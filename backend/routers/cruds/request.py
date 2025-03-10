@@ -11,14 +11,12 @@ from db.models import (
     Meal,
 )
 from routers.cruds.attendance_and_shift import (
-    read_attendances_from_hris,
     read_shifts_from_hris,
     update_request_lines_with_attendance,
 )
 from services.http_schema import RequestPageRecordResponse, RequestsResponse
 import pytz
 from fastapi import HTTPException, status
-from icecream import ic
 
 # Default timezone
 cairo_tz = pytz.timezone("Africa/Cairo")
@@ -157,7 +155,7 @@ async def read_requests(
         filters.append(Request.requester_id == requester_id)
     if requester_name:
         # Assuming Account is imported and available
-        filters.append(Account.full_name.ilike(f"%{requester_name}%"))
+        filters.append(Account.fullname.ilike(f"%{requester_name}%"))
     filters.append(Request.request_time <= current_time)
     filters.append(Request.is_deleted == False)
 
@@ -176,7 +174,7 @@ async def read_requests(
             RequestStatus.name.label("status_name"),
             RequestStatus.id.label("status_id"),
             Account.id.label("requester_id"),
-            Account.full_name.label("requester"),
+            Account.fullname.label("requester"),
             Account.title.label("requester_title"),
             Meal.name.label("meal"),
             Request.request_time,
@@ -196,7 +194,7 @@ async def read_requests(
             RequestStatus.name,
             RequestStatus.id,
             Account.id,
-            Account.full_name,
+            Account.fullname,
             Account.title,
             Meal.name,
             Request.request_time,
@@ -334,7 +332,7 @@ async def read_request_by_id(
             Request.id,
             RequestStatus.name.label("status_name"),
             RequestStatus.id.label("status_id"),
-            Account.full_name.label("requester"),
+            Account.fullname.label("requester"),
             Account.title.label("requester_title"),
             Meal.name.label("meal"),
             Request.created_time.label("request_time"),
@@ -354,7 +352,7 @@ async def read_request_by_id(
             Request.id,
             RequestStatus.name,
             RequestStatus.id,
-            Account.full_name,
+            Account.fullname,
             Account.title,
             Meal.name,
             Request.created_time,

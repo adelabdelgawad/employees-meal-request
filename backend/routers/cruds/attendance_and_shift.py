@@ -6,7 +6,6 @@ from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func
 from sqlalchemy.orm import selectinload
-from time import sleep
 from icecream import ic
 
 from hris_db.models import (

@@ -1,6 +1,6 @@
 from old_db.database import get_old_session
 from sqlalchemy.orm import joinedload
-from sqlalchemy.ext.asyncio import  AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 from old_db.models import Department as Department_old
 from old_db.models import Account as Account_old
 from old_db.models import Employee as Employee_old
@@ -12,25 +12,35 @@ from setup_database import main_async
 import asyncio
 from sqlmodel import select
 from icecream import ic
-from db.models import Department, Account, Employee, RolePermission, Request, RequestLine
+from db.models import (
+    Department,
+    Account,
+    Employee,
+    RolePermission,
+    Request,
+    RequestLine,
+)
 from typing import Optional, List
 from db.database import get_application_session
 
 
 async def get_old_departments() -> Optional[Department_old]:
-    async for  session in get_old_session():
+    async for session in get_old_session():
         stmt = select(Department_old)
         result = await session.execute(stmt)
-        old_departments  = result.scalars().all()
+        old_departments = result.scalars().all()
         return old_departments if old_departments else None
-    
+
+
 async def update_departments():
-    old_departments:List[Department]  = await get_old_departments()
+    old_departments: List[Department] = await get_old_departments()
     async for session in get_application_session():
-        new_departments = [Department(id=d.id, name=d.name) for d in old_departments]
+        new_departments = [
+            Department(id=d.id, name=d.name) for d in old_departments
+        ]
         session.add_all(new_departments)
         await session.commit()
-        
+
 
 async def get_old_accounts() -> Optional[List[Account_old]]:
     """Fetch all old accounts from the database."""
@@ -50,6 +60,7 @@ async def get_old_accounts() -> Optional[List[Account_old]]:
         except Exception as e:
             print(f"Error fetching old accounts: {e}")
             return None
+
 
 async def update_account():
     """Update accounts by fetching old records, searching LDAP, and saving new accounts."""
@@ -71,18 +82,15 @@ async def update_account():
                 account = Account(
                     id=acc.id,
                     username=acc.username,
-                    full_name="Full Name",
+                    fullname="Full Name",
                     title="Title",
                     is_domain_user=acc.is_domain_user,
-                    is_super_admin=acc.is_super_admin
+                    is_super_admin=acc.is_super_admin,
                 )
 
                 print(f"Updated account for: {acc.username}")
                 session.add(account)
-                permission = RolePermission(
-    role_id=1,
-    account_id=account.id
-                )
+                permission = RolePermission(role_id=1, account_id=account.id)
                 session.add(permission)
 
                 await session.commit()
@@ -90,31 +98,34 @@ async def update_account():
         except Exception as e:
             print(f"Error updating accounts: {e}")
             await session.rollback()
-        
-       
+
+
 async def get_old_employees() -> Optional[Employee_old]:
-    async for  session in get_old_session():
+    async for session in get_old_session():
         stmt = select(Employee_old)
         result = await session.execute(stmt)
-        old_departments  = result.scalars().all()
+        old_departments = result.scalars().all()
         return old_departments if old_departments else None
-    
+
+
 async def update_employees():
-    old_employees:List[Employee_old]  = await get_old_employees()
+    old_employees: List[Employee_old] = await get_old_employees()
     async for session in get_application_session():
         new_employees = [
             Employee(
-                    id=e.id,
-    code=e.code,
-    name=e.name,
-    title=e.title,
-    is_active=e.is_active,
-    department_id=e.department_id
-                ) for e in old_employees]
-        
+                id=e.id,
+                code=e.code,
+                name=e.name,
+                title=e.title,
+                is_active=e.is_active,
+                department_id=e.department_id,
+            )
+            for e in old_employees
+        ]
+
         session.add_all(new_employees)
         await session.commit()
-        
+
 
 async def get_old_requests() -> Optional[List[Request_old]]:
     """Fetch all old requests from the database."""
@@ -134,21 +145,23 @@ async def get_old_requests() -> Optional[List[Request_old]]:
         except Exception as e:
             print(f"Error fetching old requests: {e}")
             return None
-        
+
+
 async def update_requests():
     """Copy old requests into the new database as new instances."""
+
     def update_status_id(id):
         if id == 3:
             return 4
         if id == 2:
             return 3
-    
+
     def update_meal_id(id):
         if id == 2:
             return 1
         if id == 3:
             return 2
-    
+
     old_requests: Optional[List[Request_old]] = await get_old_requests()
 
     if not old_requests:
@@ -185,18 +198,18 @@ async def update_requests():
             print(f"Error updating requests: {e}")
             await session.rollback()
 
+
 async def get_old_request_lines() -> Optional[List[RequestLine_old]]:
     """Fetch all old request lines with necessary joins."""
     async for session in get_old_session():
         try:
             print("Fetching old request lines with joins...")
 
-            stmt = (
-                select(RequestLine_old)
-                .options(
-                    joinedload(RequestLine_old.meal_request),  # Load Request (Parent)
-                    joinedload(RequestLine_old.employee)  # Load Employee
-                )
+            stmt = select(RequestLine_old).options(
+                joinedload(
+                    RequestLine_old.meal_request
+                ),  # Load Request (Parent)
+                joinedload(RequestLine_old.employee),  # Load Employee
             )
 
             result = await session.execute(stmt)
@@ -212,10 +225,13 @@ async def get_old_request_lines() -> Optional[List[RequestLine_old]]:
         except Exception as e:
             print(f"Error fetching old request lines: {e}")
             return None
-        
+
+
 async def update_request_lines():
     """Copy old request lines into the new database with correct meal_id and employee_code."""
-    old_request_lines: Optional[List[RequestLine_old]] = await get_old_request_lines()
+    old_request_lines: Optional[List[RequestLine_old]] = (
+        await get_old_request_lines()
+    )
 
     if not old_request_lines:
         print("No old request lines to update.")
@@ -226,19 +242,32 @@ async def update_request_lines():
             print("Validating request IDs...")
 
             # Fetch all valid request IDs from the new `Request` table
-            valid_request_ids = {r.id for r in (await session.execute(select(Request))).scalars().all()}
+            valid_request_ids = {
+                r.id
+                for r in (await session.execute(select(Request)))
+                .scalars()
+                .all()
+            }
 
             new_request_lines = []
             for req_line in old_request_lines:
                 # Extract the related meal_id from the parent Request
-                meal_id = req_line.meal_request.meal_type_id if req_line.meal_request else None
+                meal_id = (
+                    req_line.meal_request.meal_type_id
+                    if req_line.meal_request
+                    else None
+                )
 
                 # Extract the employee_code from the related Employee table
-                employee_code = req_line.employee.code if req_line.employee else None
+                employee_code = (
+                    req_line.employee.code if req_line.employee else None
+                )
 
                 # Validate `request_id`
                 if req_line.meal_request_id not in valid_request_ids:
-                    print(f"Skipping request line {req_line.id} because request_id {req_line.meal_request_id} does not exist in the new database.")
+                    print(
+                        f"Skipping request line {req_line.id} because request_id {req_line.meal_request_id} does not exist in the new database."
+                    )
                     continue
 
                 # Create the new RequestLine instance
@@ -271,6 +300,7 @@ async def update_request_lines():
             print(f"Error updating request lines: {e}")
             await session.rollback()
 
+
 async def main():
     await update_departments()
     await update_account()
@@ -278,7 +308,7 @@ async def main():
     await main_async()
     await update_requests()
     await update_request_lines()
-        
+
 
 if __name__ == "__main__":
     asyncio.run(main())

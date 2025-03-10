@@ -11,6 +11,7 @@ Steps:
 
 import asyncio
 import os
+from typing import List
 from routers.utils.hashing import hash_password
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
@@ -24,6 +25,7 @@ from hris_db.clone import replicate
 
 # Import models from your project
 from db.models import (
+    DomainUser,
     Role,
     Account,
     Meal,
@@ -31,6 +33,8 @@ from db.models import (
     RequestStatus,
     Menu,
 )
+from services.schema import DomainUser as DomainUserSchema
+from services.active_directory import read_domain_users_from_ldap
 
 
 # ------------------------------------------------------------------------------
@@ -135,6 +139,7 @@ async def seed_default_values(engine: AsyncEngine) -> None:
             await seed_admin_user(session)
             await seed_request_status(session)
             await seed_menu(session)
+            await seed_domain_users(session)
             await session.commit()
 
             print("Default values seeding complete.")
@@ -229,7 +234,7 @@ async def seed_admin_user(session: AsyncSession) -> None:
         admin_user = Account(
             username="admin",
             password=hashed_password,
-            full_name="Administrator",
+            fullname="Administrator",
             title="Built-in Administrator",
             is_super_admin=True,
         )
@@ -248,6 +253,15 @@ async def seed_request_status(session: AsyncSession) -> None:
         ]
         session.add_all(request_status)
         print("Default request statuses added.")
+
+
+async def seed_domain_users(session: AsyncSession):
+    domain_users: List[DomainUserSchema] = await read_domain_users_from_ldap()
+    if domain_users:
+        users = [DomainUser(**user.model_dump()) for user in domain_users]
+        session.add_all(users)
+
+        print("Domain Users Added")
 
 
 # ------------------------------------------------------------------------------

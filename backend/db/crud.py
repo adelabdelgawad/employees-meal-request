@@ -3,6 +3,7 @@ import logging
 from typing import List, Optional
 from sqlmodel import Session, select, func, case
 from db.models import (
+    DomainUser,
     Email,
     Request,
     RequestStatus,
@@ -246,3 +247,22 @@ async def read_account(session: AsyncSession, account_id: int = None):
             exc_info=True,
         )
         return None if account_id else []
+
+
+async def read_domain_users(
+    session: AsyncSession,
+) -> Optional[List[DomainUser]]:
+    try:
+        statement = select(DomainUser)
+        result = await session.execute(statement)
+        users = result.scalars().all()
+        logger.info("Successfully fetched domain users")
+        return users
+
+    except Exception as e:
+        logger.error(
+            "An error occurred while retrieving account(s): %s",
+            str(e),
+            exc_info=True,
+        )
+        return None

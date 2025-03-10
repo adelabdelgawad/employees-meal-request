@@ -16,7 +16,7 @@ import { User, LogOut, BookOpen } from 'lucide-react';
 interface UserAvatarClientProps {
   session: {
     user: {
-      fullName: string;
+      fullname: string;
       username: string;
       title: string;
     };
@@ -43,7 +43,7 @@ export default function UserAvatarClient({ session }: UserAvatarClientProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar className="cursor-pointer">
-          <AvatarImage alt={user?.fullName} />
+          <AvatarImage alt={user?.fullname} />
           <AvatarFallback>{getInitials(user?.username || '')}</AvatarFallback>        </Avatar>
       </DropdownMenuTrigger>
 
@@ -53,7 +53,7 @@ export default function UserAvatarClient({ session }: UserAvatarClientProps) {
 
         <DropdownMenuItem className="flex items-center gap-2">
           <User className="w-4 h-4" />
-          {user?.fullName}
+          {user?.fullname}
         </DropdownMenuItem>
 
         <DropdownMenuItem className="flex items-center gap-2">

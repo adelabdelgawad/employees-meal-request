@@ -1,8 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-
-import { getDepartments, getEmployees, getMeals } from "@/lib/services/data";
+import clientAxiosInstance from "@/lib/clientAxiosInstance";
 
 interface NewRequestContextType {
   departments: DepartmentType[];
@@ -16,7 +15,6 @@ interface NewRequestContextType {
   setSubmittedEmployees: React.Dispatch<React.SetStateAction<any[]>>;
   resetSubmittedEmployees: () => void;
   loading: boolean;
-  error: string | null;
 }
 
 const NewRequestContext = createContext<NewRequestContextType | undefined>(
@@ -37,7 +35,6 @@ export function NewRequestProvider({
   );
   const [submittedEmployees, setSubmittedEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // ✅ Function to reset submitted employees
   const resetSubmittedEmployees = () => {
@@ -48,20 +45,14 @@ export function NewRequestProvider({
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+
       try {
-        const fetchedDepartments = await getDepartments();
-        setDepartments(fetchedDepartments);
-        console.log(fetchedDepartments)
-
-        const fetchedEmployees = await getEmployees();
-        setEmployees(fetchedEmployees);
-
-        const fetchedMeals = await getMeals();
-        setMeals(fetchedMeals);
-      } catch (err: any) {
-        setError(err.message || "An error occurred while fetching data.");
-      } finally {
-        setLoading(false);
+        const response = await clientAxiosInstance.get("/new-request-data");
+        setDepartments(response.data.departments);
+        setEmployees(response.data.employees);
+        setMeals(response.data.meals);
+      } catch (error) {
+        console.error("Error scheduling request:", error);
       }
     };
 
@@ -82,7 +73,6 @@ export function NewRequestProvider({
         setSubmittedEmployees,
         resetSubmittedEmployees,
         loading,
-        error,
       }}
     >
       {children}

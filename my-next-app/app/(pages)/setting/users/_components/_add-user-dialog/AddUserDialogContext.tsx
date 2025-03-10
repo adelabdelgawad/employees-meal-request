@@ -90,7 +90,7 @@ export function AddUserDialogProvider({ children }: { children: ReactNode }) {
 
     const response = await submitAddUser(
       selectedUser.username,
-      selectedUser.fullName,
+      selectedUser.fullname,
       selectedUser.title,
       selectedRoles
     );

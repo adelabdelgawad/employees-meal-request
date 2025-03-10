@@ -32,7 +32,6 @@ const Actions: React.FC<ActionsProps> = ({
       const session: Session | null = await getSession();
       // Assuming session.user.roles is an array of strings
       const userRoles: string[] = session?.user?.roles || [];
-      console.log("userRoles", userRoles);
 
       // Compare roles directly since they are strings
       const isAdminUser = userRoles.some(role => role === "Admin");

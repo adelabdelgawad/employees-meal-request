@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter
 from src.dependencies import SessionDep
 from services.schema import LoginRequest
 from services.http_schema import UserData
@@ -8,7 +8,7 @@ from routers.utils.auth import (
     read_account_by_username,
     read_hirs_account_by_username,
     create_or_update_user,
-    read_roles,
+    read_roles_name,
 )
 from services.active_directory import authenticate_and_get_user
 from src.exceptions import InvalidCredentialsException, InternalServerException
@@ -90,7 +90,7 @@ async def login_for_access_token(
             user = await create_or_update_user(
                 session,
                 windows_account.username,
-                windows_account.fullName,
+                windows_account.fullname,
                 windows_account.title,
             )
             if not user:
@@ -117,9 +117,9 @@ async def login_for_access_token(
         # Retrieve user roles
         logger.debug(f"Retrieving roles for user {user.id}")
         roles = (
-            await read_roles(session)
+            await read_roles_name(session)
             if user.is_super_admin
-            else await read_roles(session, user.id)
+            else await read_roles_name(session, user.id)
         )
         logger.info(f"Retrieved {len(roles)} roles for user {user.id}")
 
@@ -128,7 +128,7 @@ async def login_for_access_token(
             userId=user.id,
             username=user.username,
             email=f"{user.username}@andalusiagroup.net",
-            fullName=user.full_name,
+            fullname=user.fullname,
             title=user.title,
             roles=roles,
         )

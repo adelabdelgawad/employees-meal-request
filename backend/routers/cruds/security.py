@@ -1,17 +1,17 @@
 import logging
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 from db.models import Role, RolePermission, Account, LogRolePermission
 from fastapi import HTTPException
 from typing import Optional, Union, List
 from sqlalchemy.exc import IntegrityError
 from services.http_schema import (
-    SettingUserResponse,
     UserCreateRequest,
-    RoleResponse,
 )
+
 import pytz
+
+from services.schema import UserWithRoles, Role as RoleSchema
 
 # Default timezone
 cairo_tz = pytz.timezone("Africa/Cairo")
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 async def read_user(
     session: AsyncSession, user_id: Optional[int] = None
-) -> Union[SettingUserResponse, List[SettingUserResponse]]:
+) -> Union[UserWithRoles, List[UserWithRoles]]:
     """
     Retrieve user(s) along with their associated roles from the database.
 
@@ -65,13 +65,17 @@ async def read_user(
 
             # Construct the response for the user, including role details.
             user_list.append(
-                SettingUserResponse(
+                UserWithRoles(
                     id=user.id,
-                    fullName=user.full_name,
+                    fullname=user.fullname,
                     username=user.username,
                     title=user.title,
                     roles=[
-                        RoleResponse(id=role.id, name=role.name)
+                        RoleSchema(
+                            id=role.id,
+                            name=role.name,
+                            descreption=role.description,
+                        )
                         for role in roles
                     ],
                 )
@@ -114,7 +118,7 @@ async def create_user(
         if not user:
             # Create a new user record.
             user = Account(
-                full_name=request.full_name,
+                fullname=request.fullname,
                 username=request.username,
                 title=request.title,
             )
