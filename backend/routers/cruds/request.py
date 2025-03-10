@@ -180,7 +180,9 @@ async def read_requests(
             Request.request_time,
             Request.closed_time,
             Request.notes,
-            func.count(RequestLine.id).label("total_lines"),
+            func.sum(
+                case((RequestLine.is_deleted == False, 1), else_=0)
+            ).label("total_lines"),
             func.sum(
                 case((RequestLine.is_accepted == True, 1), else_=0)
             ).label("accepted_lines"),
@@ -204,6 +206,9 @@ async def read_requests(
         .having(
             func.count(RequestLine.id) > 0
         )  # Use HAVING for aggregate conditions
+        .having(
+            func.sum(case((RequestLine.is_deleted == False, 1), else_=0)) > 0
+        )
         .order_by(desc(Request.request_time))
     )
 

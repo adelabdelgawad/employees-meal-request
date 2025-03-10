@@ -15,36 +15,34 @@ import toast from "react-hot-toast";
 import { PencilIcon } from "lucide-react";
 import clientAxiosInstance from "@/lib/clientAxiosInstance";
 
-
 export default function ActionEdit({ userId }: { userId: number }) {
   // State variables
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [user, setUser] = useState<User>();
-  const [allRoles, setAllRoles] = useState<Role[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
   const [originalRoles, setOriginalRoles] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { mutate } = useSettingUserContext();
+  const { users, mutate, roles } = useSettingUserContext();
+  
 
   // Fetch user and roles data when the dialog opens
   useEffect(() => {
     if (!isDialogOpen) return;
 
     const fetchData = async () => {
-      console.log("here")
       try {
         setIsLoading(true);
-        // Retrieve all available roles.
-        const response = await clientAxiosInstance.get(`/setting/user-info/${userId}`);
-        const data = await response.data;
-        const roleIds = data.user_roles_ids.map((role: Role) => role.id);
-        setUser(data.user)
-        setAllRoles(data.all_roles)
-        setSelectedRoles(roleIds);
+        const user = users?.find(user => user.id === userId);
+        const userRoleIds = user?.roles?.map(role => role.id) || [];
+        setUser(user);
+        setSelectedRoles(userRoleIds);
+        setOriginalRoles(userRoleIds);
       } catch (error) {
         console.error("Error Setting User Info:", error);
-        toast.error("Something went Wrong")
+        toast.error("Something went wrong");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -74,32 +72,34 @@ export default function ActionEdit({ userId }: { userId: number }) {
   // Handle form submission.
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     const addedRoles = selectedRoles.filter(
       (roleId) => !originalRoles.includes(roleId)
     );
     const removedRoles = originalRoles.filter(
       (roleId) => !selectedRoles.includes(roleId)
     );
-
-    // Use startTransition for low priority state updates.
+  
     startTransition(async () => {
       try {
         const data = {
           added_roles: addedRoles,
           removed_roles: removedRoles,
         };
-
+  
         await clientAxiosInstance.put(`/user/${userId}/roles`, data);
         toast.success("User roles updated successfully!");
         setOriginalRoles(selectedRoles);
         setIsDialogOpen(false);
+        
+        // Refresh the users list from the context.
         await mutate();
       } catch (error) {
         toast.error("Failed to update user roles. Please try again.");
       }
     });
   };
+  
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -128,7 +128,7 @@ export default function ActionEdit({ userId }: { userId: number }) {
 
               <h3 className="text-md font-medium mt-4">User Roles</h3>
 
-              {allRoles.map((role) => (
+              {roles.map((role) => (
                 <div key={role.id} className="flex items-start justify-between mb-4">
                   <div>
                     <div className="font-medium">{role.name}</div>

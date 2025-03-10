@@ -11,13 +11,15 @@ import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import clientAxiosInstance from "@/lib/clientAxiosInstance";
+import { HistoryRequest } from "../HistoryDataTable";
 
 interface CopyActionProps {
   requestId: number;
+  setData: React.Dispatch<React.SetStateAction<HistoryRequest[]>>; // 🛑 Receive setData
 }
 
-const CopyAction: React.FC<CopyActionProps> = ({ requestId }) => {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+const CopyAction: React.FC<CopyActionProps> = ({ requestId, setData }) => {
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [time, setTime] = useState<string>(format(new Date(), "HH:mm"));
   const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 
@@ -41,24 +43,29 @@ const CopyAction: React.FC<CopyActionProps> = ({ requestId }) => {
       toast.error("Please select a date and time.");
       return;
     }
+    
     const [hours, minutes] = time.split(":").map(Number);
     const scheduledDate = new Date(selectedDate);
     scheduledDate.setHours(hours);
     scheduledDate.setMinutes(minutes);
-
+  
     if (scheduledDate < new Date()) {
       toast.error("Please select a future date and time.");
       return;
     }
-
+  
     try {
       const response = await clientAxiosInstance.post("/history/copy-request", {
         request_id: requestId,
         scheduled_time: scheduledDate.toISOString(),
       });
+  
       if (response.status === 200) {
         toast.success("Request scheduled successfully.");
-        setIsPopoverOpen(false); // Close the popover after scheduling
+        setIsPopoverOpen(false);
+  
+        // 🛑 Update UI by adding new copied request
+        setData(prevData => [...prevData, response.data]);
       } else {
         toast.error("Failed to schedule the request.");
       }
@@ -67,6 +74,7 @@ const CopyAction: React.FC<CopyActionProps> = ({ requestId }) => {
       toast.error("An error occurred while scheduling the request.");
     }
   };
+  
 
   return (
     <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>

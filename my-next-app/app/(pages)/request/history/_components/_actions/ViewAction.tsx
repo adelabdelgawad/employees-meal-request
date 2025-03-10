@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import RequestLinesTable from "./RequestLinesTable";
 import ConfirmationModal from "@/components/confirmation-dialog";
 import clientAxiosInstance from "@/lib/clientAxiosInstance";
+import toast from "react-hot-toast";
 
 interface ViewActionProps {
   id?: number;
@@ -35,12 +36,17 @@ const ViewAction: React.FC<ViewActionProps> = ({ id, disableStatus }) => {
   const handleLineDelete = async (id: number) => {
     try {
       await clientAxiosInstance.delete(`/history/request-line/${id}`);
-      setRequestLine((prev) => prev.filter((item) => item.id !== id));
+  
+      // 🛑 Remove the deleted request line from the UI
+      setRequestLine(prevLines => prevLines.filter(line => line.id !== id));
+  
+      toast.success("Request line deleted successfully.");
     } catch (error) {
-      console.error("Error deleting request:", error);
-      throw error;
+      console.error("Error deleting request line:", error);
+      toast.error("Failed to delete request line.");
     }
   };
+  
 
   const handleDrawerOpen = () => {
     setIsDrawerOpen(true);

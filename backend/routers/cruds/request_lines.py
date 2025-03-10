@@ -68,7 +68,10 @@ async def read_request_lines(
                 RequestLine.shift_hours,
             )
             .join(Employee, RequestLine.employee_id == Employee.id)
-            .where(RequestLine.request_id == request_id)
+            .where(
+                RequestLine.request_id == request_id,
+                RequestLine.is_deleted == False,
+            )
         )
 
         result = await session.execute(statement)

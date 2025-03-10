@@ -4,14 +4,13 @@ from fastapi import APIRouter, HTTPException, status
 from typing import List, Optional
 from sqlmodel import select
 from db.crud import read_domain_users
-from db.models import (
-    Account,
-    Role,
-    RolePermission,
-)
+from db.models import Account, DomainUser, Role, RolePermission
 from routers.utils.auth import read_roles
-from services.active_directory import read_domain_users_from_ldap
-from services.http_schema import DomainUserResponse, SettingUserInfoResponse
+from services.http_schema import (
+    DomainUserResponse,
+    RoleResponse,
+    SettingUserInfoResponse,
+)
 from sqlalchemy.exc import IntegrityError
 from routers.cruds import security as crud
 from services.http_schema import (
@@ -29,17 +28,17 @@ logger = logging.getLogger(__name__)
 
 @router.get(
     "/domain-users",
-    response_model=List[DomainUserResponse],
+    response_model=List[DomainUser],
     status_code=status.HTTP_200_OK,
 )
 async def get_domain_users(
     session: SessionDep,
-) -> Optional[List[DomainUserResponse]]:
+) -> Optional[List[DomainUser]]:
     """
     Retrieve all domain users from the external Active Directory.
 
     Returns:
-        List[DomainUserResponse]: A list of domain users.
+        List[DomainUser]: A list of domain users.
 
     Raises:
         HTTPException: 500 Internal Server Error if an error occurs during fetching.
@@ -79,7 +78,7 @@ async def get_roles(session: SessionDep):
     try:
         statement = select(Role)
         result = await session.execute(statement)
-        roles = result.scalars().all()
+        roles = result.all()
 
         if not roles:
             logger.info("No roles found in the database")
@@ -184,7 +183,7 @@ async def update_user_roles(
 
 @router.delete(
     "/users/{user_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
 )
 async def delete_user(
     user_id: int, session: SessionDep, current_user: CurrentUserDep
@@ -280,12 +279,8 @@ async def create_user(
         )
 
 
-@router.get(
-    "/setting/user-info/{user_id}", response_model=SettingUserInfoResponse
-)
-async def get_user_info(
-    session: SessionDep, user_id: int
-) -> SettingUserInfoResponse:
+@router.get("/setting/user-info/{user_id}")
+async def get_user_info(session: SessionDep, user_id: int):
     try:
         user = await session.get(Account, user_id)
         if not user:
@@ -293,17 +288,17 @@ async def get_user_info(
             raise HTTPException(status_code=404, detail="User not found")
 
         # Fetch all roles
-        statement = select(Role)
-        results = await session.execute(statement)
-        roles = results.all()
-        ic(roles)
+        user_roles = await read_roles(session, user.id)
+        user_roles_ids = [r.id for r in user_roles]
+        all_roles = await read_roles(session)
+        ic(user_roles_ids)
 
-        # Extract role IDs
-        user_roles_ids = [role.id for role in roles]
-
-        return SettingUserInfoResponse(
-            user_roles_ids=user_roles_ids, user=user, all_roles=roles
-        )
+        # Extract role IDs from all roles or adjust according to your logic.
+        return {
+            "user_roles_ids": user_roles_ids,
+            "user": user,
+            "all_roles": all_roles,
+        }
 
     except IntegrityError:
         logger.exception("IntegrityError in get_user_info endpoint")

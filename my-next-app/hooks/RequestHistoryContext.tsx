@@ -7,24 +7,25 @@ import toast from 'react-hot-toast';
 
 // Define the shape of the context
 interface UserContextType {
-  domainUsers: DomainUser[];
-  setDomainUsers: React.Dispatch<React.SetStateAction<DomainUser[]>>;
-  roles: Role[];
-  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
-  users: User[];
-  loading: boolean;
+  
   mutate: () => Promise<void>;
 }
 
 // Create the context
-const SettingUserContext = createContext<UserContextType | undefined>(
+const RequestHistoryContext = createContext<UserContextType | undefined>(
   undefined,
 );
 
 // Create a provider component
-export const SettingUserProvider: React.FC<{ children: React.ReactNode }> = ({
+export const RequestHistoryProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+
+
+
+
+
+
   const [domainUsers, setDomainUsers] = useState<DomainUser[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -64,7 +65,7 @@ export const SettingUserProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   return (
-    <SettingUserContext.Provider
+    <RequestHistoryContext.Provider
       value={{
         domainUsers,
         setDomainUsers,
@@ -76,16 +77,16 @@ export const SettingUserProvider: React.FC<{ children: React.ReactNode }> = ({
       }}
     >
       {children}
-    </SettingUserContext.Provider>
+    </RequestHistoryContext.Provider>
   );
 };
 
 // Custom hook to use the context
-export const useSettingUserContext = () => {
-  const context = useContext(SettingUserContext);
+export const useRequestHistoryContext = () => {
+  const context = useContext(RequestHistoryContext);
   if (!context) {
     throw new Error(
-      'useSettingUserContext must be used within a SettingUserProvider',
+      'useRequestHistoryContext must be used within a RequestHistoryProvider',
     );
   }
   return context;

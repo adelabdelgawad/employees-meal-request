@@ -129,10 +129,6 @@ async def _create_or_update_security_users(
                     app_session.add(new_user)
                     await app_session.commit()
 
-                    # Prepare new user for insertion
-                    logger.info(
-                        f"Inserting new security user: {hris_sec_user.name} (ID: {hris_sec_user.id})"
-                    )
             except Exception as e:
                 logger.error(
                     f"Error processing security user {hris_sec_user.id}: {e}"
@@ -179,9 +175,6 @@ async def _create_or_update_departments(
                 logger.info(f"Updating department: {dep.name} (ID: {dep.id})")
                 dep.name = hris_dep.name
             else:
-                logger.info(
-                    f"Inserting new department: {hris_dep.name} (ID: {hris_dep.id})"
-                )
                 new_departments.append(
                     Department(id=hris_dep.id, name=hris_dep.name)
                 )

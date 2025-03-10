@@ -4,12 +4,13 @@ import logging
 from typing import List
 from fastapi import APIRouter, HTTPException, status
 
-from services.http_schema import RequestHistoryRecordResponse
+from routers.cruds.request import read_requests
+from services.http_schema import RequestHistoryRecordResponse, RequestsResponse
 import pytz
 from services.http_schema import ScheduleRequest
 from src.dependencies import SessionDep, CurrentUserDep
 from icecream import ic
-from sqlmodel import select, func, case
+from sqlmodel import and_, select, func, case
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
 from db.models import Request, RequestStatus, Meal, RequestLine
@@ -27,15 +28,18 @@ router = APIRouter()
 
 @router.get(
     "/history",
-    response_model=List[RequestHistoryRecordResponse],
+    response_model=RequestsResponse,
     status_code=status.HTTP_200_OK,
 )
 async def get_history_requests(
     user: CurrentUserDep,
     session: SessionDep,
-):
+) -> RequestsResponse:
     """
     Retrieve the history of requests made by the current user.
+
+    This endpoint now only considers RequestLine records where `is_deleted` is False.
+    A Request will only be returned if it has at least one non-deleted RequestLine.
 
     Args:
         user (dict): The current authenticated user.
@@ -48,61 +52,8 @@ async def get_history_requests(
         HTTPException: If an error occurs while retrieving the data.
     """
     try:
-        stmt = (
-            select(
-                Request.id,
-                RequestStatus.name.label("status_name"),
-                RequestStatus.id.label("status_id"),
-                Meal.name.label("meal"),
-                Request.request_time,
-                Request.closed_time,
-                Request.notes,
-                func.count(RequestLine.id).label("total_lines"),
-                func.sum(
-                    case((RequestLine.is_accepted == True, 1), else_=0)
-                ).label("accepted_lines"),
-            )
-            .join(RequestStatus, Request.status_id == RequestStatus.id)
-            .outerjoin(RequestLine, Request.id == RequestLine.request_id)
-            .outerjoin(Meal, RequestLine.meal_id == Meal.id)
-            .where(
-                Request.is_deleted == False,
-                Request.requester_id == user.id,
-            )
-            .group_by(
-                Request.id,
-                RequestStatus.name,
-                RequestStatus.id,
-                Meal.name,
-                Request.request_time,
-                Request.closed_time,
-                Request.notes,
-            )
-            .having(func.count(RequestLine.id) > 0)
-            .order_by(desc(Request.request_time))
-        )
-
-        # Execute the query
-        results = await session.execute(stmt)
-        requests = results.all()
-
-        # Transform results into the response model
-        response = [
-            RequestHistoryRecordResponse(
-                id=row.id,
-                status_name=row.status_name,
-                status_id=row.status_id,
-                meal=row.meal,
-                request_time=row.request_time,
-                closed_time=row.closed_time,
-                notes=row.notes,
-                total_lines=row.total_lines,
-                accepted_lines=row.accepted_lines,
-            )
-            for row in requests
-        ]
-
-        return response
+        requests = await read_requests(session=session, requester_id=user.id)
+        return requests
 
     except SQLAlchemyError as db_err:
         logger.error(f"Database error occurred: {str(db_err)}")
@@ -242,8 +193,11 @@ async def delete_request_line(
             )
 
         request_line.is_deleted = True
+        request_line.is_accepted = False
+
         session.add(request_line)
         await session.commit()
+        await session.refresh(request_line)
         logger.info(
             f"User {current_user} successfully deleted RequestLine wsith id {id}."
         )

@@ -121,7 +121,7 @@ class UserCreateResponse(BaseModel):
 
 
 class SettingUserInfoResponse(BaseModel):
-    user_roles_ids: int | None
+    user_roles_ids: List[int] | None
     user: SettingUserResponse | None
     all_roles: List[RoleResponse] | None
 
@@ -227,7 +227,7 @@ class RequestHistoryRecordResponse(BaseModel):
     status_id: int
     meal: str
     request_time: datetime
-    closed_time: datetime
+    closed_time: datetime | None
     notes: str | None
     total_lines: int
     accepted_lines: int

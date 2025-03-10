@@ -266,16 +266,12 @@ async def update_order_status_endpoint(
         """
         Email Sender
         """
-        await send_confirmation_notification(
+        background_tasks.add_task(
+            send_confirmation_notification,
             session=session,
             request=request,
             requester_name=requester.fullname,
         )
-        # background_tasks.add_task(
-        #     send_confirmation_notification,
-        #     session=session,
-        #     request=request,
-        # )
 
         return {
             "status": "success",

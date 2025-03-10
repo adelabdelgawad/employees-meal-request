@@ -31,8 +31,8 @@ class HRISSecurityUser(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Field(nullable=False, max_length=64, unique=True)
-    is_deleted: Optional[bool] = None
-    is_locked: Optional[bool] = None
+    is_deleted: Optional[bool] = False
+    is_locked: Optional[bool] = False
 
 
 class Department(SQLModel, table=True):
@@ -127,8 +127,8 @@ class Account(SQLModel, table=True):
     fullname: Optional[str] = None
     password: Optional[str] = None
     title: Optional[str] = None
-    is_domain_user: Optional[bool] = None
-    is_super_admin: Optional[bool] = None
+    is_domain_user: Optional[bool] = False
+    is_super_admin: Optional[bool] = False
 
     role_permissions: List["RolePermission"] = Relationship(
         back_populates="account"
@@ -227,7 +227,7 @@ class RequestLine(SQLModel, table=True):
     notes: Optional[str] = None
     is_accepted: Optional[bool] = True
     shift_hours: Optional[int] = None
-    is_deleted: Optional[bool] = None
+    is_deleted: Optional[bool] = False
 
     # Relationships
     meal: Optional["Meal"] = Relationship(back_populates="request_lines")
@@ -275,7 +275,7 @@ class LogRequestLine(SQLModel, table=True):
     request_line_id: int = Field(foreign_key="request_line.id", nullable=False)
     account_id: int = Field(foreign_key="account.id", nullable=False)
     action: Optional[str] = None
-    is_successful: Optional[bool] = None
+    is_successful: Optional[bool] = False
     result: Optional[str] = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
 

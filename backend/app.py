@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, data, report, security
+from routers import auth, data, report, setting
 from routers.request.history import router as request_history_router
 from routers.request.requests import router as request_requests_router
 from dotenv import load_dotenv
@@ -80,6 +80,6 @@ logfire.instrument_fastapi(app, capture_headers=True)
 app.include_router(data.router, tags=["Data"])
 app.include_router(request_requests_router, tags=["Request"])
 app.include_router(report.router, tags=["Report"])
-app.include_router(security.router, tags=["Security Settings"])
+app.include_router(setting.router, tags=["Security Settings"])
 app.include_router(auth.router, tags=["Authentication"])
 app.include_router(request_history_router, tags=["Request"])

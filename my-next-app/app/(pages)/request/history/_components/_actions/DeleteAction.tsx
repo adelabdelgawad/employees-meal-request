@@ -3,16 +3,15 @@ import { Trash } from "lucide-react";
 import ConfirmationDialog from "@/components/confirmation-dialog";
 import toast from "react-hot-toast";
 import clientAxiosInstance from "@/lib/clientAxiosInstance";
+import { HistoryRequest } from "../HistoryDataTable";
 
 interface DeleteActionProps {
   id: number;
   disableStatus: boolean;
+  setData: React.Dispatch<React.SetStateAction<HistoryRequest[]>>; // 🛑 Receive setData
 }
 
-const DeleteAction: React.FC<DeleteActionProps> = ({
-  id,
-  disableStatus,
-}) => {
+const DeleteAction: React.FC<DeleteActionProps> = ({ id, disableStatus, setData }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const openDialog = useCallback(() => {
@@ -26,16 +25,21 @@ const DeleteAction: React.FC<DeleteActionProps> = ({
   const handleDelete = useCallback(async () => {
     try {
       const response = await clientAxiosInstance.delete(`/history/delete/${id}`);
-      toast.success("Request Deleted Succeefully");
-      return response.data;
+  
+      if (response.status === 204) {
+        toast.success("Request Deleted Successfully");
+  
+        // 🛑 Remove the deleted request from the UI
+        setData(prevData => prevData.filter(item => item.id !== id));
+      }
     } catch (error) {
-      toast.error("Failted to Deleting Request");
-      console.error("Deleting Request:", error);
-    }
-   finally {
+      toast.error("Failed to delete the request.");
+      console.error("Error deleting request:", error);
+    } finally {
       closeDialog();
     }
   }, [id, closeDialog]);
+  
 
   return (
     <>

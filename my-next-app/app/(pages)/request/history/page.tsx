@@ -20,7 +20,7 @@ export default async function Page() {
       <div className="flex flex-col m-2">
         {/* Table */}
         <div>
-          <HistoryDataTable initialData={historyData} />
+          <HistoryDataTable initialData={historyData.data} />
         </div>
       </div>
     );

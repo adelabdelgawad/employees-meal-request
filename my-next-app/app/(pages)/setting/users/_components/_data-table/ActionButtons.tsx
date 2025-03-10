@@ -5,36 +5,32 @@ import toast from 'react-hot-toast';
 import { TrashIcon } from 'lucide-react';
 import ConfirmationDialog from '@/components/confirmation-dialog';
 import clientAxiosInstance from '@/lib/clientAxiosInstance';
+import { useSettingUserContext } from '@/hooks/SettingUserContext';
 
 interface ActionButtonsProps {
   recordId: number;
-  onDelete?: (id: number) => void; // Optional callback to update UI after deletion
 }
 
-export default function ActionButtons({ recordId, onDelete }: ActionButtonsProps) {
+export default function ActionButtons({ recordId }: ActionButtonsProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false); // Loading state for delete action
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  const { setUsers } = useSettingUserContext(); // Access users state
 
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await clientAxiosInstance.delete(`/users/${recordId}`);
-      if (response.status === 204) {
-        toast.success('Record deleted successfully!');
-                // Notify parent component to remove item from the UI
-        if (onDelete) {
-          onDelete(recordId);
-        }
+      await clientAxiosInstance.delete(`/users/${recordId}`);
+      toast.success('Record deleted successfully!');
+        
+      // **Remove user from UI without reloading**
+      setUsers(prevUsers => prevUsers.filter(user => user.id !== recordId));
 
-        setDeleteDialogOpen(false);
-      }
+      setDeleteDialogOpen(false);
+
     } catch (error) {
-      if (error) {
-        console.log(error)
-        toast.error(`Faild to delete`);
-      } else {
-        toast.error('Failed to delete the record. Please try again.');
-      }
+      console.error(error);
+      toast.error('Failed to delete the record. Please try again.');
     } finally {
       setIsDeleting(false);
     }
@@ -50,7 +46,7 @@ export default function ActionButtons({ recordId, onDelete }: ActionButtonsProps
         onClick={() => setDeleteDialogOpen(true)}
         variant="outline"
         color="red"
-        disabled={isDeleting} // Disable button while deleting
+        disabled={isDeleting}
       >
         {isDeleting ? 'Deleting...' : <><TrashIcon className="mr-1" /> Delete</>}
       </Button>
@@ -64,7 +60,6 @@ export default function ActionButtons({ recordId, onDelete }: ActionButtonsProps
         cancelLabel="Cancel"
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialogOpen(false)}
-        // Disable buttons while deleting
       />
     </div>
   );
