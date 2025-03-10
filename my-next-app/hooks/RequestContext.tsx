@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { RequestRecord } from "@/pages/definitions";
 import { getRequests } from "@/lib/services/request-requests";
 
 interface RequestContextProps {
@@ -21,7 +20,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchData = async () => {
     try {
       const response = await getRequests();
-      setRequests(response);
+      setRequests(response as unknown as RequestRecord[]);
     } catch (error) {
       console.error("Failed to fetch requests:", error);
     }

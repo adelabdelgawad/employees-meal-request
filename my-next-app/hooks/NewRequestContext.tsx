@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-import { DepartmentType, EmployeeType, Meal } from "@/pages/definitions";
 import { getDepartments, getEmployees, getMeals } from "@/lib/services/data";
 
 interface NewRequestContextType {

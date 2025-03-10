@@ -3,7 +3,7 @@ import * as Checkbox from "@radix-ui/react-checkbox";
 import { CheckIcon } from "lucide-react";
 
 interface DepartmentItemProps {
-  dept: { id: string; name: string };
+  dept: DepartmentType;
   isSelected: boolean;
   onToggle: (deptId: string) => void;
 }

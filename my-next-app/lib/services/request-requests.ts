@@ -1,9 +1,7 @@
-// app/actions.ts
 "use server";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getSession } from "../session";
-
-const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
+import axiosInstance from "../axiosInstance";
 
 export interface RequestParams {
   query?: string;
@@ -20,54 +18,32 @@ export async function getRequests({
   startTime = "",
   endTime = "",
 }: RequestParams = {}): Promise<RequestsResponse> {
-  const baseUrl = `${NEXT_PUBLIC_FASTAPI_URL}/requests`;
-
   try {
-    const url = new URL(baseUrl);
-    const session = await getSession(); // Removed duplicate await
-    const userId = session?.user?.userId;
-    const isAdmin = !!session?.user?.roles?.includes("Admin");
-    if (!userId) {
+    const session = await getSession();
+    if (!session || !session.user?.userId) {
       throw new Error("User session is invalid or missing user ID");
     }
-    // Convert isAdmin boolean to string
-    const isAdminString = isAdmin ? "true" : "false";
 
-    // Add query parameters
-    url.searchParams.append("query", query);
-    url.searchParams.append("page", currentPage.toString());
-    url.searchParams.append("page_size", pageSize.toString());
-    url.searchParams.append("start_time", startTime);
-    url.searchParams.append("end_time", endTime);
-    url.searchParams.append("user_id", userId);
-    url.searchParams.append("is_admin", isAdminString);
+    const { userId, roles } = session.user;
+    const isAdmin = roles?.includes("Admin") ? "true" : "false";
 
+    // Build the query parameters object.
+    const params = {
+      query,
+      page: currentPage.toString(),
+      page_size: pageSize.toString(),
+      start_time: startTime,
+      end_time: endTime,
+      user_id: userId.toString(),
+      is_admin: isAdmin,
+    };
 
-    const response = await fetch(url.toString(), { 
-      cache: "no-store",
-      headers: {
-        // Add authorization header if needed
-        Authorization: `Bearer ${session.accessToken}`,
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch data: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error(
-      `Error fetching data from ${baseUrl} with params: ${JSON.stringify({
-        query,
-        currentPage,
-        pageSize,
-        startTime,
-        endTime,
-      })}`,
-      error
-    );
-    throw error;
+    // Pass the params object to axiosInstance.
+    const response = await axiosInstance.get("/requests", { params });
+    return response.data;
+  } catch (error: unknown) {
+    console.error("Error fetching requests:", error);
+    throw new Error("Failed to fetch requests");
   }
 }
 
@@ -85,43 +61,24 @@ export default async function handler(
       return res.status(400).json({ message: "Missing id or statusId" });
     }
 
-    const response = await fetch(
-      `${NEXT_PUBLIC_FASTAPI_URL}/update-request-status?request_id=${id}&status_id=${statusId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+    const response = await axiosInstance.put(
+      `/update-request-status?request_id=${id}&status_id=${statusId}`
     );
-
-    if (!response.ok) {
-      throw new Error(`Failed to update status: ${response.statusText}`);
-    }
-
-    const updatedRecord = await response.json();
-    return res.status(200).json(updatedRecord);
+    return response.data;
   } catch (error) {
-    console.error(`Error updating request status:`, error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    console.error("Error Updating request", error);
+    throw new Error("Failed to Update request");
   }
 }
 
 export const getRequestLineById = async (id: number) => {
-  const res = await fetch(
-    `${NEXT_PUBLIC_FASTAPI_URL}/request-lines?request_id=${id}`,
-    { cache: "no-store" }
-  );
-
-  if (!res.ok) throw new Error("Failed to fetch requests");
-
-  const result = await res.json();
-  if (result.length === 0) {
-    console.error("No data found.");
+  try {
+    const response = await axiosInstance.get(`/request-lines?request_id=${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error Getting Request Line By id", error);
     return [];
   }
-
-  return result;
 };
 
 export const updateRequestLine = async (
@@ -133,19 +90,14 @@ export const updateRequestLine = async (
     changed_statuses: changedStatus,
   };
 
-  const response = await fetch(`${NEXT_PUBLIC_FASTAPI_URL}/update-request-lines`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.detail || "Failed to update request lines.");
+  try {
+    const response = await axiosInstance.put(
+      `/request-lines?request_id=${id}`,
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error while updating request lines", error);
+    throw new Error("Failed to Update request");
   }
-
-  const result = await response.json();
-  return result.data;
 };

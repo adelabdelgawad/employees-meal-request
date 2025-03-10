@@ -1,4 +1,5 @@
-// app/history/page.js
+export const dynamic = "force-dynamic";
+
 import axiosInstance from '@/lib/axiosInstance';
 import HistoryDataTable from './_components/HistoryDataTable';
 
@@ -17,15 +18,14 @@ export default async function Page() {
     const historyData = await fetchUserHistory();
     return (
       <div className="flex flex-col m-2">
-
-      {/* Table */}
-      <div>
-        <HistoryDataTable initialData={historyData}/>
+        {/* Table */}
+        <div>
+          <HistoryDataTable initialData={historyData} />
+        </div>
       </div>
-    </div>
     );
   } catch (error) {
     console.error('Error rendering history page:', error);
+    return <div>Error loading history</div>;
   }
 }
-
