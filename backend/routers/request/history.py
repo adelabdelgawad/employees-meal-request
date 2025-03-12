@@ -235,7 +235,7 @@ async def delete_request(
     try:
         # Retrieve the Request by ID
         request = await session.get(Request, id)
-        ic(request)
+
         if not request:
             raise HTTPException(status_code=404, detail="request not found")
 

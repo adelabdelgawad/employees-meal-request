@@ -61,18 +61,31 @@ export const generatePagination = (currentPage: number, totalPages: number) => {
 
 interface TablePaginationProps {
   totalPages: number;
+  currentPage: number;
+  onPageChange?: (page: number) => void;
 }
 
-const TablePagination = React.memo(function TablePagination({ totalPages }: TablePaginationProps) {  const searchParams = useSearchParams();
+const TablePagination = React.memo(function TablePagination({
+  totalPages,
+  currentPage,
+  onPageChange,
+}: TablePaginationProps) {
+  const searchParams = useSearchParams();
   const params = new URLSearchParams(searchParams?.toString() || "");
   const pathname = usePathname();
-  const currentPage = Number(params.get("page")) || 1;
   const allPages = generatePagination(currentPage, totalPages);
 
   const createPageURL = (page: number | string) => {
     params.set("page", page.toString());
-
     return `${pathname}?${params.toString()}`;
+  };
+
+  // Handler that calls the onPageChange callback if provided
+  const handlePageClick = (page: number) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (onPageChange) {
+      e.preventDefault();
+      onPageChange(page);
+    }
   };
 
   return (
@@ -85,9 +98,8 @@ const TablePagination = React.memo(function TablePagination({ totalPages }: Tabl
               <PaginationPrevious
                 href={currentPage > 1 ? createPageURL(currentPage - 1) : "#"}
                 aria-disabled={currentPage <= 1}
-                className={
-                  currentPage <= 1 ? "pointer-events-none opacity-50" : ""
-                }
+                className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                onClick={currentPage > 1 ? handlePageClick(currentPage - 1) : undefined}
               />
             </PaginationItem>
 
@@ -100,6 +112,7 @@ const TablePagination = React.memo(function TablePagination({ totalPages }: Tabl
                   <PaginationLink
                     href={createPageURL(value)}
                     isActive={currentPage === value}
+                    onClick={onPageChange ? handlePageClick(value as number) : undefined}
                   >
                     {value}
                   </PaginationLink>
@@ -110,17 +123,10 @@ const TablePagination = React.memo(function TablePagination({ totalPages }: Tabl
             {/* Next Button */}
             <PaginationItem>
               <PaginationNext
-                href={
-                  currentPage < totalPages
-                    ? createPageURL(currentPage + 1)
-                    : "#"
-                }
+                href={currentPage < totalPages ? createPageURL(currentPage + 1) : "#"}
                 aria-disabled={currentPage >= totalPages}
-                className={
-                  currentPage >= totalPages
-                    ? "pointer-events-none opacity-50"
-                    : ""
-                }
+                className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                onClick={currentPage < totalPages ? handlePageClick(currentPage + 1) : undefined}
               />
             </PaginationItem>
           </PaginationContent>

@@ -110,7 +110,7 @@ async def send_confirmation_notification(
     """
     try:
         request_lines = await read_request_lines(session, request.id)
-        ic(request_lines)
+
         body_html = generate_new_request_template(
             {"request_lines": request_lines}, "confirmation.html"
         )

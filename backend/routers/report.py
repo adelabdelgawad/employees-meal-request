@@ -15,7 +15,7 @@ from src.dependencies import SessionDep, HRISSessionDep
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-DATE_FORMAT = "%m/%d/%Y, %I:%M:%S %p"
+DATE_FORMAT = "%Y-%m-%d"
 
 
 def parse_date_range(
@@ -90,7 +90,7 @@ async def get_requests(
 
 
 @router.get(
-    "/report-details",
+    "/report/details",
     response_model=ReportDetailsResponse,
     status_code=status.HTTP_200_OK,
 )
@@ -130,6 +130,8 @@ async def get_requests_data(
     :raises HTTPException: If an HTTP error or unexpected error occurs.
     """
     try:
+        if start_time and not end_time:
+            end_time = start_time
         start_time, end_time = parse_date_range(start_time, end_time)
         if update_attendance:
             await update_request_lines_with_attendance(
@@ -160,6 +162,7 @@ async def get_requests_data(
             page,
             data_count,
         )
+
         return request_lines
 
     except HTTPException as http_exc:

@@ -37,6 +37,37 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+DATE_FORMAT = "%Y-%m-%d"
+
+
+def parse_date_range(
+    start_time: Optional[str], end_time: Optional[str]
+) -> Tuple[Optional[datetime], Optional[datetime]]:
+    """
+    Parse the start and end time strings into datetime objects adjusted to
+    the start and end of the day.
+
+    :param start_time: Start date (format: 'MM/DD/YYYY, HH:MM:SS AM/PM')
+    :param end_time: End date (format: 'MM/DD/YYYY, HH:MM:SS AM/PM')
+    :return: Tuple of (start_dt, end_dt) or (None, None) if not provided.
+    :raises ValueError: If the date strings cannot be parsed.
+    """
+
+    if start_time and end_time:
+        try:
+            start_dt = datetime.strptime(start_time, DATE_FORMAT).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            end_dt = datetime.strptime(end_time, DATE_FORMAT).replace(
+                hour=23, minute=59, second=59, microsecond=0
+            )
+            return start_dt, end_dt
+        except ValueError:
+            raise ValueError(
+                "Invalid date format. Expected 'MM/DD/YYYY, HH:MM:SS AM/PM'."
+            )
+    return None, None
+
 
 def get_request_time_and_status(
     payload: RequestPayload,
@@ -215,12 +246,15 @@ async def get_requests(
     """
     Retrieve a paginated list of requests with optional filtering.
     """
+
     try:
         if is_admin:
             user_id = None
         background_tasks.add_task(
             crud.prepare_scheduled_requests, session, hris_session
         )
+        
+        start_time, end_time = parse_date_range(start_time, end_time)
 
         requests = await crud.read_requests(
             session=session,

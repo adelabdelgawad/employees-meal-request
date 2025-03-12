@@ -102,7 +102,6 @@ async def update_request_lines_with_attendance(
         min_request_time = datetime.combine(min_request_time, time.min)
         max_request_time = datetime.combine(max_request_time, time.max)
 
-        ic(min_request_time, max_request_time)
     if not min_request_time or not max_request_time:
         raise ValueError("Could not determine the min/max request times.")
 

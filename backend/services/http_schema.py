@@ -244,7 +244,7 @@ class ScheduleRequest(BaseModel):
 
 class ReportDetailsResponse(BaseModel):
     request_lines: List[ReportDetailsRecord] | None
-    current_pages: int | None
+    current_page: int | None
     page_size: int | None
     total_pages: int | None
     total_rows: int | None

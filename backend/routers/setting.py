@@ -291,7 +291,6 @@ async def get_user_info(session: SessionDep, user_id: int):
         user_roles = await read_roles(session, user.id)
         user_roles_ids = [r.id for r in user_roles]
         all_roles = await read_roles(session)
-        ic(user_roles_ids)
 
         # Extract role IDs from all roles or adjust according to your logic.
         return {

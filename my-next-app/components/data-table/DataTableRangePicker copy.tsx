@@ -1,16 +1,7 @@
 "use client";
-export const dynamic = "force-dynamic";
 
 import * as React from "react";
-import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  subMonths,
-  parse,
-  isSameDay,
-  subDays,
-} from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
@@ -20,7 +11,6 @@ import { DateRange as DayPickerDateRange } from "react-day-picker";
 
 // Import shadcn Sheet components
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Spinner } from "../ui/spinner";
 
 interface DataTableRangePickerProps {
   placeholder?: string;
@@ -29,16 +19,10 @@ interface DataTableRangePickerProps {
 export default function DataTableRangePicker({
   placeholder = "Pick a date",
 }: DataTableRangePickerProps) {
-  const [open, setOpen] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false); // Spinner state
-
   const searchParams = useSearchParams();
   const { replace } = useRouter();
   const pathname = usePathname();
 
-  // Extract dates from URL query parameters (if available)
-  const urlStartDate = searchParams?.get("startDate");
-  const urlEndDate = searchParams?.get("endDate");
   const defaultFrom = searchParams?.get("startDate")
     ? new Date(searchParams.get("startDate")!)
     : undefined;
@@ -47,28 +31,14 @@ export default function DataTableRangePicker({
     ? new Date(searchParams.get("endDate")!)
     : undefined;
 
+  // Controls the Sheet open/close state
+  const [open, setOpen] = React.useState(false);
+
   // Maintain the selected date range
   const [date, setDate] = React.useState<DayPickerDateRange>({
     from: defaultFrom,
     to: defaultTo,
   });
-
-  React.useEffect(() => {
-    if (
-      isLoading &&
-      date?.from &&
-      urlStartDate &&
-      isSameDay(parse(urlStartDate, "yyyy-MM-dd", new Date()), date.from) &&
-      ((date.to &&
-        urlEndDate &&
-        isSameDay(parse(urlEndDate, "yyyy-MM-dd", new Date()), date.to)) ||
-        (!date.to && !urlEndDate))
-    ) {
-      setIsLoading(false); // Stop loading when URL matches selected date
-
-      console.log("Loaded");
-    }
-  }, [searchParams, isLoading, date, urlStartDate, urlEndDate]);
 
   const handleDateSelect = (newDateRange: DayPickerDateRange | undefined) => {
     // If user picks both from & to, set them
@@ -82,10 +52,9 @@ export default function DataTableRangePicker({
   };
 
   const handleSaveButtonClick = () => {
-    setIsLoading(true); // Start loading
-
     const params = new URLSearchParams(searchParams?.toString() || "");
 
+    // If no date range is selected, clear parameters and close the sheet
     if (!date?.from && !date?.to) {
       params.delete("startDate");
       params.delete("endDate");
@@ -94,6 +63,7 @@ export default function DataTableRangePicker({
       return;
     }
 
+    // Ensure both start and end dates are present
     if (!date?.from) {
       toast.error("Please select a start date.");
       return;
@@ -103,9 +73,9 @@ export default function DataTableRangePicker({
       return;
     }
 
-    params.set("startDate", format(date.from, "yyyy-MM-dd"));
-    params.set("endDate", format(date.to, "yyyy-MM-dd"));
-
+    // Set the parameters if the range is valid
+    params.set("startDate", date.from.toISOString().split("T")[0]);
+    params.set("endDate", date.to.toISOString().split("T")[0]);
     replace(`${pathname}?${params.toString()}`);
     setOpen(false);
   };
@@ -119,7 +89,7 @@ export default function DataTableRangePicker({
     const now = new Date();
     setDate({
       from: startOfMonth(now),
-      to: endOfMonth(now),
+      to: new Date(endOfMonth(now).setHours(23, 59, 59, 999)),
     });
   };
 
@@ -127,8 +97,8 @@ export default function DataTableRangePicker({
     const now = new Date();
     const lastMonth = subMonths(now, 1);
     setDate({
-      from: startOfMonth(lastMonth),
-      to: endOfMonth(lastMonth),
+      from: new Date(startOfMonth(lastMonth).setHours(0, 0, 0, 0)),
+      to: new Date(endOfMonth(lastMonth).setHours(23, 59, 59, 999)),
     });
   };
 
@@ -138,7 +108,6 @@ export default function DataTableRangePicker({
       <SheetTrigger asChild>
         <Button size="lg" variant="outline">
           <CalendarIcon className="mx-2 w-5 h-5 opacity-60" />
-
           {date?.from ? (
             date.to ? (
               <>
@@ -151,7 +120,6 @@ export default function DataTableRangePicker({
           ) : (
             <span>{placeholder}</span>
           )}
-        {isLoading && <Spinner className="absolute left-[-30px] h-5 w-5 text-blue-500" />}
         </Button>
       </SheetTrigger>
 
@@ -178,13 +146,12 @@ export default function DataTableRangePicker({
               >
                 Today
               </Button>
-
               <Button
                 className="w-full text-left"
                 onClick={() =>
                   handleDateSelect({
-                    from: subDays(new Date(), 1),
-                    to: subDays(new Date(), 1),
+                    from: subMonths(new Date(), 1),
+                    to: subMonths(new Date(), 1),
                   })
                 }
               >

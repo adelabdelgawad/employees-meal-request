@@ -1,41 +1,30 @@
 // app/actions.js
 "use server";
-const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
 
-export async function fetchReportDetails({
-  query = "",
-  currentPage = 1,
-  pageSize = 20,
-  startTime = "",
-  endTime = "",
-  download = false,
-  update_attendance = false,
-} = {}): Promise<ReportDetailsResponse> {
+import axiosInstance from "../axiosInstance";
+
+
+export async function fetchReportDetails(
+  query: string = "",
+  page: number = 1,
+  startDate?: string,
+  endDate?: string,
+  updateAttendance: boolean = false,
+  download: boolean = false
+) {
   try {
-    const baseUrl = `${NEXT_PUBLIC_FASTAPI_URL}/report-details`;
-    const url = new URL(baseUrl);
-
-    // Add query parameters
-    url.searchParams.append("query", query);
-    url.searchParams.append("page", currentPage.toString());
-    url.searchParams.append("page_size", pageSize.toString());
-    url.searchParams.append("start_time", startTime);
-    url.searchParams.append("end_time", endTime);
-    url.searchParams.append("update_attendance", update_attendance.toString());
-
-    if (download) {
-      url.searchParams.append("download", "true");
-    }
-
-    const response = await fetch(url.toString(), { cache: "no-store" });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch data: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const res = await axiosInstance.get("/report/details", {
+      params: {
+        query,
+        page,
+        ...(startDate && { start_time: startDate }), // Only include if defined
+        ...(endDate && { end_time: endDate }), // Only include if defined
+        update_attendance: updateAttendance,
+        download
+      },
+    });
+    return res.data;
   } catch (error) {
     console.error("Error fetching report details:", error);
-    throw error;
   }
 }

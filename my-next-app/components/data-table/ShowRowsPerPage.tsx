@@ -12,9 +12,10 @@ import {
 
 interface ShowRowsPerPageProps {
   rowsPerPage: number;
+  onRowsPerPageChange?: (rows: number) => void;
 }
 
-export default function ShowRowsPerPage({ rowsPerPage }: ShowRowsPerPageProps) {
+export default function ShowRowsPerPage({ rowsPerPage, onRowsPerPageChange }: ShowRowsPerPageProps) {
   const { replace } = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -30,6 +31,10 @@ export default function ShowRowsPerPage({ rowsPerPage }: ShowRowsPerPageProps) {
     params.set("page", "1"); // Reset to first page upon change
 
     replace(`${pathname}?${params.toString()}`);
+
+    if (onRowsPerPageChange) {
+      onRowsPerPageChange(parseInt(newSize, 10));
+    }
   };
 
   return (

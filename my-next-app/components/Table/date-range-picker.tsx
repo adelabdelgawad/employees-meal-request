@@ -22,13 +22,13 @@ import { DateRange as DayPickerDateRange } from "react-day-picker";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Spinner } from "../ui/spinner";
 
-interface DataTableRangePickerProps {
+interface DateRangePickerProps {
   placeholder?: string;
 }
 
-export default function DataTableRangePicker({
-  placeholder = "Pick a date",
-}: DataTableRangePickerProps) {
+export default function DateRangePicker({
+  placeholder = "Pick a Date Range",
+}: DateRangePickerProps) {
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false); // Spinner state
 
