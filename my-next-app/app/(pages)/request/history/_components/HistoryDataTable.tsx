@@ -8,9 +8,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Actions from "./_actions/Actions";
-import { useCallback, useState } from "react";
-import clientAxiosInstance from "@/lib/clientAxiosInstance";
-import toast from "react-hot-toast";
+import { useState } from "react";
+
 
 export interface HistoryRequest {
   id: number;

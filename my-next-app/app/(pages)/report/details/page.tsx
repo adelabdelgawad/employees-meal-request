@@ -6,9 +6,7 @@ import { TablePagination } from "@/components/Table/table-pagination";
 import { URLSwitch } from "./URLSwitch";
 import DateRangePicker from "@/components/Table/date-range-picker";
 import { fetchReportDetails } from "@/lib/services/report-details";
-import { Download as DownloadIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { tableDownload } from "@/components/Table/table-download";
+import DownloadButton from "./DownloadButton";
 
 interface ReportDetailsRecord {
   id: string;
@@ -41,7 +39,7 @@ interface PageProps {
 }
 
 export default async function Page({ searchParams }: PageProps) {
-  // Construct a key from search parameters to force a remount on each refetch.
+  // Extract query parameters
   const query = searchParams?.query || "";
   const page = Number(searchParams?.page) || 1;
   const startDate = searchParams?.startDate || "";
@@ -49,19 +47,6 @@ export default async function Page({ searchParams }: PageProps) {
   const updateAttendance =
     searchParams?.updateAttendance === "true" ||
     searchParams?.updateAttendance === true;
-
-async function Export() {
-  console.log("Inside download")
-  const download = true
-  const response: ReportDetailsResponse | null = await fetchReportDetails(
-    query,
-    page,
-    startDate,
-    endDate,
-    download
-  );
-  await tableDownload({ response.request_lines })
-}
 
   const response: ReportDetailsResponse | null = await fetchReportDetails(
     query,
@@ -98,11 +83,8 @@ async function Export() {
         {/* Right Section */}
         <div className="flex items-center gap-4">
           <URLSwitch placeholder="Update Attendance" />
-          <Button variant="outline" onClick={() => Export()}
-          >
-      <DownloadIcon className="mr-2 h-4 w-4" />
-      Download
-    </Button>
+          {/* Render the client-side export button */}
+          <DownloadButton query={query} page={page} startDate={startDate} endDate={endDate} />
         </div>
       </div>
 

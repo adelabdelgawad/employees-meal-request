@@ -1,64 +1,57 @@
 'use client';
 
 import clientAxiosInstance from '@/lib/clientAxiosInstance';
-import { fetchUsers } from '@/lib/services/setting-user';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
-// Define the shape of the context
+
 interface UserContextType {
-  
+  domainUsers: DomainUser[];
+  setDomainUsers: React.Dispatch<React.SetStateAction<DomainUser[]>>;
+  roles: Role[];
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
+  users: User[];
+  loading: boolean;
   mutate: () => Promise<void>;
 }
 
 // Create the context
-const RequestHistoryContext = createContext<UserContextType | undefined>(
-  undefined,
-);
+const RequestHistoryContext = createContext<UserContextType | null>(null);
 
 // Create a provider component
-export const RequestHistoryProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-
-
-
-
-
-
+export const RequestHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [domainUsers, setDomainUsers] = useState<DomainUser[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Initial data fetch
   useEffect(() => {
     const loadData = async () => {
-        try {
-          const response = await clientAxiosInstance.get(`/setting/users`);
-            const data =  await response.data;
-            setRoles(data.roles);
-            setUsers(data.users);
-            setDomainUsers(data.domain_users);
-          } catch (error) {
-          console.error("Error fetching roles:", error);
-          toast.error("Failed to get the Users.");
-        }
-    };
-
-    loadData();
-    setLoading(false)
-  }, []);
-
-  // Mutate function to refresh users
-  const mutate = async () => {
-    try {
-      const response = await clientAxiosInstance.get(`/setting/users`);
-        const data =  await response.data;
+      try {
+        const response = await clientAxiosInstance.get(`/setting/users`);
+        const data = await response.data;
         setRoles(data.roles);
         setUsers(data.users);
         setDomainUsers(data.domain_users);
       } catch (error) {
+        console.error("Error fetching roles:", error);
+        toast.error("Failed to get the Users.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const mutate = async () => {
+    try {
+      const response = await clientAxiosInstance.get(`/setting/users`);
+      const data = await response.data;
+      setRoles(data.roles);
+      setUsers(data.users);
+      setDomainUsers(data.domain_users);
+    } catch (error) {
       console.error("Error fetching roles:", error);
       toast.error("Failed to get the Users.");
     }
@@ -80,6 +73,7 @@ export const RequestHistoryProvider: React.FC<{ children: React.ReactNode }> = (
     </RequestHistoryContext.Provider>
   );
 };
+
 
 // Custom hook to use the context
 export const useRequestHistoryContext = () => {

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -7,7 +8,7 @@ import TableOptions from "./_components/_data-table/TableOptions";
 import DataTableBody from "./_components/_data-table/DataTableBody";
 import { useSettingUserContext } from "@/hooks/SettingUserContext";
 import { AddUserDialog } from "./_components/_add-user-dialog/AddUserDialog";
-import TablePagination from "@/components/data-table/TablePagination";
+
 
 export function SettingUsersTable() {
   // ✅ Use the users array from context
@@ -37,8 +38,6 @@ export function SettingUsersTable() {
   }, [rolesFilter, users]);
 
   // Pagination calculations
-  const totalRows = filteredData.length;
-  const totalPages = Math.ceil(totalRows / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
   const currentPageData = filteredData.slice(
     startIndex,
@@ -87,9 +86,6 @@ export function SettingUsersTable() {
         <DataTableBody records={currentPageData} />
       </Table>
 
-      <TablePagination
-        totalPages={totalPages}
-      />
     </div>
   );
 }

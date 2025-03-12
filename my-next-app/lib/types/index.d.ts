@@ -24,7 +24,7 @@ declare global {
     fullname: string;
     title: string;
     email: string;
-    roles: string[];
+    roles: str[];
   };
   interface SessionPayload {
     user: User;

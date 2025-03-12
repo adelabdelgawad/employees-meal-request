@@ -8,7 +8,7 @@ import { HistoryRequest } from "../HistoryDataTable";
 interface DeleteActionProps {
   id: number;
   disableStatus: boolean;
-  setData: React.Dispatch<React.SetStateAction<HistoryRequest[]>>; // 🛑 Receive setData
+  setData: React.Dispatch<React.SetStateAction<HistoryRequest[]>>;
 }
 
 const DeleteAction: React.FC<DeleteActionProps> = ({ id, disableStatus, setData }) => {
@@ -25,11 +25,11 @@ const DeleteAction: React.FC<DeleteActionProps> = ({ id, disableStatus, setData 
   const handleDelete = useCallback(async () => {
     try {
       const response = await clientAxiosInstance.delete(`/history/delete/${id}`);
-  
+
       if (response.status === 204) {
         toast.success("Request Deleted Successfully");
-  
-        // 🛑 Remove the deleted request from the UI
+
+        // Remove the deleted request from the UI
         setData(prevData => prevData.filter(item => item.id !== id));
       }
     } catch (error) {
@@ -38,8 +38,7 @@ const DeleteAction: React.FC<DeleteActionProps> = ({ id, disableStatus, setData 
     } finally {
       closeDialog();
     }
-  }, [id, closeDialog]);
-  
+  }, [id, setData, closeDialog]);
 
   return (
     <>

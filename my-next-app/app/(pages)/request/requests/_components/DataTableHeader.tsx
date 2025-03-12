@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import ExportTable from "@/components/data-table/DataTableExport";
 import DataTableSearch from "@/components/data-table/DataTableSearch";
 import DataTableDateRange from "@/components/data-table/DataTableRangePicker";
 import LiveButton from "./LiveButton";
@@ -31,7 +30,6 @@ const DataTableHeader = () => {
               </div>
             )}
             <LiveButton />
-            <ExportTable />
           </div>
       </div>
     </div>

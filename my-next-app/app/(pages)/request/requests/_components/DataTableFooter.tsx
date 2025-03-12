@@ -24,9 +24,13 @@ export function DataTableFooter({
       </div>
 
       {/* Pagination Controls */}
-      <div>
-        <TablePagination totalPages={totalPages} />
+      <div className="mt-5 flex w-full justify-center">
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+        />
       </div>
+
 
       {/* Page and Total Rows Info */}
       <div>

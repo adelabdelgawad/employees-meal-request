@@ -20,11 +20,11 @@ export async function getRequests({
 }: RequestParams = {}): Promise<RequestsResponse> {
   try {
     const session = await getSession();
-    if (!session || !session.user?.userId) {
+    if (!session || !session.user?.id) {
       throw new Error("User session is invalid or missing user ID");
     }
 
-    const { userId, roles } = session.user;
+    const { id, roles } = session.user;
     const isAdmin = roles?.includes("Admin") ? "true" : "false";
 
     // Build the query parameters object.
@@ -34,7 +34,7 @@ export async function getRequests({
       page_size: pageSize.toString(),
       start_time: startTime,
       end_time: endTime,
-      user_id: userId.toString(),
+      user_id: id.toString(),
       is_admin: isAdmin,
     };
 

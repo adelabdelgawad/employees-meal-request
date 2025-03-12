@@ -46,7 +46,7 @@ export function TablePagination({ currentPage, totalPages }: TablePaginationProp
 
   // Determine which page numbers to display.
   // For small totalPages, display all pages; otherwise, display ellipsis where appropriate.
-  let pages: (number | 'ellipsis')[] = [];
+  const pages: (number | 'ellipsis')[] = [];
   if (totalPages <= 7) {
     for (let i = 1; i <= totalPages; i++) {
       pages.push(i);

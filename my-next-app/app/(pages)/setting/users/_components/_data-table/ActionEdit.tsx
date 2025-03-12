@@ -26,15 +26,15 @@ export default function ActionEdit({ userId }: { userId: number }) {
   const { users, mutate, roles } = useSettingUserContext();
   
 
-  // Fetch user and roles data when the dialog opens
   useEffect(() => {
+    // Fetch user and roles data when the dialog opens
     if (!isDialogOpen) return;
-
+  
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const user = users?.find(user => user.id === userId);
-        const userRoleIds = user?.roles?.map(role => role.id) || [];
+        const user = users?.find((user) => user.id === userId);
+        const userRoleIds = user?.roles?.map((role) => role.id) || [];
         setUser(user);
         setSelectedRoles(userRoleIds);
         setOriginalRoles(userRoleIds);
@@ -45,9 +45,10 @@ export default function ActionEdit({ userId }: { userId: number }) {
         setIsLoading(false);
       }
     };
-
+  
     fetchData();
-  }, [isDialogOpen, userId]);
+  }, [isDialogOpen, userId, users]); // Added 'users' to the dependency array
+  
 
   // Handle toggling of roles.
   const handleRoleToggle = (roleId: number) => {
@@ -95,6 +96,7 @@ export default function ActionEdit({ userId }: { userId: number }) {
         // Refresh the users list from the context.
         await mutate();
       } catch (error) {
+        console.log(error)
         toast.error("Failed to update user roles. Please try again.");
       }
     });
