@@ -1,46 +1,37 @@
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
-import { cookies } from 'next/headers';
-import HistoryDataTable from './_components/HistoryDataTable';
-import axiosInstance from '@/lib/axiosInstance';
+// page.tsx
+import React from 'react'
+import { Suspense } from "react";
+import TableSkelton from "@/components/Table/table-skelton";
+import TableWithSWR from './TableWithSWR';
+import { getHistoryRequests } from '@/lib/services/request-history';
 
-/**
- * Fetches history data from the API.
- *
- * @returns The history data returned by the API.
- */
-async function readHistory() {
-  try {
-    // Extract the session cookie from the cookie store
-    const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('session')?.value;
-    
-    // Make the request using Axios; note that the response data is in response.data
-    const response = await axiosInstance.get('/requests', {
-      headers: {
-        Authorization: sessionCookie ? `Bearer ${sessionCookie}` : '',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching requests:', error);
-    throw error;
-  }
+interface PageProps {
+  searchParams: {
+    page?: string;
+
+  };
 }
 
-export default async function Page() {
-  try {
-    // Fetch the history data
-    const historyData = await readHistory();
-    console.log(historyData)
-    return (
-      <div className="flex flex-col m-2">
-        {/* Pass the fetched data to HistoryDataTable */}
-        <HistoryDataTable initialData={historyData} />
-      </div>
-    );
-  } catch (error) {
-    console.error('Error rendering history page:', error);
-    return <div>Error loading history</div>;
-  }
+
+async function page({ searchParams }: PageProps) {
+  // Extract query parameters
+  const page = Number(searchParams?.page) || 1;
+
+  // Fetch initial data on the server.
+  const response: RequestsResponse | null = await getHistoryRequests(
+    page,
+  );
+
+  return (
+    <div className="w-full p-2 pt-5">
+      <div className="flex w-full items-center justify-between"></div>
+      <Suspense fallback={<TableSkelton />}>
+        <TableWithSWR fallbackData={response} currentPage={page} />
+      </Suspense>
+    </div>
+  );
 }
+
+export default page

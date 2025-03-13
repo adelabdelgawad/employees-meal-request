@@ -73,12 +73,12 @@ async def read_request_lines(
 
 async def read_request_lines_with_attendance(
     session: AsyncSession,
-    start_time: Optional[str] = None,
-    end_time: Optional[str] = None,
-    employee_name: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 10,
-    download: Optional[bool] = False,
+    start_time: str | None = None,
+    end_time: str | None = None,
+    employee_name: str | None = None,
+    page: int | None = 1,
+    page_size: int | None = 15,
+    download: bool | None = False,
 ) -> ReportDetailsResponse:
     """
     Retrieves paginated request data with optional filters.

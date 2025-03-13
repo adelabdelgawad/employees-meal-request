@@ -14,11 +14,11 @@ import { useState } from "react";
 
 
 interface HistoryDataTableProps {
-  initialData: HistoryRequest[];
+  initialData: RequestRecord[];
 }
 
 const HistoryDataTable: React.FC<HistoryDataTableProps> = ({ initialData }) => {
-  const [data, setData] = useState<HistoryRequest[]>(initialData);
+  const [data, setData] = useState<RequestRecord[]>(initialData);
 
   return (
     <div className="relative overflow-x-auto border border-neutral-200 bg-white">

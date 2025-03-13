@@ -45,13 +45,13 @@ async def get_min_and_max_time(
 async def update_request_lines_with_attendance(
     session: AsyncSession,
     hris_session: AsyncSession,
-    start_time: Optional[datetime] = None,
-    end_time: Optional[datetime] = None,
-    page: int = 1,
-    page_size: int = 10,
-    download: Optional[bool] = False,
-    request_line_ids: List[int] = None,
-    employee_name: Optional[str] = None,
+    start_time: str | None = None,
+    end_time: str | None = None,
+    page: int | None = 1,
+    page_size: int | None = 15,
+    download: bool | None = False,
+    request_line_ids: List[int] | None = None,
+    employee_name: str | None = None,
 ) -> List[RequestLine]:
     """
     Updates RequestLine records with attendance_in and attendance_out values from

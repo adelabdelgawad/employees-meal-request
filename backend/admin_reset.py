@@ -14,7 +14,7 @@ async def reset_password():
     async for session in get_hris_session():
         query = select(Account).where(Account.username == username)
         result = await session.execute(query)
-        user = result.one_or_none()
+        user: Account = result.one_or_none()
 
         if user:
             user.password = hash_password(new_password)

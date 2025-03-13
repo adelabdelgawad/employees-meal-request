@@ -97,19 +97,13 @@ async def get_requests(
 async def get_requests_data(
     session: SessionDep,
     hris_session: HRISSessionDep,
-    start_time: Optional[str] = Query(
-        None, description="Start date (YYYY-MM-DD)"
-    ),
-    end_time: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
-    page: int = Query(1, ge=1, description="Page number (1-based)"),
-    page_size: int = Query(
-        10, ge=1, le=100, description="Number of rows per page"
-    ),
-    query: str = Query(None, description="Search parameters"),
-    update_attendance: bool = Query(
-        False, description="Update attendance status"
-    ),
-    download: bool = Query(False, description="Download status"),
+    start_time: str | None = None,
+    end_time: str | None = None,
+    page: int | None = 1,
+    page_size: int | None = 15,
+    query: str | None = None,
+    update_attendance: bool | None = False,
+    download: bool | None = False,
 ) -> ReportDetailsResponse:
     """
     Retrieve paginated request data with optional date filtering and search query.

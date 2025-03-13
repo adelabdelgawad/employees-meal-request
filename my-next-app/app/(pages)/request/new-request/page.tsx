@@ -5,7 +5,7 @@ import SelectedEmployeesColumn from "./SelectedEmployeesColumn";
 
 export default function Page() {
   return (
-    <div className="flex flex-col h-screen bg-gray-50 px-12 py-4">
+    <div className="flex flex-col h-screen bg-gray-50 px-12 p-2">
       {/* Main Content */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 overflow-hidden mb-4">
         {/* Department Column */}

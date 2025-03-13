@@ -32,7 +32,7 @@ export default async function Page({ searchParams }: PageProps) {
   );
 
   return (
-    <div className="w-full p-0">
+    <div className="w-full p-2 pt-5">
       <div className="flex w-full items-center justify-between"></div>
       <div className="flex items-center justify-between mb-5">
         {/* Left Section */}

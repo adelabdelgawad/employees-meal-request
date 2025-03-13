@@ -64,10 +64,19 @@ export default async function Page({ searchParams }: PageProps) {
     { header: "Department", accessor: "department" },
     { header: "Requester", accessor: "requester_name" },
     { header: "Requester Title", accessor: "requester_title" },
-    { header: "Request Time", accessor: "request_time" },
+    {
+      header: "Request Time",
+      accessor: (row) => row.request_time.replace("T", " "),
+    },
     { header: "Meal", accessor: "meal" },
-    { header: "Attendance In", accessor: "attendance_in" },
-    { header: "Attendance Out", accessor: "attendance_out" },
+    {
+      header: "Attendance In",
+      accessor: (row) => row.attendance_in.replace("T", " "),
+    },
+    {
+      header: "Attendance Out",
+      accessor: (row) => row.attendance_out.replace("T", " "),
+    },
     { header: "Notes", accessor: "notes" },
   ];
 
@@ -84,7 +93,12 @@ export default async function Page({ searchParams }: PageProps) {
         <div className="flex items-center gap-4">
           <URLSwitch placeholder="Update Attendance" />
           {/* Render the client-side export button */}
-          <DownloadButton query={query} page={page} startDate={startDate} endDate={endDate} />
+          <DownloadButton
+            query={query}
+            page={page}
+            startDate={startDate}
+            endDate={endDate}
+          />
         </div>
       </div>
 

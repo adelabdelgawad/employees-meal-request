@@ -1,19 +1,15 @@
 from fastapi import HTTPException, status, APIRouter
 import traceback
 import logging
-from typing import List
 from fastapi import APIRouter, HTTPException, status
+import icecream
 
 from routers.cruds.request import read_requests
-from services.http_schema import RequestHistoryRecordResponse, RequestsResponse
+from services.http_schema import RequestsResponse
 import pytz
 from services.http_schema import ScheduleRequest
 from src.dependencies import SessionDep, CurrentUserDep
-from icecream import ic
-from sqlmodel import and_, select, func, case
-from sqlalchemy import desc
-from sqlalchemy.exc import SQLAlchemyError
-from db.models import Request, RequestStatus, Meal, RequestLine
+from db.models import Request, RequestLine
 from routers.cruds.request_lines import read_request_lines_by_request_id
 
 # Default timezone
@@ -27,47 +23,40 @@ router = APIRouter()
 
 
 @router.get(
-    "/history",
+    "/requests/history",
     response_model=RequestsResponse,
     status_code=status.HTTP_200_OK,
 )
-async def get_history_requests(
-    user: CurrentUserDep,
+async def get_requests(
     session: SessionDep,
+    user: CurrentUserDep,
+    page: int | None = 1,
+    page_size: int | None = 15,
 ) -> RequestsResponse:
     """
-    Retrieve the history of requests made by the current user.
-
-    This endpoint now only considers RequestLine records where `is_deleted` is False.
-    A Request will only be returned if it has at least one non-deleted RequestLine.
-
-    Args:
-        user (dict): The current authenticated user.
-        session (AsyncSession): The asynchronous database session.
-
-    Returns:
-        List[RequestHistoryRecordResponse]: A list of request history records.
-
-    Raises:
-        HTTPException: If an error occurs while retrieving the data.
+    Retrieve a paginated list of requests with optional filtering.
     """
-    try:
-        requests = await read_requests(session=session, requester_id=user.id)
-        return requests
 
-    except SQLAlchemyError as db_err:
-        logger.error(f"Database error occurred: {str(db_err)}")
-        logger.debug(traceback.format_exc())
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while retrieving request history.",
+    try:
+        requests = await read_requests(
+            session=session,
+            page=page,
+            page_size=page_size,
+            requester_id=user.id,
+            accept_future=True,
         )
+        icecream.ic(user.id)
+        icecream.ic(requests)
+        return requests
+    except HTTPException as http_exc:
+        logger.error(f"HTTP error occurred: {http_exc.detail}")
+        raise http_exc
     except Exception as err:
-        logger.error(f"Unexpected error: {str(err)}")
-        logger.debug(traceback.format_exc())
+        logger.error(f"Unexpected error: {err}")
+        logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred.",
+            detail="Internal server error while retrieving request details.",
         )
 
 
@@ -75,7 +64,7 @@ async def get_history_requests(
     "/history/copy-request",
     status_code=status.HTTP_200_OK,
 )
-async def schedule_request(
+async def copy_request(
     user: CurrentUserDep,
     session: SessionDep,
     schedule_request: ScheduleRequest,

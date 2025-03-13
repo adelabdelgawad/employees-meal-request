@@ -31,8 +31,8 @@ class HRISSecurityUser(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Field(nullable=False, max_length=64, unique=True)
-    is_deleted: Optional[bool] = False
-    is_locked: Optional[bool] = False
+    is_deleted: bool | None = False
+    is_locked: bool | None = False
 
 
 class Department(SQLModel, table=True):
@@ -58,8 +58,8 @@ class Employee(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     code: int = Field(nullable=False, unique=True)
-    name: Optional[str] = None
-    title: Optional[str] = None
+    name: str | None = None
+    title: str | None = None
     is_active: bool
     department_id: int = Field(foreign_key="department.id", nullable=False)
 
@@ -95,8 +95,8 @@ class DomainUser(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str
-    fullname: Optional[str] = None
-    title: Optional[str] = None
+    fullname: str | None = None
+    title: str | None = None
 
 
 class Meal(SQLModel, table=True):
@@ -108,7 +108,7 @@ class Meal(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    is_active: Optional[bool] = True
+    is_active: bool | None = True
 
     # Relationships
     request_lines: List["RequestLine"] = Relationship(back_populates="meal")
@@ -124,11 +124,11 @@ class Account(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str
-    fullname: Optional[str] = None
-    password: Optional[str] = None
-    title: Optional[str] = None
-    is_domain_user: Optional[bool] = False
-    is_super_admin: Optional[bool] = False
+    fullname: str | None = None
+    password: str | None = None
+    title: str | None = None
+    is_domain_user: bool | None = False
+    is_super_admin: bool | None = False
 
     role_permissions: List["RolePermission"] = Relationship(
         back_populates="account"
@@ -182,9 +182,9 @@ class Request(SQLModel, table=True):
     created_time: datetime = Field(
         default_factory=lambda: datetime.now(cairo_tz)
     )
-    closed_time: Optional[datetime] = None
-    notes: Optional[str] = None
-    is_deleted: Optional[bool] | None = False
+    closed_time: datetime | None = None
+    notes: str | None = None
+    is_deleted: bool | None | None = False
     auditor_id: Optional[int] = Field(foreign_key="account.id", default=None)
     menu_id: int = Field(foreign_key="menu.id", default=1)
 
@@ -222,12 +222,12 @@ class RequestLine(SQLModel, table=True):
     department_id: int = Field(foreign_key="department.id", nullable=False)
     request_id: int = Field(foreign_key="request.id", nullable=False)
     meal_id: int = Field(foreign_key="meal.id", nullable=False)
-    attendance_in: Optional[datetime] = None
-    attendance_out: Optional[datetime] = None
-    notes: Optional[str] = None
-    is_accepted: Optional[bool] = True
+    attendance_in: datetime | None = None
+    attendance_out: datetime | None = None
+    notes: str | None = None
+    is_accepted: bool | None = True
     shift_hours: Optional[int] = None
-    is_deleted: Optional[bool] = False
+    is_deleted: bool | None = False
 
     # Relationships
     meal: Optional["Meal"] = Relationship(back_populates="request_lines")
@@ -255,7 +255,7 @@ class LogRolePermission(SQLModel, table=True):
     account_id: int = Field(foreign_key="account.id", nullable=False)
     role_id: int = Field(foreign_key="role.id", nullable=False)
     admin_id: int = Field(foreign_key="account.id", nullable=False)
-    action: Optional[str] = None
+    action: str | None = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
 
     # Relationships
@@ -274,9 +274,9 @@ class LogRequestLine(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     request_line_id: int = Field(foreign_key="request_line.id", nullable=False)
     account_id: int = Field(foreign_key="account.id", nullable=False)
-    action: Optional[str] = None
-    is_successful: Optional[bool] = False
-    result: Optional[str] = None
+    action: str | None = None
+    is_successful: bool | None = False
+    result: str | None = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(cairo_tz))
 
     # Relationships
@@ -326,7 +326,7 @@ class Menu(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(nullable=False, max_length=128, unique=True)
-    details: Optional[str] = None
+    details: str | None = None
 
     # Relationships
     requests: List["Request"] = Relationship(back_populates="menu")

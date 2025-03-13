@@ -104,13 +104,14 @@ def parse_datetime(date_str: str, fmt: str) -> datetime:
 
 async def read_requests(
     session: AsyncSession,
-    start_time: Optional[str] = None,
-    end_time: Optional[str] = None,
-    requester_id: Optional[int] = None,
-    requester_name: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 10,
-    download: Optional[bool] = False,
+    start_time: str | None = None,
+    end_time: str | None = None,
+    requester_id: int | None = None,
+    requester_name: str | None = None,
+    page: int | None = 1,
+    page_size: int | None = 15,
+    download: bool | None = False,
+    accept_future: bool | None = False,
 ) -> RequestsResponse:
     """
     Retrieves paginated request data with optional filters.
@@ -144,7 +145,8 @@ async def read_requests(
     if requester_name:
         # Assuming Account is imported and available
         filters.append(Account.fullname.ilike(f"%{requester_name}%"))
-    filters.append(Request.request_time <= current_time)
+    if not accept_future:
+        filters.append(Request.request_time <= current_time)
     filters.append(Request.is_deleted == False)
 
     # Count total rows using the common filters
