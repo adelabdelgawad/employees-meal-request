@@ -1,85 +1,54 @@
-// app/page.tsx
-import React from "react";
-import DataTableHeader from "./_components/DataTableHeader";
-import { DataTableFooter } from "./_components/DataTableFooter";
-import DataTable from "./_components/DataTable";
+// page.tsx
+import { Suspense } from "react";
+import TableSkelton from "@/components/Table/table-skelton";
+import TableSearch from "@/components/Table/table-search";
+import DateRangePicker from "@/components/Table/date-range-picker";
 import { getRequests } from "@/lib/services/request-requests";
+import Counter from "./Counter";
+import TableWithSWR from "./TableWithSWR";
 
-interface SearchParams {
-  query?: string;
-  page?: string;
-  page_size?: string;
-  start_time?: string;
-  end_time?: string;
+interface PageProps {
+  searchParams: {
+    query?: string;
+    page?: string;
+    startDate?: string;
+    endDate?: string;
+  };
 }
 
-export default async function Page({
-  searchParams = Promise.resolve({}),
-}: {
-  searchParams?: Promise<SearchParams>; // Mark searchParams as a Promise
-}) {
-  // Await the searchParams before accessing its properties
-  const resolvedSearchParams = await searchParams;
+export default async function Page({ searchParams }: PageProps) {
+  // Extract query parameters
+  const query = searchParams?.query || "";
+  const page = Number(searchParams?.page) || 1;
+  const startDate = searchParams?.startDate || "";
+  const endDate = searchParams?.endDate || "";
 
-  // 1. Parse search parameters
-  const query = resolvedSearchParams.query || ""; // Default to an empty search query
-  const currentPage = Number(resolvedSearchParams.page) || 1; // Default to page 1
-  const pageSize = Number(resolvedSearchParams.page_size) || 20; // Default rows per page
-  const startTime = resolvedSearchParams.start_time || "";
-  const endTime = resolvedSearchParams.end_time || "";
-
-
-
-  // 2. Fetch data (server-side)
-  let data = null;
-  let error = null;
-
-  try {
-    data = await getRequests({
-      query,
-      currentPage,
-      pageSize,
-      startTime,
-      endTime,
-    });
-  } catch (err) {
-    console.error("Error fetching report details:", err);
-    error = err;
-  }
-
-  // 3. Use totalPages from fetched data if available
-  const totalPages = data?.total_pages || 1;
+  // Fetch initial data on the server.
+  const response: RequestsResponse | null = await getRequests(
+    query,
+    page,
+    startDate,
+    endDate
+  );
 
   return (
-    <div className="flex flex-col m-2">
-      {/* Header */}
-      <div>
-        <DataTableHeader/>
+    <div className="w-full p-0">
+      <div className="flex w-full items-center justify-between"></div>
+      <div className="flex items-center justify-between mb-5">
+        {/* Left Section */}
+        <div className="flex items-center gap-4">
+          <TableSearch placeholder="Search Employee Name..." />
+          <DateRangePicker />
+        </div>
+        {/* Right Section */}
+        <div className="flex items-center gap-4">
+          <Counter />
+        </div>
       </div>
 
-      {/* Table */}
-      <div>
-        {error ? (
-          <div className="error-message">
-            Failed to load data. Please try again later.
-          </div>
-        ) : data ? (
-          <DataTable initialData={data.data} />
-        ) : (
-          <div>No data available</div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div className="mt-2">
-        <DataTableFooter
-          pageSize={pageSize}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          rowsPerPage={pageSize}
-          totalRows={data?.total_rows || 0}
-        />
-      </div>
+      <Suspense fallback={<TableSkelton />}>
+        <TableWithSWR fallbackData={response} query={query} currentPage={page} />
+      </Suspense>
     </div>
   );
 }

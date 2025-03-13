@@ -42,16 +42,17 @@ export function TableBody<T extends { id: string | number }>({
 }: TableBodyProps<T>) {
   return (
     <div className="overflow-x-auto">
-      <table className={`min-w-full table-auto border-collapse ${className}`}>
+      {/* Apply text-center to the entire table */}
+      <table className={`min-w-full table-auto border-collapse text-center ${className}`}>
         <thead>
           <tr className="border-b">
             {columns.map((col, colIndex) => (
-              <th key={colIndex} className="p-2 text-center whitespace-nowrap">
+              <th key={colIndex} className="p-2 whitespace-nowrap">
                 {col.header}
               </th>
             ))}
             {options && (
-              <th className="p-2 text-center whitespace-nowrap">Options</th>
+              <th className="p-2 whitespace-nowrap">Options</th>
             )}
           </tr>
         </thead>

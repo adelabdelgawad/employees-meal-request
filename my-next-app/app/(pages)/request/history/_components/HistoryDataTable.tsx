@@ -11,17 +11,7 @@ import Actions from "./_actions/Actions";
 import { useState } from "react";
 
 
-export interface HistoryRequest {
-  id: number;
-  request_time?: string;
-  meal?: string;
-  status_name?: string;
-  status_id?: number;
-  closed_time?: string;
-  total_lines?: number;
-  accepted_lines?: number;
-  notes?: string;
-}
+
 
 interface HistoryDataTableProps {
   initialData: HistoryRequest[];

@@ -1,3 +1,5 @@
+import { LucideIcon, FilePlus, List, History, BarChart, FileText, Users } from "lucide-react";
+
 // Define valid application roles as a type
 export type AppRole = "Admin" | "User" | "Ordertaker" | "Manager";
 
@@ -8,6 +10,7 @@ export interface RouteConfig {
   navSection?: string;
   navTitle?: string;
   navDescription?: string;
+  icon?: LucideIcon; // Add this line
 }
 
 // Centralized route configuration
@@ -18,6 +21,7 @@ export const routesConfig: RouteConfig[] = [
     navSection: "Request",
     navTitle: "New Request",
     navDescription: "Create a new meal request.",
+    icon: FilePlus, // Specify the icon component
   },
   {
     path: "/request/requests",
@@ -25,6 +29,7 @@ export const routesConfig: RouteConfig[] = [
     navSection: "Request",
     navTitle: "Requests",
     navDescription: "View and manage all submitted requests.",
+    icon: List,
   },
   {
     path: "/request/history",
@@ -32,6 +37,7 @@ export const routesConfig: RouteConfig[] = [
     navSection: "Request",
     navTitle: "History",
     navDescription: "View and manage your requests.",
+    icon: History,
   },
   {
     path: "/report/requests-dashboard",
@@ -39,6 +45,7 @@ export const routesConfig: RouteConfig[] = [
     navSection: "Report",
     navTitle: "Requests Dashboard",
     navDescription: "Analyze requests with interactive dashboards.",
+    icon: BarChart,
   },
   {
     path: "/report/details",
@@ -46,13 +53,7 @@ export const routesConfig: RouteConfig[] = [
     navSection: "Report",
     navTitle: "Requests Details",
     navDescription: "Detailed breakdown of each request.",
-  },
-  {
-    path: "/data-management/meal-plans",
-    roles: ["Admin"],
-    navSection: "Report",
-    navTitle: "Meal Plans",
-    navDescription: "Manage and organize meal plans.",
+    icon: FileText,
   },
   {
     path: "/setting/users",
@@ -60,8 +61,10 @@ export const routesConfig: RouteConfig[] = [
     navSection: "Settings",
     navTitle: "Users",
     navDescription: "Manage application users and their roles.",
+    icon: Users,
   }
 ];
+
 
 // Publicly accessible paths
 export const publicPaths = [

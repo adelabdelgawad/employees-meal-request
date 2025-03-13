@@ -125,20 +125,8 @@ async def read_requests(
     :param download: If True, disables pagination.
     :return: A dictionary containing paginated data and metadata.
     """
-    date_format = "%m/%d/%Y, %I:%M:%S %p"
-    start_dt = end_dt = None
-
-    # Parse start_time and end_time if provided
-    if start_time:
-        # Set time to beginning of the day
-        start_dt = parse_datetime(start_time, date_format).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
-    if end_time:
-        # Set time to end of the day
-        end_dt = parse_datetime(end_time, date_format).replace(
-            hour=23, minute=59, second=59, microsecond=0
-        )
+    start_dt = start_time
+    end_dt = end_time
 
     # Calculate pagination offset
     offset = (page - 1) * page_size
@@ -335,6 +323,7 @@ async def read_request_by_id(
     stmt = (
         select(
             Request.id,
+            Request.requester_id.label("requester_id"),  # Added field
             RequestStatus.name.label("status_name"),
             RequestStatus.id.label("status_id"),
             Account.fullname.label("requester"),
@@ -355,6 +344,7 @@ async def read_request_by_id(
         .where(Request.id == request_id)
         .group_by(
             Request.id,
+            Request.requester_id,  # Added to GROUP BY clause
             RequestStatus.name,
             RequestStatus.id,
             Account.fullname,

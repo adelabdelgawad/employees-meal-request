@@ -1,6 +1,7 @@
 from datetime import datetime
 from collections import defaultdict
 from typing import List, Optional, Dict, Tuple
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 import pytz
 import traceback
@@ -26,7 +27,7 @@ from routers.utils.request import (
     create_request_lines_and_confirm,
     send_confirmation_notification,
 )
-from db.models import Request
+from db.models import Account, Request
 from icecream import ic
 
 # Default timezone for Cairo
@@ -114,15 +115,15 @@ def group_requests_by_meal(
 
 
 async def create_and_schedule_meal_group(
+    session: AsyncSession,
+    hris_session: AsyncSession,
     meal_id: int,
     req_list: List[Dict],
     user: CurrentUserDep,
     payload: RequestPayload,
     request_time: Optional[datetime],
     request_status_id: int,
-    session: SessionDep,
     background_tasks: BackgroundTasks,
-    hris_session: HRISSessionDep,
 ) -> None:
     """
     Create a new Request for a specific meal group, commit it to the database,
@@ -189,20 +190,21 @@ async def create_request_endpoint(
     meal_groups = group_requests_by_meal(payload.requests)
     total_requests = sum(len(req_list) for req_list in meal_groups.values())
 
+    ic(meal_groups)
     try:
         logger.info(f"Processing {len(meal_groups)} meal group(s)")
         # Process each meal group in a background task.
         for meal_id, req_list in meal_groups.items():
             await create_and_schedule_meal_group(
+                session=session,
+                hris_session=hris_session,
                 meal_id=meal_id,
                 req_list=req_list,
                 user=user,
                 payload=payload,
                 request_time=request_time,
                 request_status_id=request_status_id,
-                session=session,
                 background_tasks=background_tasks,
-                hris_session=hris_session,
             )
 
         return {
@@ -230,8 +232,7 @@ async def get_requests(
     session: SessionDep,
     hris_session: HRISSessionDep,
     background_tasks: BackgroundTasks,
-    user_id: int,
-    is_admin: bool = Query(False, description="Admin status"),
+    query: Optional[str] = Query(None, description="Search parameters"),
     start_time: Optional[str] = Query(
         None, description="Start date (YYYY-MM-DD)"
     ),
@@ -240,31 +241,25 @@ async def get_requests(
     page_size: int = Query(
         10, ge=1, le=100, description="Number of rows per page"
     ),
-    query: Optional[str] = Query(None, description="Search parameters"),
-    download: bool = Query(False, description="Download status"),
 ) -> RequestsResponse:
     """
     Retrieve a paginated list of requests with optional filtering.
     """
 
     try:
-        if is_admin:
-            user_id = None
         background_tasks.add_task(
             crud.prepare_scheduled_requests, session, hris_session
         )
-        
+
         start_time, end_time = parse_date_range(start_time, end_time)
 
         requests = await crud.read_requests(
             session=session,
-            requester_id=user_id,
             start_time=start_time,
             end_time=end_time,
             requester_name=query,
             page=page,
             page_size=page_size,
-            download=download,
         )
         return requests
     except HTTPException as http_exc:
@@ -281,22 +276,21 @@ async def get_requests(
 
 @router.put("/update-request-status")
 async def update_order_status_endpoint(
-    payload: UpdateRequestStatusPayload,
     session: SessionDep,
     current_user: CurrentUserDep,
     background_tasks: BackgroundTasks,
+    request_id: int,
+    status_id: int,
 ):
     """
     Update the status of a request by its ID.
     """
     try:
-        request_id: int = payload.request_id
-        status_id: int = payload.status_id
 
         request = await crud.update_request_status(
             session, current_user.id, request_id, status_id
         )
-        requester = await read_account(session, request.requester_id)
+        requester = await session.get(Account, request.requester_id)
         """
         Email Sender
         """
@@ -307,11 +301,7 @@ async def update_order_status_endpoint(
             requester_name=requester.fullname,
         )
 
-        return {
-            "status": "success",
-            "message": "Request updated successfully",
-            "data": request,
-        }
+        return request
     except HTTPException as http_exc:
         raise http_exc
     except Exception as e:
@@ -353,7 +343,7 @@ async def get_request_lines_endpoint(
         )
 
 
-@router.put("/update-request-lines", status_code=status.HTTP_200_OK)
+@router.put("/request-lines", status_code=status.HTTP_200_OK)
 async def update_request_lines_endpoint(
     session: SessionDep,
     payload: UpdateRequestLinesPayload,

@@ -104,7 +104,17 @@ declare global {
     id: number;
     name: string;
   };
-
+interface HistoryRequest {
+  id: number;
+  request_time?: string;
+  meal?: string;
+  status_name?: string;
+  status_id?: number;
+  closed_time?: string;
+  total_lines?: number;
+  accepted_lines?: number;
+  notes?: string;
+}
   interface ReportDetailsData {
     id: number;
     employee_code?: number;

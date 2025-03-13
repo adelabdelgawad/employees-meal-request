@@ -1,27 +1,42 @@
 export const dynamic = "force-dynamic";
 
-import axiosInstance from '@/lib/axiosInstance';
+import { cookies } from 'next/headers';
 import HistoryDataTable from './_components/HistoryDataTable';
+import axiosInstance from '@/lib/axiosInstance';
 
-async function fetchUserHistory() {
+/**
+ * Fetches history data from the API.
+ *
+ * @returns The history data returned by the API.
+ */
+async function readHistory() {
   try {
-    const response = await axiosInstance.get('/history');
+    // Extract the session cookie from the cookie store
+    const cookieStore = cookies();
+    const sessionCookie = cookieStore.get('session')?.value;
+    
+    // Make the request using Axios; note that the response data is in response.data
+    const response = await axiosInstance.get('/requests', {
+      headers: {
+        Authorization: sessionCookie ? `Bearer ${sessionCookie}` : '',
+      },
+    });
     return response.data;
   } catch (error) {
-    console.error('Error fetching history:', error);
-    throw new Error('Failed to fetch history');
+    console.error('Error fetching requests:', error);
+    throw error;
   }
 }
 
 export default async function Page() {
   try {
-    const historyData = await fetchUserHistory();
+    // Fetch the history data
+    const historyData = await readHistory();
+    console.log(historyData)
     return (
       <div className="flex flex-col m-2">
-        {/* Table */}
-        <div>
-          <HistoryDataTable initialData={historyData.data} />
-        </div>
+        {/* Pass the fetched data to HistoryDataTable */}
+        <HistoryDataTable initialData={historyData} />
       </div>
     );
   } catch (error) {

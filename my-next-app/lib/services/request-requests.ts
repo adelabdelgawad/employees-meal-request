@@ -1,41 +1,21 @@
 "use server";
-import { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "../session";
+import toast from "react-hot-toast";
 import axiosInstance from "../axiosInstance";
+import { cookies } from "next/headers";
 
-export interface RequestParams {
-  query?: string;
-  currentPage?: number;
-  pageSize?: number;
-  startTime?: string;
-  endTime?: string;
-}
-
-export async function getRequests({
-  query = "",
-  currentPage = 1,
-  pageSize = 20,
-  startTime = "",
-  endTime = "",
-}: RequestParams = {}): Promise<RequestsResponse> {
+export async function getRequests(
+  query: string = "",
+  page: number = 1,
+  startDate?: string,
+  endDate?: string
+): Promise<RequestsResponse> {
   try {
-    const session = await getSession();
-    if (!session || !session.user?.id) {
-      throw new Error("User session is invalid or missing user ID");
-    }
-
-    const { id, roles } = session.user;
-    const isAdmin = roles?.includes("Admin") ? "true" : "false";
-
     // Build the query parameters object.
     const params = {
       query,
-      page: currentPage.toString(),
-      page_size: pageSize.toString(),
-      start_time: startTime,
-      end_time: endTime,
-      user_id: id.toString(),
-      is_admin: isAdmin,
+      page: page.toString(),
+      start_time: startDate,
+      end_time: endDate,
     };
 
     // Pass the params object to axiosInstance.
@@ -47,29 +27,38 @@ export async function getRequests({
   }
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "PUT") {
-    return res.status(405).json({ message: "Method Not Allowed" });
-  }
 
+
+/**
+ * Updates the status of a request by its ID.
+ *
+ * @param recordId - The ID of the request to update.
+ * @param statusId - The new status ID to set for the request.
+ * @returns The updated request data.
+ * @throws An error if the request fails.
+ */
+export const updateRequestStatus = async (recordId: number, statusId: number) => {
+  console.log(statusId)
   try {
-    const { id, statusId } = req.body;
-    if (!id || !statusId) {
-      return res.status(400).json({ message: "Missing id or statusId" });
-    }
+      // Extract the session cookie from the cookie store
+      const cookieStore = cookies();
+      const sessionCookie = cookieStore.get('session')?.value;
 
     const response = await axiosInstance.put(
-      `/update-request-status?request_id=${id}&status_id=${statusId}`
+      `/update-request-status?request_id=${recordId}&status_id=${statusId}`, {
+        headers: {
+          Authorization: sessionCookie ? `Bearer ${sessionCookie}` : '',
+        },
+      }
     );
+    toast.success('Request updated successfully!');
     return response.data;
   } catch (error) {
-    console.error("Error Updating request", error);
-    throw new Error("Failed to Update request");
+    console.error('Error updating request:', error);
+    toast.error('Failed to update the request. Please try again.');
+    throw new Error('Failed to update request');
   }
-}
+};
 
 export const getRequestLineById = async (id: number) => {
   try {
@@ -85,6 +74,16 @@ export const updateRequestLine = async (
   id: number,
   changedStatus: { id: number; is_accepted: boolean }[]
 ) => {
+  // This function must be executed in a server context.
+  let sessionCookie = "";
+  try {
+    const cookieStore = cookies();
+    sessionCookie = cookieStore.get("session")?.value || "";
+  } catch (error) {
+    console.error("Error retrieving session cookie:", error);
+    // Optionally, you might want to throw an error here if a session cookie is required.
+  }
+
   const payload = {
     request_id: id,
     changed_statuses: changedStatus,
@@ -93,11 +92,16 @@ export const updateRequestLine = async (
   try {
     const response = await axiosInstance.put(
       `/request-lines?request_id=${id}`,
-      payload
+      payload,
+      {
+        headers: {
+          Authorization: sessionCookie ? `Bearer ${sessionCookie}` : "",
+        },
+      }
     );
     return response.data;
   } catch (error) {
     console.error("Error while updating request lines", error);
-    throw new Error("Failed to Update request");
+    throw new Error("Failed to update request");
   }
 };

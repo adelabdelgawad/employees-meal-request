@@ -17,6 +17,7 @@ const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
 interface RequestLinesTableProps {
   data: RequestLineRespose[];
   disableStatus: boolean;
+  saveDisable: boolean;
   onSwitchChange: (lineId: number, checked: boolean) => void;
   onSave: () => void; // Function for Save button
   onCancel: () => void; // Function for Cancel button
@@ -25,6 +26,7 @@ interface RequestLinesTableProps {
 const RequestLinesTable: React.FC<RequestLinesTableProps> = ({
   data,
   disableStatus,
+  saveDisable,
   onSwitchChange,
   onSave,
   onCancel,
@@ -122,6 +124,7 @@ const RequestLinesTable: React.FC<RequestLinesTableProps> = ({
           onClick={onSave}
           // disabled={disableStatus || changedStatus.length === 0}
           className="bg-blue-600 hover:bg-blue-700 text-white"
+          disabled={saveDisable}
         >
           Save Changes
         </Button>
