@@ -71,7 +71,7 @@ declare global {
     total_pages: number;
     total_rows: number;
   };
-  type RequestLineRespose = {
+  type RequestLine = {
     id: number;
     name: string;
     title: string;
@@ -80,6 +80,7 @@ declare global {
     attendance_in: Date;
     shift_hours: number;
     is_accepted: boolean;
+    is_deleted?: boolean;
   };
   type ReportDashboardResponse = {
     id: number;

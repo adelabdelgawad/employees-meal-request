@@ -45,8 +45,6 @@ async def get_requests(
             requester_id=user.id,
             accept_future=True,
         )
-        icecream.ic(user.id)
-        icecream.ic(requests)
         return requests
     except HTTPException as http_exc:
         logger.error(f"HTTP error occurred: {http_exc.detail}")
@@ -139,8 +137,8 @@ async def copy_request(
         logger.info(
             f"user: {user.username} - scheduled_time: {scheduled_time} - original request_id: {request_id} - new request_id: {new_request.id}"
         )
-
-        return {"message": "Request copied successfully."}
+        request = await session.get(Request, new_request.id)
+        return request
 
     except HTTPException as http_ex:
         # Re-raise HTTP exceptions to be handled by FastAPI

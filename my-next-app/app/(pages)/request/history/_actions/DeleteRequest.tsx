@@ -1,17 +1,19 @@
+
 import React, { useState, useCallback } from "react";
 import { Trash } from "lucide-react";
 import ConfirmationDialog from "@/components/confirmation-dialog";
 import toast from "react-hot-toast";
 import clientAxiosInstance from "@/lib/clientAxiosInstance";
-import { HistoryRequest } from "../HistoryDataTable";
+import { KeyedMutator } from "swr";
 
-interface DeleteActionProps {
-  id: number;
-  disableStatus: boolean;
-  setData: React.Dispatch<React.SetStateAction<HistoryRequest[]>>;
+
+interface DeleteRequestProps {
+  disabled: boolean;
+  mutate: KeyedMutator<RequestsResponse>;
+  record: RequestRecord;
 }
 
-const DeleteAction: React.FC<DeleteActionProps> = ({ id, disableStatus, setData }) => {
+const DeleteRequest: React.FC<DeleteRequestProps> = ({ disabled, mutate, record }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const openDialog = useCallback(() => {
@@ -24,32 +26,46 @@ const DeleteAction: React.FC<DeleteActionProps> = ({ id, disableStatus, setData 
 
   const handleDelete = useCallback(async () => {
     try {
-      const response = await clientAxiosInstance.delete(`/history/delete/${id}`);
+      await clientAxiosInstance.delete(`/history/delete/${record.id}`);
+      toast.success("Request Deleted Successfully");
 
-      if (response.status === 204) {
-        toast.success("Request Deleted Successfully");
-
-        // Remove the deleted request from the UI
-        setData(prevData => prevData.filter(item => item.id !== id));
-      }
+      // Update the UI by removing the deleted record from the SWR data.
+      mutate(
+        (currentData: RequestsResponse | undefined) => {
+          if (!currentData) {
+            return {
+              data: [],
+              current_page: 1,
+              page_size: 0,
+              total_pages: 0,
+              total_rows: 0,
+            };
+          }
+          return {
+            ...currentData,
+            data: currentData.data.filter((req) => req.id !== record.id),
+          };
+        },
+        false // do not revalidate immediately
+      );
     } catch (error) {
       toast.error("Failed to delete the request.");
       console.error("Error deleting request:", error);
     } finally {
       closeDialog();
     }
-  }, [id, setData, closeDialog]);
+  }, [record.id, mutate, closeDialog]);
 
   return (
     <>
       <button
         onClick={openDialog}
         className={`w-10 h-10 flex items-center justify-center rounded-full ${
-          disableStatus
+          disabled
             ? "bg-gray-300 cursor-not-allowed"
             : "bg-red-500 text-white cursor-pointer hover:bg-red-600"
         }`}
-        disabled={disableStatus}
+        disabled={disabled}
       >
         <Trash size={20} />
       </button>
@@ -67,4 +83,4 @@ const DeleteAction: React.FC<DeleteActionProps> = ({ id, disableStatus, setData 
   );
 };
 
-export default DeleteAction;
+export default DeleteRequest;

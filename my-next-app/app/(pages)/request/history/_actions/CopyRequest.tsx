@@ -11,20 +11,21 @@ import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import clientAxiosInstance from "@/lib/clientAxiosInstance";
-import { HistoryRequest } from "../HistoryDataTable";
+import { KeyedMutator } from "swr";
 
-interface CopyActionProps {
-  requestId: number;
-  setData: React.Dispatch<React.SetStateAction<HistoryRequest[]>>; // 🛑 Receive setData
+interface CopyRequestProps {
+  mutate: KeyedMutator<RequestsResponse>;
+  record: RequestRecord;
 }
 
-const CopyAction: React.FC<CopyActionProps> = ({ requestId, setData }) => {
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+const CopyRequest: React.FC<CopyRequestProps> = ({ mutate, record }) => {
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [time, setTime] = useState<string>(format(new Date(), "HH:mm"));
   const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
 
   const onCopy = () => {
-    console.log(`Copy request: ${requestId}`);
+    console.log(`Copy request: ${record.id}`);
     setIsPopoverOpen(true);
   };
 
@@ -43,38 +44,39 @@ const CopyAction: React.FC<CopyActionProps> = ({ requestId, setData }) => {
       toast.error("Please select a date and time.");
       return;
     }
-    
+
     const [hours, minutes] = time.split(":").map(Number);
     const scheduledDate = new Date(selectedDate);
     scheduledDate.setHours(hours);
     scheduledDate.setMinutes(minutes);
-  
+
     if (scheduledDate < new Date()) {
       toast.error("Please select a future date and time.");
       return;
     }
-  
+
+    setLoading(true);
+
     try {
-      const response = await clientAxiosInstance.post("/history/copy-request", {
-        request_id: requestId,
+      // 1) Send the request to the server and wait for the response
+      await clientAxiosInstance.post("/history/copy-request", {
+        request_id: record.id,
         scheduled_time: scheduledDate.toISOString(),
       });
-  
-      if (response.status === 200) {
-        toast.success("Request scheduled successfully.");
-        setIsPopoverOpen(false);
-  
-        // 🛑 Update UI by adding new copied request
-        setData(prevData => [...prevData, response.data]);
-      } else {
-        toast.error("Failed to schedule the request.");
-      }
+    
+      // 2) Re-fetch all records so you get the complete, up-to-date list
+      await mutate();
+    
+      setIsPopoverOpen(false);
+      toast.success("Request updated successfully!");
     } catch (error) {
-      console.error("Error scheduling request:", error);
-      toast.error("An error occurred while scheduling the request.");
+      toast.error("Failed to update the request. Please try again.");
+      // Revalidate in case the data got partially changed
+      mutate();
+    } finally {
+      setLoading(false);
     }
   };
-  
 
   return (
     <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
@@ -110,12 +112,12 @@ const CopyAction: React.FC<CopyActionProps> = ({ requestId, setData }) => {
             className="mt-1 block w-full"
           />
         </div>
-        <Button onClick={handleSchedule} className="mt-4 w-full">
-          Schedule
+        <Button onClick={handleSchedule} className="mt-4 w-full" disabled={loading}>
+          {loading ? "Scheduling..." : "Schedule"}
         </Button>
       </PopoverContent>
     </Popover>
   );
 };
 
-export default CopyAction;
+export default CopyRequest;

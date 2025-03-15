@@ -10,14 +10,12 @@ import useRequestLineState from "@/hooks/useRequestLineState";
 import { updateRequestLine } from "@/lib/services/request-requests";
 
 interface ViewActionProps {
-  recordId: number;
   disabled: boolean;
   mutate: (data?: any, shouldRevalidate?: boolean) => Promise<any>;
   record: RequestRecord;
 }
 
 const ViewAction: React.FC<ViewActionProps> = ({
-  recordId,
   disabled,
   mutate,
   record,
@@ -34,7 +32,7 @@ const ViewAction: React.FC<ViewActionProps> = ({
     fetchData,
     updateChangedStatus,
     resetChangedStatus,
-  } = useRequestLineState(recordId);
+  } = useRequestLineState(record.id);
 
   const openDrawer = () => {
     setIsDrawerOpen(true);
@@ -67,7 +65,7 @@ const ViewAction: React.FC<ViewActionProps> = ({
       (currentData: RequestsResponse) => ({
         ...currentData,
         data: currentData.data.map((req: RequestRecord) =>
-          req.id === recordId ? optimisticRecord : req
+          req.id === record.id ? optimisticRecord : req
         ),
       }),
       false // Do not revalidate immediately.
@@ -75,7 +73,7 @@ const ViewAction: React.FC<ViewActionProps> = ({
 
     try {
       // 2) Send update to the server.
-      const response = await updateRequestLine(recordId, changedStatus);
+      const response = await updateRequestLine(record.id, changedStatus);
       const updatedRecordFromServer = response.data;
 
       // 3) Merge the optimistic record with the server response.
@@ -89,7 +87,7 @@ const ViewAction: React.FC<ViewActionProps> = ({
         (currentData: RequestsResponse) => ({
           ...currentData,
           data: currentData.data.map((req: RequestRecord) =>
-            req.id === recordId ? mergedRecord : req
+            req.id === record.id ? mergedRecord : req
           ),
         }),
         false // Do not revalidate automatically.

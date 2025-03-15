@@ -1,8 +1,9 @@
-// components/ui/ConfirmationModal.tsx
-import React from "react";
+"use client";
+
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -11,41 +12,41 @@ import { Button } from "@/components/ui/button";
 
 interface ConfirmationDialogProps {
   isOpen: boolean;
-  title?: string;
-  message?: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
+  title: string;
+  message: string;
+  confirmLabel: string;
+  cancelLabel: string;
   onConfirm: () => void;
   onCancel: () => void;
+  confirmButtonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 }
 
-const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
+export default function ConfirmationDialog({
   isOpen,
-  title = "Are you sure?",
-  message = "This action cannot be undone.",
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
+  title,
+  message,
+  confirmLabel,
+  cancelLabel,
   onConfirm,
   onCancel,
-}) => {
+  confirmButtonVariant = "default",
+}: ConfirmationDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onCancel}>
-      <DialogContent className="max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{message}</DialogDescription>
         </DialogHeader>
-        <p className="my-2">{message}</p>
         <DialogFooter>
-          <Button onClick={onCancel} variant="secondary">
+          <Button variant="outline" onClick={onCancel}>
             {cancelLabel}
           </Button>
-          <Button onClick={onConfirm} className="bg-red-500 text-white">
+          <Button variant={confirmButtonVariant} onClick={onConfirm}>
             {confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-};
-
-export default ConfirmationDialog;
+}

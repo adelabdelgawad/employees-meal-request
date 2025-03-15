@@ -1,5 +1,7 @@
+import asyncio
 from datetime import datetime
 from collections import defaultdict
+from time import sleep
 from typing import List, Optional, Dict, Tuple
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -190,7 +192,6 @@ async def create_request_endpoint(
     meal_groups = group_requests_by_meal(payload.requests)
     total_requests = sum(len(req_list) for req_list in meal_groups.values())
 
-    ic(meal_groups)
     try:
         logger.info(f"Processing {len(meal_groups)} meal group(s)")
         # Process each meal group in a background task.

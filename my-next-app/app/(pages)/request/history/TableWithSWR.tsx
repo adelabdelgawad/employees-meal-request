@@ -4,6 +4,7 @@ import useSWR from "swr";
 import { TableBody, Column } from "@/components/Table/table-body";
 import { TablePagination } from "@/components/Table/table-pagination";
 import { getHistoryRequests } from "@/lib/services/request-history";
+import Actions from "./Actions";
 
 interface TableWithSWRProps {
   fallbackData: RequestsResponse;
@@ -27,7 +28,8 @@ export default function TableWithSWR({
     { header: "Meal", accessor: "meal" },
     {
       header: "Request Time",
-      accessor: (row) => row.request_time.replace("T", " "),
+      accessor: (row) =>
+        row.request_time ? row.request_time.replace("T", " ") : "N/A",
     },
     {
       header: "Closed Time",
@@ -47,6 +49,10 @@ export default function TableWithSWR({
         columns={columns}
         data={data.data || []}
         className="shadow-sm"
+        // Pass mutate to the Actions component so buttons can update the cache
+        options={(_, record: RequestRecord) => (
+          <Actions record={record} mutate={mutate} />
+        )}
       />
       <div className="mt-5 flex w-full justify-center">
         <TablePagination

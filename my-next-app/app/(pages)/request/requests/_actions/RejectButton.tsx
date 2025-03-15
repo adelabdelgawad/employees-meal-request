@@ -6,7 +6,6 @@ import { toast } from 'react-hot-toast';
 import clientAxiosInstance from '@/lib/clientAxiosInstance';
 
 interface RejectButtonProps {
-  recordId: number;
   disabled: boolean;
   mutate: (data?: any, shouldRevalidate?: boolean) => Promise<any>;
   record: RequestRecord;
@@ -19,7 +18,7 @@ interface RejectButtonProps {
  * returns only partial data (e.g., new closed_time, new status), we merge
  * those fields into the existing record to avoid losing data.
  */
-const RejectButton: React.FC<RejectButtonProps> = ({ recordId, disabled, mutate, record }) => {
+const RejectButton: React.FC<RejectButtonProps> = ({ disabled, mutate, record }) => {
   const [loading, setLoading] = useState(false);
 
   const handleReject = async () => {
@@ -40,7 +39,7 @@ const RejectButton: React.FC<RejectButtonProps> = ({ recordId, disabled, mutate,
       (currentData: RequestsResponse) => ({
         ...currentData,
         data: currentData.data.map((req: RequestRecord) =>
-          req.id === recordId ? optimisticRecord : req
+          req.id === record.id ? optimisticRecord : req
         ),
       }),
       false // do not revalidate immediately
@@ -49,7 +48,7 @@ const RejectButton: React.FC<RejectButtonProps> = ({ recordId, disabled, mutate,
     try {
       // 2) Send the update to the server
       const response = await clientAxiosInstance.put(
-        `/update-request-status?request_id=${recordId}&status_id=4`
+        `/update-request-status?request_id=${record.id}&status_id=4`
       );
       const updatedRecordFromServer = response.data;
 
@@ -68,7 +67,7 @@ const RejectButton: React.FC<RejectButtonProps> = ({ recordId, disabled, mutate,
         (currentData: RequestsResponse) => ({
           ...currentData,
           data: currentData.data.map((req: RequestRecord) =>
-            req.id === recordId ? mergedUpdatedRecord : req
+            req.id === record.id ? mergedUpdatedRecord : req
           ),
         }),
         false // do not revalidate automatically
