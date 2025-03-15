@@ -1,32 +1,13 @@
+// app/[your-route]/Page.tsx
 import { Suspense } from "react";
-import TableSkelton from "@/components/Table/table-skelton";
-import { Column, TableBody } from "@/components/Table/table-body";
+import dynamic from "next/dynamic";
 import TableSearch from "@/components/Table/table-search";
-import { TablePagination } from "@/components/Table/table-pagination";
 import { URLSwitch } from "./URLSwitch";
 import DateRangePicker from "@/components/Table/date-range-picker";
-import { fetchReportDetails } from "@/lib/services/report-details";
 import DownloadButton from "./DownloadButton";
 
-interface ReportDetailsRecord {
-  id: string;
-  employee_code: string;
-  employee_name: string;
-  employee_title: string;
-  department: string;
-  requester_name: string;
-  requester_title: string;
-  request_time: string;
-  meal: string;
-  attendance_in: string;
-  attendance_out: string;
-  notes: string;
-}
-
-interface ReportDetailsResponse {
-  total_pages: number;
-  request_lines: ReportDetailsRecord[];
-}
+// Dynamically import ReportTable as a client component
+const ReportTable = dynamic(() => import("./ReportTable"), { ssr: false });
 
 interface PageProps {
   searchParams: {
@@ -38,61 +19,25 @@ interface PageProps {
   };
 }
 
-export default async function Page({ searchParams }: PageProps) {
-  // Extract query parameters
+export default function Page({ searchParams }: PageProps) {
+  // Extract query parameters for the DownloadButton
   const query = searchParams?.query || "";
   const page = Number(searchParams?.page) || 1;
   const startDate = searchParams?.startDate || "";
   const endDate = searchParams?.endDate || "";
-  const updateAttendance =
-    searchParams?.updateAttendance === "true" ||
-    searchParams?.updateAttendance === true;
-
-  const response: ReportDetailsResponse | null = await fetchReportDetails(
-    query,
-    page,
-    startDate,
-    endDate,
-    updateAttendance
-  );
-
-  const columns: Column<ReportDetailsRecord>[] = [
-    { header: "Code", accessor: "id" },
-    { header: "Employee Code", accessor: "employee_code" },
-    { header: "Employee Name", accessor: "employee_name" },
-    { header: "Employee Title", accessor: "employee_title" },
-    { header: "Department", accessor: "department" },
-    { header: "Requester", accessor: "requester_name" },
-    { header: "Requester Title", accessor: "requester_title" },
-    {
-      header: "Request Time",
-      accessor: (row) => row.request_time.replace("T", " "),
-    },
-    { header: "Meal", accessor: "meal" },
-    {
-      header: "Attendance In",
-      accessor: (row) => row.attendance_in.replace("T", " "),
-    },
-    {
-      header: "Attendance Out",
-      accessor: (row) => row.attendance_out.replace("T", " "),
-    },
-    { header: "Notes", accessor: "notes" },
-  ];
 
   return (
-    <div className="w-full p-0">
-      <div className="flex w-full items-center justify-between"></div>
-      <div className="flex items-center justify-between mb-5">
+    <div className="w-full p-2 overflow-hidden">
+      {/* Responsive Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-4">
         {/* Left Section */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
           <TableSearch placeholder="Search Employee Name..." />
-          <DateRangePicker />
+          <DateRangePicker additionalParamstoDelete="updateAttendance" />
         </div>
         {/* Right Section */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-shrink-0">
           <URLSwitch placeholder="Update Attendance" />
-          {/* Render the client-side export button */}
           <DownloadButton
             query={query}
             page={page}
@@ -102,18 +47,8 @@ export default async function Page({ searchParams }: PageProps) {
         </div>
       </div>
 
-      <Suspense fallback={<TableSkelton />}>
-        <TableBody<ReportDetailsRecord>
-          columns={columns}
-          data={response?.request_lines || []}
-          className="shadow-sm"
-        />
-        <div className="mt-5 flex w-full justify-center">
-          <TablePagination
-            currentPage={page}
-            totalPages={response?.total_pages || 1}
-          />
-        </div>
+      <Suspense fallback={null}>
+        <ReportTable />
       </Suspense>
     </div>
   );

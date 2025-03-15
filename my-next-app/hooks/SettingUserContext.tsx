@@ -1,7 +1,7 @@
 'use client';
 
 import clientAxiosInstance from '@/lib/clientAxiosInstance';
-import { fetchUsers } from '@/lib/services/setting-user';
+import { fetchUsers } from '@/app/actions/setting-user';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 

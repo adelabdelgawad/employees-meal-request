@@ -1,27 +1,28 @@
-import * as React from "react"
+// components/Table/table-body.tsx
+import * as React from "react";
 
 export type Column<T> = {
   /** Column header title */
-  header: string
+  header: string;
   /**
    * Defines how to access the cell value.
    * Can be a key of the data object or a custom render function.
    */
-  accessor: keyof T | ((row: T) => React.ReactNode)
-}
+  accessor: keyof T | ((row: T) => React.ReactNode);
+};
 
 export interface TableBodyProps<T extends { id: string | number }> {
   /** Array of column definitions */
-  columns: Column<T>[]
+  columns: Column<T>[];
   /** Array of data objects to display */
-  data: T[]
+  data: T[];
   /**
    * Optional render function to display extra options (e.g. edit/view buttons).
    * It receives the record's id and the full record.
    */
-  options?: (id: T["id"], record: T) => React.ReactNode
+  options?: (id: T["id"], record: T) => React.ReactNode;
   /** Optional additional class names for the table */
-  className?: string
+  className?: string;
 }
 
 /**
@@ -42,17 +43,19 @@ export function TableBody<T extends { id: string | number }>({
 }: TableBodyProps<T>) {
   return (
     <div className="overflow-x-auto">
-      {/* Apply text-center to the entire table */}
-      <table className={`min-w-full table-auto border-collapse text-center ${className}`}>
+      <table className={`min-w-full table-auto border-collapse ${className}`}>
         <thead>
           <tr className="border-b">
             {columns.map((col, colIndex) => (
-              <th key={colIndex} className="p-2 whitespace-nowrap">
+              <th
+                key={colIndex}
+                className="p-2 text-center whitespace-nowrap"
+              >
                 {col.header}
               </th>
             ))}
             {options && (
-              <th className="p-2 whitespace-nowrap">Options</th>
+              <th className="p-2 text-center whitespace-nowrap">Actions</th>
             )}
           </tr>
         </thead>
@@ -63,16 +66,19 @@ export function TableBody<T extends { id: string | number }>({
                 const cellContent =
                   typeof col.accessor === "function"
                     ? col.accessor(row)
-                    : row[col.accessor]
+                    : row[col.accessor];
 
                 return (
-                  <td key={colIndex} className="p-2 whitespace-nowrap">
+                  <td
+                    key={colIndex}
+                    className="p-2 whitespace-nowrap text-center"
+                  >
                     {cellContent as React.ReactNode}
                   </td>
-                )
+                );
               })}
               {options && (
-                <td className="p-2 whitespace-nowrap">
+                <td className="p-2 whitespace-nowrap text-center">
                   {options(row.id, row)}
                 </td>
               )}
@@ -81,5 +87,5 @@ export function TableBody<T extends { id: string | number }>({
         </tbody>
       </table>
     </div>
-  )
+  );
 }

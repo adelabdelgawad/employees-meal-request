@@ -80,7 +80,7 @@ declare global {
     attendance_in: Date;
     shift_hours: number;
     is_accepted: boolean;
-    is_deleted?: boolean;
+    is_deleted: boolean;
   };
   type ReportDashboardResponse = {
     id: number;
@@ -143,12 +143,15 @@ interface HistoryRequest {
     is_active: string;
     department_id: string;
   }
-  interface Meal {
+
+  type Meal = {
     id: number;
     name: string;
+    is_active: boolean
   }
 
-  interface RequestRecord {
+
+  type RequestRecord = {
     id: number;
     status_name: string;
     status_id: number;

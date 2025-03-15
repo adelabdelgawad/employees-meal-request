@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { fetchReportRequestRecords } from "@/lib/services/report-request";
+import { fetchReportRequestRecords } from "@/app/actions/report-request";
 
 type ReportRequestRecord = {
   id: number;

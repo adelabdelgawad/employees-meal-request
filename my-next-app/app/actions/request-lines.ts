@@ -1,5 +1,7 @@
-import axiosInstance from "@/lib/axiosInstance";
+"use server"
 
+import axiosInstance from "@/lib/axiosInstance";
+import { cookies } from "next/headers";
 
 export async function getRequestLines(requestId: number) {
   // Fetch requests with date range filter
@@ -34,16 +36,3 @@ export async function updateRequestLines(
   }
 }
 
-export async function deleteRequestLine(
-  requestLineId: number,
-){
-  try {
-    const response = await axiosInstance.delete(
-      `/history/request-line/${requestLineId}`
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching RequestLines:", error);
-    throw new Error("Failed to fetch RequestLines");
-  }
-}

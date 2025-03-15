@@ -61,6 +61,13 @@ class RequestLineRespose(BaseModel):
     attendance_in: datetime | None
     shift_hours: int | None
     is_accepted: bool
+    is_deleted: bool | None = False
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DeleteRequestLinesPayload(BaseModel):
+    deleted_lines: List[RequestLineRespose]
 
     model_config = ConfigDict(from_attributes=True)
 

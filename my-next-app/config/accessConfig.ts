@@ -10,7 +10,7 @@ export interface RouteConfig {
   navSection?: string;
   navTitle?: string;
   navDescription?: string;
-  icon?: LucideIcon; // Add this line
+  icon?: LucideIcon;
 }
 
 // Centralized route configuration
@@ -21,7 +21,7 @@ export const routesConfig: RouteConfig[] = [
     navSection: "Request",
     navTitle: "New Request",
     navDescription: "Create a new meal request.",
-    icon: FilePlus, // Specify the icon component
+    icon: FilePlus,
   },
   {
     path: "/request/requests",
@@ -62,12 +62,16 @@ export const routesConfig: RouteConfig[] = [
     navTitle: "Users",
     navDescription: "Manage application users and their roles.",
     icon: Users,
-  }
+  },
+  {
+    path: "/setting/meals",
+    roles: ["Admin", "Manager"],
+    navSection: "Settings",
+    navTitle: "Meals",
+    navDescription: "Manage available meals and their details.",
+    icon: FileText, // Revised entry
+  },
 ];
-
 
 // Publicly accessible paths
-export const publicPaths = [
-  "/access-denied",
-  "/login"
-];
+export const publicPaths = ["/access-denied", "/login"];

@@ -7,7 +7,7 @@ import { toast } from "react-hot-toast";
 import RequestLinesTable from "./RequestLinesTable";
 import ConfirmationModal from "@/components/confirmation-dialog";
 import useRequestLineState from "@/hooks/useRequestLineState";
-import { updateRequestLine } from "@/lib/services/request-requests";
+import { updateRequestLine } from "@/app/actions/request-requests";
 
 interface ViewActionProps {
   disabled: boolean;

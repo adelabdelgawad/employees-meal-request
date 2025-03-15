@@ -1,5 +1,5 @@
 import toast from "react-hot-toast";
-import clientAxiosInstance from "../clientAxiosInstance";
+import clientAxiosInstance from "@/lib/clientAxiosInstance";
 
 const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
 

@@ -1,3 +1,4 @@
+// components/DeleteRequestLine.tsx
 "use client";
 
 import React from "react";
@@ -25,6 +26,7 @@ export default function DeleteRequestLine({
           variant="outline"
           size="sm"
           onClick={() => onUndo(requestLine.id)}
+          disabled={disabled}
         >
           <Undo className="h-4 w-4 mr-2" />
           Undo
@@ -36,7 +38,8 @@ export default function DeleteRequestLine({
           onClick={() => onDelete(requestLine.id)}
           disabled={disabled}
         >
-          <Trash size={20} />
+          <Trash className="h-4 w-4 mr-2" />
+          Delete
         </Button>
       )}
     </>

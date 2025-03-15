@@ -1,7 +1,7 @@
 // app/actions.js
 "use server";
 
-import axiosInstance from "../axiosInstance";
+import axiosInstance from '@/lib/axiosInstance';
 
 
 

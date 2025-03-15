@@ -66,6 +66,7 @@ async def read_request_lines(
                 RequestLine.attendance_in,
                 RequestLine.is_accepted,
                 RequestLine.shift_hours,
+                RequestLine.is_deleted,
             )
             .join(Employee, RequestLine.employee_id == Employee.id)
             .where(

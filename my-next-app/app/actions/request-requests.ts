@@ -1,7 +1,7 @@
 "use server";
 import toast from "react-hot-toast";
-import axiosInstance from "../axiosInstance";
 import { cookies } from "next/headers";
+import axiosInstance from "@/lib/axiosInstance";
 
 export async function getRequests(
   query: string = "",

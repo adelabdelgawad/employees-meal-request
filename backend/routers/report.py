@@ -100,7 +100,7 @@ async def get_requests_data(
     start_time: str | None = None,
     end_time: str | None = None,
     page: int | None = 1,
-    page_size: int | None = 15,
+    page_size: int | None = 13,
     query: str | None = None,
     update_attendance: bool | None = False,
     download: bool | None = False,

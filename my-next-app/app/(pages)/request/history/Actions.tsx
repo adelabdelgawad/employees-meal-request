@@ -12,14 +12,12 @@ interface ActionsProps {
 }
 
 const Actions: React.FC<ActionsProps> = ({ record, mutate }) => {
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-
   const disabled: boolean = record.status_id !== 1 && record.status_id !== 2;
 
   return (
     <div className="flex gap-2 items-center align-middle justify-center text-center">
       <CopyAction mutate={mutate} record={record} />
-      <ViewAction record={record} disabled={disabled} />
+      <ViewAction record={record} mutate={mutate} disabled={disabled} />
       <DeleteAction disabled={disabled} mutate={mutate} record={record} />
     </div>
   );

@@ -19,15 +19,18 @@ import { Calendar } from "@/components/ui/calendar";
 import { DateRange as DayPickerDateRange } from "react-day-picker";
 
 // Import shadcn Sheet components
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Spinner } from "../ui/spinner";
+import { DialogTitle } from "@radix-ui/react-dialog";
 
 interface DateRangePickerProps {
   placeholder?: string;
+  additionalParamstoDelete?: string;
 }
 
 export default function DateRangePicker({
   placeholder = "Pick a Date Range",
+  additionalParamstoDelete= ""
 }: DateRangePickerProps) {
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false); // Spinner state
@@ -89,6 +92,10 @@ export default function DateRangePicker({
     if (!date?.from && !date?.to) {
       params.delete("startDate");
       params.delete("endDate");
+      if (additionalParamstoDelete){
+        params.delete(additionalParamstoDelete) 
+      }
+
       replace(`${pathname}?${params.toString()}`);
       setOpen(false);
       return;
@@ -158,9 +165,13 @@ export default function DateRangePicker({
       {/* Sheet Content */}
       <SheetContent side="right" className="w-full max-w-md p-0">
         {/* Custom Header (top bar) */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-lg font-semibold">Select Date Range</h3>
-        </div>
+        <SheetHeader>
+          <DialogTitle></DialogTitle>
+        <SheetDescription>Select Date Range</SheetDescription>
+        </SheetHeader>
+        {/* <div className="flex items-center justify-between p-4 border-b">
+          <h3 className="text-lg font-semibold"></h3>
+        </div> */}
 
         {/* Main Content */}
         <div className="flex-col">

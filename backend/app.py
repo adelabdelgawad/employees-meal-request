@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, data, report, setting
+from routers import auth, data, meal, report, setting
 from routers.request import history
 from routers.request import requests
 from dotenv import load_dotenv
@@ -83,3 +83,4 @@ app.include_router(report.router, tags=["Report"])
 app.include_router(setting.router, tags=["Security Settings"])
 app.include_router(auth.router, tags=["Authentication"])
 app.include_router(history.router, tags=["Request"])
+app.include_router(meal.router, tags=["Meals"])

@@ -109,7 +109,7 @@ async def read_requests(
     requester_id: int | None = None,
     requester_name: str | None = None,
     page: int | None = 1,
-    page_size: int | None = 15,
+    page_size: int | None = 13,
     download: bool | None = False,
     accept_future: bool | None = False,
 ) -> RequestsResponse:

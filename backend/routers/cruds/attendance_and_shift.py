@@ -48,7 +48,7 @@ async def update_request_lines_with_attendance(
     start_time: str | None = None,
     end_time: str | None = None,
     page: int | None = 1,
-    page_size: int | None = 15,
+    page_size: int | None = 13,
     download: bool | None = False,
     request_line_ids: List[int] | None = None,
     employee_name: str | None = None,
