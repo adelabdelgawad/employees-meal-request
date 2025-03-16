@@ -144,10 +144,15 @@ interface HistoryRequest {
     department_id: string;
   }
 
+  type  Schedule=  {
+    schedule_from: string; // Format: "HH:MM"
+    schedule_to: string;   // Format: "HH:MM"
+  }
   type Meal = {
     id: number;
     name: string;
     is_active: boolean
+    schedules?: Schedule[];
   }
 
 

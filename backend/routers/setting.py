@@ -188,7 +188,8 @@ async def update_user_roles(
 async def delete_user(
     user_id: int, session: SessionDep, current_user: CurrentUserDep
 ):
-    """
+    """        icecream.ic(new_schedule)
+
     Delete an existing user by their ID.
 
     Args:

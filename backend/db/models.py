@@ -2,6 +2,7 @@ from typing import List, Optional
 from datetime import datetime
 import pytz
 from sqlmodel import Field, Relationship, SQLModel
+from datetime import time
 
 # Default timezone
 cairo_tz = pytz.timezone("Africa/Cairo")
@@ -113,6 +114,28 @@ class Meal(SQLModel, table=True):
     # Relationships
     request_lines: List["RequestLine"] = Relationship(back_populates="meal")
     requests: List["Request"] = Relationship(back_populates="meal")
+    meal_schedules: List["MealSchedule"] = Relationship(back_populates="meal")
+
+
+class MealSchedule(SQLModel, table=True):
+    """
+    Represents a time interval during which a meal should appear.
+
+    Attributes:
+        meal_id (int): Foreign key linking to the meal.
+        schedule_from (time): Start time of the interval.
+        schedule_to (time): End time of the interval.
+    """
+
+    __tablename__ = "meal_schedule"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    meal_id: int = Field(foreign_key="meal.id")
+    schedule_from: time
+    schedule_to: time
+
+    # Back reference to the Meal
+    meal: "Meal" = Relationship(back_populates="meal_schedules")
 
 
 class Account(SQLModel, table=True):

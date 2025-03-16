@@ -14,7 +14,7 @@ async function page() {
   const response: Meal | null = await getMeals();
 
   return (
-    <div className="w-full p-2 pt-5">
+    <div className="w-full pt-10">
       <div className="flex w-full items-center justify-between"></div>
       <Suspense fallback={<TableSkelton />}>
         <TableWithSWR fallbackData={response} />

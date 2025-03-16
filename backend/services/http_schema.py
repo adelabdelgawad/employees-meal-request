@@ -1,3 +1,4 @@
+from datetime import time
 from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from typing import List
@@ -263,5 +264,23 @@ class NewRequestDataResponse(BaseModel):
     departments: List[Department] | None
     employees: List[Employee] | None
     meals: List[Meal] | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MealScheduleResponse(BaseModel):
+    id: int
+    meal_id: int
+    schedule_from: time
+    schedule_to: time
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MealWithScheduleResponse(BaseModel):
+    id: int
+    name: str
+    is_active: bool
+    meal_schedules: List[MealScheduleResponse] | None = None
 
     model_config = ConfigDict(from_attributes=True)

@@ -6,9 +6,16 @@ export type Column<T> = {
   header: string;
   /**
    * Defines how to access the cell value.
-   * Can be a key of the data object or a custom render function.
+   * Can be a key of the data object or a custom accessor function.
    */
   accessor: keyof T | ((row: T) => React.ReactNode);
+  /**
+   * Optional custom render function to override the default cell rendering.
+   *
+   * @param row - The current row data.
+   * @returns A React node to render.
+   */
+  render?: (row: T) => React.ReactNode;
 };
 
 export interface TableBodyProps<T extends { id: string | number }> {
@@ -47,10 +54,7 @@ export function TableBody<T extends { id: string | number }>({
         <thead>
           <tr className="border-b">
             {columns.map((col, colIndex) => (
-              <th
-                key={colIndex}
-                className="p-2 text-center whitespace-nowrap"
-              >
+              <th key={colIndex} className="p-2 text-center whitespace-nowrap">
                 {col.header}
               </th>
             ))}
@@ -63,16 +67,13 @@ export function TableBody<T extends { id: string | number }>({
           {data.map((row) => (
             <tr key={row.id} className="border-b">
               {columns.map((col, colIndex) => {
-                const cellContent =
-                  typeof col.accessor === "function"
-                    ? col.accessor(row)
-                    : row[col.accessor];
-
+                const cellContent = col.render
+                  ? col.render(row)
+                  : typeof col.accessor === "function"
+                  ? col.accessor(row)
+                  : row[col.accessor];
                 return (
-                  <td
-                    key={colIndex}
-                    className="p-2 whitespace-nowrap text-center"
-                  >
+                  <td key={colIndex} className="p-2 whitespace-nowrap text-center">
                     {cellContent as React.ReactNode}
                   </td>
                 );

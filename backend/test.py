@@ -1,31 +1,72 @@
+"""
+drop_and_recreate_meal_table.py
+
+This script asynchronously drops and recreates the 'Meal' table using SQLModel.
+WARNING: Dropping a table will result in the loss of all data within that table.
+"""
+
 import asyncio
-from routers.cruds.attendance_and_shift import (
-    update_request_lines_with_attendance,
-)
-from datetime import datetime, date, time
-from db.database import get_application_session
-from hris_db.database import get_hris_session
-from icecream import ic
+import logging
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.exc import SQLAlchemyError
+from sqlmodel import SQLModel
+from db.models import Meal  # Ensure this import matches your project structure
+from dotenv import load_dotenv
+import os
+
+# Configure your asynchronous database URL
+load_dotenv()
+
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_SERVER = os.getenv("DB_SERVER")
+DB_NAME = os.getenv("DB_NAME")
+ASYNC_DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_SERVER}/{DB_NAME}?charset=utf8mb4"
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-async def main():
-    target_date = date(2025, 2, 27)
-    # Example 2: "Range" mode (using start and end datetime)
-    start_dt = datetime(2025, 2, 27, 0, 0, 0)
-    end_dt = datetime(2025, 2, 28, 23, 59, 59)
-    async for hris_session in get_hris_session():
-        async for session in get_application_session():
-            updated_lines = await update_request_lines_with_attendance(
-                session, hris_session, start=start_dt, end=end_dt
+async def drop_and_recreate_meal_table():
+    """
+    Asynchronously drops and recreates the 'Meal' table.
+    """
+    async_engine = create_async_engine(ASYNC_DATABASE_URL, echo=True)
+
+    async with async_engine.begin() as conn:
+        try:
+            # Drop the 'Meal' table if it exists
+            logger.info("Attempting to drop the 'Meal' table...")
+            await conn.run_sync(Meal.__table__.drop)
+            logger.info("Successfully dropped the 'Meal' table.")
+        except SQLAlchemyError as drop_error:
+            logger.error(
+                "Error occurred while dropping the 'Meal' table: %s",
+                drop_error,
             )
-            print(f"Updated {len(updated_lines)} request lines:")
-            for rl in updated_lines:
-                print(
-                    f"RequestLine ID: {rl.id}, Employee Code: {rl.employee_code}, "
-                    f"Attendance In: {rl.attendance_in}, Attendance Out: {rl.attendance_out}"
-                )
+            return
+
+        try:
+            # Recreate the 'Meal' table
+            logger.info("Attempting to recreate the 'Meal' table...")
+            await conn.run_sync(
+                SQLModel.metadata.create_all, tables=[Meal.__table__]
+            )
+            logger.info("Successfully recreated the 'Meal' table.")
+        except SQLAlchemyError as create_error:
+            logger.error(
+                "Error occurred while recreating the 'Meal' table: %s",
+                create_error,
+            )
+            return
+
+    await async_engine.dispose()
 
 
 if __name__ == "__main__":
-
-    asyncio.run(main())
+    logger.info(
+        "Starting the process to drop and recreate the 'Meal' table..."
+    )
+    asyncio.run(drop_and_recreate_meal_table())
+    logger.info("Process completed.")
