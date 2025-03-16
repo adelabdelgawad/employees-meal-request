@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client";
 
 import React, { useState } from 'react';
@@ -76,7 +78,7 @@ const RejectButton: React.FC<RejectButtonProps> = ({ disabled, mutate, record })
       toast.success('Request updated successfully!');
     } catch (error) {
       toast.error('Failed to update the request. Please try again.');
-
+      console.log(error)
       // 4) Revalidate to revert the optimistic update if something failed
       mutate();
     } finally {
@@ -104,3 +106,4 @@ const RejectButton: React.FC<RejectButtonProps> = ({ disabled, mutate, record })
 };
 
 export default RejectButton;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -70,6 +70,7 @@ const CopyRequest: React.FC<CopyRequestProps> = ({ mutate, record }) => {
       setIsPopoverOpen(false);
       toast.success("Request updated successfully!");
     } catch (error) {
+      console.log(error)
       toast.error("Failed to update the request. Please try again.");
       // Revalidate in case the data got partially changed
       mutate();

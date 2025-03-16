@@ -74,8 +74,6 @@ const DeleteRequest: React.FC<DeleteRequestProps> = ({ disabled, mutate, record 
         isOpen={isDialogOpen}
         title="Confirm Deletion"
         message="Are you sure you want to delete this item?"
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
         onConfirm={handleDelete}
         onCancel={closeDialog}
       />

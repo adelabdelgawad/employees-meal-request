@@ -1,10 +1,11 @@
+import datetime
 import logging
 import asyncio
 from fastapi import APIRouter, HTTPException, status
 from typing import List
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.models import Employee, Department, Meal
+from db.models import Employee, Department, Meal, MealSchedule
 from src.dependencies import SessionDep
 from services.http_schema import NewRequestDataResponse
 
@@ -49,18 +50,25 @@ async def read_employees(session: AsyncSession) -> List[Employee]:
 
 
 async def read_meals(session: AsyncSession) -> List[Meal]:
-    """
-    Retrieve a list of active meal types.
-    """
     try:
-        statement = select(Meal).where(Meal.is_active)
+        current_time = datetime.datetime.now().time()
+        statement = (
+            select(Meal)
+            .join(MealSchedule)
+            .where(
+                Meal.is_active == True,
+                MealSchedule.schedule_from <= current_time,
+                MealSchedule.schedule_to >= current_time,
+            )
+        )
         result = await session.execute(statement)
         meals = result.scalars().all()
-        logger.info("Retrieved %d active meal types.", len(meals))
         return meals
-    except Exception as e:
-        logger.exception("Error retrieving meals: %s", e)
-        return []
+    except Exception as exc:
+        logger.error("Error retrieving active meals", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Error retrieving active meals"
+        )
 
 
 @router.get(

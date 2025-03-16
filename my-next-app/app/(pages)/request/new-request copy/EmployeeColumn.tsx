@@ -28,6 +28,7 @@ export default function EmployeeColumn() {
   const listRef = useRef<FixedSizeList>(null);
 
   const departmentMealFilteredEmployees = useMemo(() => {
+    console.log(selectedDepartments)
     return employees.filter((emp) => {
       const isSubmittedForAllMeals = Meals.every((Meal) =>
         submittedEmployees.some(
@@ -51,6 +52,7 @@ export default function EmployeeColumn() {
       (emp) =>
         emp.name.toLowerCase().includes(lowerSearch) ||
         emp.code.toString().toLowerCase().includes(lowerSearch)
+        
     );
   }, [departmentMealFilteredEmployees, search]);
 

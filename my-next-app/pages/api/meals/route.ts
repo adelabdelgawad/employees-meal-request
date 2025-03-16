@@ -2,9 +2,9 @@
 "use server";
 import { getMeals } from "@/app/actions/meal";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const response: Meal | null = await getMeals();
+    const response: Meal[] | null = await getMeals();
 
     console.log(response);
     return response;

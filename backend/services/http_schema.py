@@ -268,11 +268,12 @@ class NewRequestDataResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# Pydantic Response Models
 class MealScheduleResponse(BaseModel):
-    id: int
+    id: int | None = None
     meal_id: int
-    schedule_from: time
-    schedule_to: time
+    schedule_from: str  # time serialized as string
+    schedule_to: str  # time serialized as string
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -282,5 +283,18 @@ class MealWithScheduleResponse(BaseModel):
     name: str
     is_active: bool
     meal_schedules: List[MealScheduleResponse] | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MealActivationUpdateRequest(BaseModel):
+    is_active: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ScheduleUpdateRequest(BaseModel):
+    added: List[MealScheduleResponse]
+    removed: List[MealScheduleResponse]
 
     model_config = ConfigDict(from_attributes=True)

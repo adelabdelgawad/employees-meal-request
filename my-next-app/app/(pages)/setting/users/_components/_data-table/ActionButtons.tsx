@@ -56,8 +56,6 @@ export default function ActionButtons({ recordId }: ActionButtonsProps) {
         isOpen={isDeleteDialogOpen}
         title="Delete Record"
         message={`Are you sure you want to delete record #${recordId}? This action cannot be undone.`}
-        confirmLabel={isDeleting ? "Deleting..." : "Delete"}
-        cancelLabel="Cancel"
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialogOpen(false)}
       />

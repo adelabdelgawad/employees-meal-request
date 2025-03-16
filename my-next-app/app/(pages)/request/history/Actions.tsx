@@ -1,10 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import ViewAction from "./_actions/ViewAction";
 import DeleteAction from "./_actions/DeleteRequest";
 import CopyAction from "./_actions/CopyRequest";
 import { KeyedMutator } from "swr";
-import toast from "react-hot-toast";
 
 interface ActionsProps {
   record: RequestRecord;

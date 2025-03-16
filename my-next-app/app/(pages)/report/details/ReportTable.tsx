@@ -39,7 +39,7 @@ export default function ReportTable() {
   const updateAttendance = searchParams?.get("updateAttendance") === "true";
 
   const [data, setData] = useState<ReportDetailsResponse | null>(null);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -55,17 +55,20 @@ export default function ReportTable() {
         );
         setData(response);
         setError(null);
-      } catch (err) {
-        setError(err);
+      } catch (err: unknown) {
+        // Ensure the caught error is of type Error
+        if (err instanceof Error) {
+          setError(err);
+        } else {
+          setError(new Error("An unexpected error occurred"));
+        }
         setData(null);
       } finally {
         setLoading(false);
       }
     }
-
     loadData();
   }, [query, page, startDate, endDate, updateAttendance]);
-
   // Define table columns
   const columns: Column<ReportDetailsRecord>[] = [
     { header: "ID", accessor: "id" },
@@ -105,7 +108,6 @@ export default function ReportTable() {
   return (
     <>
       {/* Wrap the table in a scrollable container */}
-      // ReportTable.tsx
 <div className="overflow-x-auto">
   <TableBody<ReportDetailsRecord>
     columns={columns}

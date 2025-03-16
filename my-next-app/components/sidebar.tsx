@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { getSession } from "@/lib/session";
 import { routesConfig, RouteConfig, AppRole } from "@/config/accessConfig";
+import { useEffect, useState } from "react";
 
 export function Sidebar() {
   const pathname = usePathname();

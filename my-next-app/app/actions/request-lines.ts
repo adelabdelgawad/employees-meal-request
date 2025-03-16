@@ -1,7 +1,6 @@
 "use server"
 
 import axiosInstance from "@/lib/axiosInstance";
-import { cookies } from "next/headers";
 
 export async function getRequestLines(requestId: number) {
   // Fetch requests with date range filter

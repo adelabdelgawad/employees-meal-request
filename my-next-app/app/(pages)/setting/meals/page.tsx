@@ -11,7 +11,7 @@ async function page() {
   // Extract query parameters
 
   // Fetch initial data on the server.
-  const response: Meal | null = await getMeals();
+  const response: Meal[] | null = await getMeals();
 
   return (
     <div className="w-full pt-10">

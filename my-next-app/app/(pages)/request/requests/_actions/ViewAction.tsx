@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -8,6 +10,8 @@ import RequestLinesTable from "./RequestLinesTable";
 import ConfirmationModal from "@/components/confirmation-dialog";
 import useRequestLineState from "@/hooks/useRequestLineState";
 import { updateRequestLine } from "@/app/actions/request-requests";
+
+
 
 interface ViewActionProps {
   disabled: boolean;
@@ -150,8 +154,6 @@ const ViewAction: React.FC<ViewActionProps> = ({
         isOpen={showConfirmModal}
         title="Confirm Save"
         message="Are you sure you want to save these changes?"
-        confirmLabel="Yes, Save"
-        cancelLabel="Cancel"
         onConfirm={confirmSave}
         onCancel={() => setShowConfirmModal(false)}
       />
@@ -160,3 +162,5 @@ const ViewAction: React.FC<ViewActionProps> = ({
 };
 
 export default ViewAction;
+
+/* eslint-disable @typescript-eslint/no-explicit-any */

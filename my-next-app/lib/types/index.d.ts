@@ -145,15 +145,28 @@ interface HistoryRequest {
   }
 
   type  Schedule=  {
+    id?: number;
+    meal_id?: numbet;
     schedule_from: string; // Format: "HH:MM"
     schedule_to: string;   // Format: "HH:MM"
+    isDeleted?: boolean; // For soft-delete/undo
+
   }
+
+
   type Meal = {
     id: number;
     name: string;
     is_active: boolean
     schedules?: Schedule[];
   }
+  type MealResponse = {
+    id: number;
+    name: string;
+    is_active: boolean
+    meal_schedules?: Schedule[];
+  }
+
 
 
   type RequestRecord = {

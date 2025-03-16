@@ -90,7 +90,7 @@ async def update_account():
 
                 print(f"Updated account for: {acc.username}")
                 session.add(account)
-                permission = RolePermission(role_id=1, account_id=account.id)
+                permission = RolePermission(role_id=2, account_id=account.id)
                 session.add(permission)
 
                 await session.commit()
@@ -302,10 +302,10 @@ async def update_request_lines():
 
 
 async def main():
-    await update_departments()
-    await update_account()
-    await update_employees()
-    await main_async()
+    # await update_departments()
+    # await update_account()
+    # await update_employees()
+    # await main_async()
     await update_requests()
     await update_request_lines()
 
