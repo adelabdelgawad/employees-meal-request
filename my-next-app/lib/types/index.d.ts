@@ -105,17 +105,17 @@ declare global {
     id: number;
     name: string;
   };
-interface HistoryRequest {
-  id: number;
-  request_time?: string;
-  meal?: string;
-  status_name?: string;
-  status_id?: number;
-  closed_time?: string;
-  total_lines?: number;
-  accepted_lines?: number;
-  notes?: string;
-}
+  interface HistoryRequest {
+    id: number;
+    request_time?: string;
+    meal?: string;
+    status_name?: string;
+    status_id?: number;
+    closed_time?: string;
+    total_lines?: number;
+    accepted_lines?: number;
+    notes?: string;
+  }
   interface ReportDetailsData {
     id: number;
     employee_code?: number;
@@ -135,7 +135,8 @@ interface HistoryRequest {
     id: number;
     name: string;
   }
-  interface EmployeeType {
+
+  interface Employee {
     id: number;
     code: number;
     name: string;
@@ -144,30 +145,26 @@ interface HistoryRequest {
     department_id: string;
   }
 
-  type  Schedule=  {
+  type Schedule = {
     id?: number;
     meal_id?: numbet;
     schedule_from: string; // Format: "HH:MM"
-    schedule_to: string;   // Format: "HH:MM"
+    schedule_to: string; // Format: "HH:MM"
     isDeleted?: boolean; // For soft-delete/undo
-
-  }
-
+  };
 
   type Meal = {
     id: number;
     name: string;
-    is_active: boolean
+    is_active: boolean;
     schedules?: Schedule[];
-  }
+  };
   type MealResponse = {
     id: number;
     name: string;
-    is_active: boolean
+    is_active: boolean;
     meal_schedules?: Schedule[];
-  }
-
-
+  };
 
   type RequestRecord = {
     id: number;
@@ -181,7 +178,7 @@ interface HistoryRequest {
     notes?: string;
     total_lines: number;
     accepted_lines: number;
-  }
+  };
   interface Request {
     id: number;
     requester?: string;
@@ -222,6 +219,16 @@ interface HistoryRequest {
     expiresAt: Date;
     token: string;
   }
+  
+  type DepartmentWithEmployees = {
+    department: string;
+    employees: Employee[];
+  };
+
+  type NewRequestDataResponse = {
+    departments: DepartmentWithEmployees[];
+    meals?: Meal[];
+  };
 }
 
 export {};

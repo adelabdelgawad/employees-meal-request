@@ -260,9 +260,15 @@ class ReportDetailsResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class DepartmentWithEmployees(BaseModel):
+    department: str
+    employees: List[Employee]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class NewRequestDataResponse(BaseModel):
-    departments: List[Department] | None
-    employees: List[Employee] | None
+    departments: List[DepartmentWithEmployees] | None
     meals: List[Meal] | None
 
     model_config = ConfigDict(from_attributes=True)

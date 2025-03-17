@@ -5,12 +5,12 @@ import clientAxiosInstance from "@/lib/clientAxiosInstance";
 
 interface NewRequestContextType {
   departments: DepartmentType[];
-  employees: EmployeeType[];
+  employees: Employee[];
   Meals: Meal[];
   selectedDepartments: string[];
   setSelectedDepartments: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedEmployees: EmployeeType[];
-  setSelectedEmployees: React.Dispatch<React.SetStateAction<EmployeeType[]>>;
+  selectedEmployees: Employee[];
+  setSelectedEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
   submittedEmployees: any[];
   setSubmittedEmployees: React.Dispatch<React.SetStateAction<any[]>>;
   resetSubmittedEmployees: () => void;
@@ -27,10 +27,10 @@ export function NewRequestProvider({
   children: React.ReactNode;
 }) {
   const [departments, setDepartments] = useState<DepartmentType[]>([]);
-  const [employees, setEmployees] = useState<EmployeeType[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [Meals, setMeals] = useState<Meal[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
-  const [selectedEmployees, setSelectedEmployees] = useState<EmployeeType[]>(
+  const [selectedEmployees, setSelectedEmployees] = useState<Employee[]>(
     []
   );
   const [submittedEmployees, setSubmittedEmployees] = useState<any[]>([]);

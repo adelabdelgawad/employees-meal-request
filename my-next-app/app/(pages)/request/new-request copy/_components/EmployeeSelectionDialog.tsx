@@ -14,8 +14,8 @@ import { toastWarning } from "@/lib/utils/toast";
 const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
 interface EmployeeSelectionDialogProps {
-  selectedEmployees: EmployeeType[];
-  setSelectedEmployees: (employees: EmployeeType[]) => void;
+  selectedEmployees: Employee[];
+  setSelectedEmployees: (employees: Employee[]) => void;
   Meals: Meal[];
   onSelectMeal: (selectedMeals: Meal[]) => void;
 }

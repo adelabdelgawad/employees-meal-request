@@ -3,11 +3,16 @@ import logging
 import asyncio
 from fastapi import APIRouter, HTTPException, status
 from typing import List
+import icecream
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.models import Employee, Department, Meal, MealSchedule
 from src.dependencies import SessionDep
-from services.http_schema import NewRequestDataResponse
+from services.http_schema import (
+    DepartmentWithEmployees,
+    NewRequestDataResponse,
+)
+from sqlalchemy.orm import selectinload
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -15,38 +20,33 @@ logger = logging.getLogger(__name__)
 
 async def read_departments_with_employees(
     session: AsyncSession,
-) -> List[Department]:
+) -> List[DepartmentWithEmployees]:
     """
-    Retrieve a list of departments that have at least one associated employee.
-    """
-    try:
-        # Create a subquery to get distinct department IDs from Employee
-        subquery = select(Employee.department_id).distinct()
-        statement = select(Department).where(Department.id.in_(subquery))
-        result = await session.execute(statement)
-        departments = result.scalars().all()
-        logger.info(
-            "Retrieved %d departments with employees.", len(departments)
-        )
-        return departments
-    except Exception as e:
-        logger.exception("Error retrieving departments: %s", e)
-        return []
+    Retrieve all departments along with their employees and return a NewRequestDataResponse.
 
+    Args:
+        session (SessionDep): The database session dependency.
 
-async def read_employees(session: AsyncSession) -> List[Employee]:
+    Returns:
+        NewRequestDataResponse: The response data containing a list of departments and their employees.
     """
-    Retrieve a list of all employees.
-    """
-    try:
-        statement = select(Employee)
-        result = await session.execute(statement)
-        employees = result.scalars().all()
-        logger.info("Retrieved %d employees.", len(employees))
-        return employees
-    except Exception as e:
-        logger.exception("Error retrieving employees: %s", e)
-        return []
+    # Eager load employees for each department.
+    statement = (
+        select(Department)
+        .join(Employee, Department.id == Employee.department_id)
+        .distinct()
+        .options(selectinload(Department.employees))
+    )
+    result = await session.execute(statement)
+    departments = result.scalars().all()
+
+    # Map each department to the response model. The field "department" is set to the department's name.
+    dept_with_employees = [
+        DepartmentWithEmployees(department=dept.name, employees=dept.employees)
+        for dept in departments
+    ]
+
+    return dept_with_employees
 
 
 async def read_meals(session: AsyncSession) -> List[Meal]:
@@ -79,13 +79,14 @@ async def read_meals(session: AsyncSession) -> List[Meal]:
 async def read_new_request_data(session: SessionDep) -> NewRequestDataResponse:
     try:
         departments = await read_departments_with_employees(session)
-        employees = await read_employees(session)  # Fixed typo here
         meals = await read_meals(session)
-        response = NewRequestDataResponse(
-            departments=departments, employees=employees, meals=meals
-        )
+        response = NewRequestDataResponse(departments=departments, meals=meals)
         return response
-    except Exception:
+    except Exception as ex:
+        logger.error(
+            "Error retrieving active Meal Request Data", exc_info=True
+        )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An internal error occurred while fetching employees.",
