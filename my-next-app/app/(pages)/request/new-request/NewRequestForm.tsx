@@ -1,203 +1,276 @@
 "use client";
-
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { MinusCircle, PlusCircle } from "lucide-react";
-import { useState } from "react";
+import { MinusCircle, PlusCircle, UserPlus } from "lucide-react";
+import NewRequestFormFooter from "./NewRequestFormFooter";
 
-// Reusable SelectableList component
-interface SelectableListProps<T> {
-  items: T[];
-  selectedItems: Set<string>;
-  onSelectionChange: (newSelectedItems: Set<string>) => void;
-  keyExtractor: (item: T) => string;
-  renderItem: (item: T) => JSX.Element;
-  filterFunction: (item: T, searchTerm: string) => boolean;
-}
-
-function SelectableList<T>({
-  items,
-  selectedItems,
-  onSelectionChange,
-  keyExtractor,
-  renderItem,
-  filterFunction,
-}: SelectableListProps<T>) {
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const filteredItems = items.filter((item) => filterFunction(item, searchTerm));
-
-  const handleSelectAll = () => {
-    const newSelectedItems = new Set([
-      ...selectedItems,
-      ...filteredItems.map(keyExtractor),
-    ]);
-    onSelectionChange(newSelectedItems);
-  };
-
-  const handleDeselectAll = () => {
-    const filteredKeys = new Set(filteredItems.map(keyExtractor));
-    const newSelectedItems = new Set(
-      [...selectedItems].filter((key) => !filteredKeys.has(key))
-    );
-    onSelectionChange(newSelectedItems);
-  };
-
-  return (
-    <div className="space-y-2">
-      <Input
-        type="text"
-        placeholder="Search..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="w-full p-2 border border-gray-300 rounded-md
-                   focus:outline-none focus:ring-2 focus:ring-blue-500"
-                         />
-    <div className="flex justify-between mb-4">        
-        {/* Add All Button */}
-        <Button onClick={handleSelectAll} variant="outline">
-        <PlusCircle className="h-5 w-5" />
-        Add All        </Button>
-        <Button onClick={handleDeselectAll} variant="outline">
-        <MinusCircle className="h-5 w-5" />
-        Remove All        </Button>
-      </div>
-      <div className=" overflow-y-auto">
-        {filteredItems.map((item) => {
-          const key = keyExtractor(item);
-          const isSelected = selectedItems.has(key);
-          return (
-            <div key={key} className="flex items-center py-1">
-              <Checkbox
-                checked={isSelected}
-                onCheckedChange={(checked) => {
-                  const newSelectedItems = new Set(selectedItems);
-                  if (checked) {
-                    newSelectedItems.add(key);
-                  } else {
-                    newSelectedItems.delete(key);
-                  }
-                  onSelectionChange(newSelectedItems);
-                }}
-              />
-              <div className="ml-2">{renderItem(item)}</div>
-            </div>
-          );
-        })}
-      </div>
-
-    </div>
-  );
-}
-
-// Main component
+// Assuming these types are defined elsewhere:
+// type Employee = { id: number; code: number; name: string; title: string; is_active: string; department_id: string; };
+// type NewRequestDataResponse = { departments: { department: string; employees: Employee[] }[]; meals?: any[] };
 
 interface NewRequestFormProps {
-  userData: NewRequestDataResponse
+  formData: NewRequestDataResponse;
 }
 
-export default function NewRequestForm({
-  userData
-}: NewRequestFormProps) {
-  const [selectedDepartments, setSelectedDepartments] = useState<Set<string>>(new Set());
-  const [checkedEmployees, setCheckedEmployees] = useState<Set<string>>(new Set());
+function NewRequestForm({ formData }: NewRequestFormProps) {
+  // State for department selections (via checkboxes).
+  // When empty, employees from all departments are shown.
+  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  // State for employees that have been added (selected).
   const [selectedEmployees, setSelectedEmployees] = useState<Employee[]>([]);
+  // State for department search term.
+  const [departmentSearchTerm, setDepartmentSearchTerm] = useState("");
+  // State for employee search term.
+  const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
 
-  // Extract departments and employees
-  const departments = userData.departments.map((dept) => dept.department);
-  const employeesToShow = userData.departments
-    .filter((dept) => selectedDepartments.has(dept.department))
-    .flatMap((dept) => dept.employees);
+  // Combine all employees from all departments and attach department name to each employee.
+  const allEmployees = formData.departments.flatMap((dept) =>
+    dept.employees.map((emp) => ({ ...emp, department: dept.department }))
+  );
 
-  const addSelectedEmployees = () => {
-    const employeesToAdd = employeesToShow.filter((emp) =>
-      checkedEmployees.has(emp.code.toString())
+  // Filter employees based on selected departments and employee search term.
+  // If no departments are selected, show all employees.
+  // Also, exclude any employees already added to the selected list.
+  const filteredEmployees = useMemo(() => {
+    let employees =
+      selectedDepartments.length > 0
+        ? allEmployees.filter((emp) =>
+            selectedDepartments.includes(emp.department)
+          )
+        : allEmployees;
+    // Filter by employee search term (search by name or code)
+    if (employeeSearchTerm.trim() !== "") {
+      const term = employeeSearchTerm.toLowerCase();
+      employees = employees.filter(
+        (emp) =>
+          emp.name.toLowerCase().includes(term) ||
+          String(emp.code).toLowerCase().includes(term)
+      );
+    }
+    return employees.filter(
+      (emp) => !selectedEmployees.some((se) => se.id === emp.id)
     );
-    const newSelectedEmployees = [
-      ...selectedEmployees,
-      ...employeesToAdd.filter(
-        (emp) => !selectedEmployees.some((e) => e.code === emp.code)
-      ),
-    ];
-    setSelectedEmployees(newSelectedEmployees);
-    setCheckedEmployees(new Set()); // Reset checked employees
+  }, [selectedDepartments, selectedEmployees, allEmployees, employeeSearchTerm]);
+
+  // Extract the list of unique department names, filtered by search term.
+  const departments = Array.from(
+    new Set(formData.departments.map((dept) => dept.department))
+  ).filter((dept) =>
+    dept.toLowerCase().includes(departmentSearchTerm.toLowerCase())
+  );
+
+  // Toggle a department checkbox.
+  const handleDepartmentCheckboxChange = (dept: string) => {
+    setSelectedDepartments((prev) => {
+      if (prev.includes(dept)) {
+        // Remove the department if already selected.
+        return prev.filter((d) => d !== dept);
+      } else {
+        // Add the department to selections.
+        return [...prev, dept];
+      }
+    });
+  };
+
+  // Add a single employee to the selected list.
+  const addEmployee = (employee: Employee) => {
+    setSelectedEmployees((prev) => [...prev, employee]);
+  };
+
+  // Add all employees currently visible (i.e. filteredEmployees).
+  const addAllEmployees = () => {
+    setSelectedEmployees((prev) => {
+      const newEmployees = filteredEmployees.filter(
+        (emp) => !prev.some((se) => se.id === emp.id)
+      );
+      return [...prev, ...newEmployees];
+    });
+  };
+
+  // Remove a single employee from the selected list.
+  const removeEmployee = (employee: Employee) => {
+    setSelectedEmployees((prev) =>
+      prev.filter((emp) => emp.id !== employee.id)
+    );
+  };
+
+  // Department-specific actions:
+
+  // Select all departments by setting the selectedDepartments state
+  // to include all available department names.
+  const selectAllDepartments = () => {
+    const allDeptNames = formData.departments.map((dept) => dept.department);
+    setSelectedDepartments(allDeptNames);
+  };
+
+  // Clear all department selections.
+  const clearAllDepartments = () => {
+    setSelectedDepartments([]);
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50  p-2">      {/* Grid container with remaining space and scrolling */}
-      <div className="grid grid-cols-1   gap-6 flex-1">
-        <div className="container mx-auto p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
-            {/* Department Column */}
-            <div className="border p-4 rounded-lg flex flex-col h-full">
-              <h2 className="text-lg font-semibold mb-2">Departments</h2>
-              <div className="flex-grow overflow-y-auto">
-                <SelectableList
-                  items={departments}
-                  selectedItems={selectedDepartments}
-                  onSelectionChange={setSelectedDepartments}
-                  keyExtractor={(dept) => dept}
-                  renderItem={(dept) => <span>{dept}</span>}
-                  filterFunction={(dept, searchTerm) =>
-                    dept.toLowerCase().includes(searchTerm.toLowerCase())
-                  }
-                />
-              </div>
-            </div>
-
-            {/* Employee Column */}
-            <div className="border p-4 rounded-lg flex flex-col h-full">
-              <h2 className="text-lg font-semibold mb-2">Employees</h2>
-              <div className="flex-grow overflow-y-auto">
-                <SelectableList
-                  items={employeesToShow}
-                  selectedItems={checkedEmployees}
-                  onSelectionChange={setCheckedEmployees}
-                  keyExtractor={(emp) => emp.code}
-                  renderItem={(emp) => (
-                    <div>
-                      {emp.code} - {emp.name} ({emp.title})
-                    </div>
-                  )}
-                  filterFunction={(emp, searchTerm) =>
-                    emp.code.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    emp.name.toLowerCase().includes(searchTerm.toLowerCase())
-                  }
-                />
-              </div>
+    <div className="h-screen flex flex-col">
+      {/* Top Row: occupies ~80% of the screen height */}
+      <div className="flex-[40]">
+        {/* Grid with three columns: Departments, Employees, Selected Employees */}
+        <div className="grid grid-cols-3 gap-5 h-full min-h-0">
+          {/* Departments Column */}
+          <div className="border rounded p-4 flex flex-col h-full">
+            <h2 className="text-2xl font-semibold mb-2">Departments</h2>
+            <Input
+              placeholder="Search Departments..."
+              className="mb-2"
+              value={departmentSearchTerm}
+              onChange={(e) => setDepartmentSearchTerm(e.target.value)}
+            />
+            <div className="flex justify-between mb-4">
               <Button
-                onClick={addSelectedEmployees}
-                className="mt-4"
-                disabled={checkedEmployees.size === 0}
+                variant="outline"
+                className="text-sm"
+                onClick={selectAllDepartments}
               >
-                Add Selected Employees
+                <PlusCircle className="h-5 w-5" />
+                Select All
+              </Button>
+              <Button
+                variant="destructive"
+                className="text-sm"
+                onClick={clearAllDepartments}
+              >
+                <MinusCircle className="h-5 w-5" />
+                Clear All
               </Button>
             </div>
+            <div
+              className="flex-1 border rounded overflow-y-auto p-2"
+              style={{ maxHeight: "calc(100vh - 300px)" }}
+            >
+              {departments.length ? (
+                departments.map((dept) => (
+                  <div
+                    key={dept}
+                    className="flex items-center mb-2 font-semibold text-xl"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedDepartments.includes(dept)}
+                      onChange={() => handleDepartmentCheckboxChange(dept)}
+                      className="mr-2"
+                    />
+                    <span>{dept}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500">
+                  No departments found
+                </div>
+              )}
+            </div>
+          </div>
 
-            {/* Selected Employees Column */}
-            <div className="border p-4 rounded-lg flex flex-col h-full">
-              <h2 className="text-lg font-semibold mb-2">Selected Employees</h2>
-              <div className="flex-grow overflow-y-auto">
-                {selectedEmployees.length === 0 ? (
-                  <p className="text-gray-500">No employees selected.</p>
-                ) : (
-                  selectedEmployees.map((emp) => (
-                    <div key={emp.code} className="py-1">
-                      {emp.code} - {emp.name} ({emp.title})
+          {/* Employees Column */}
+          <div className="border rounded p-4 flex flex-col h-full">
+            <h2 className="text-2xl font-semibold mb-2">Employees</h2>
+            <Input
+              placeholder="Search Employees..."
+              className="mb-2"
+              value={employeeSearchTerm}
+              onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+            />
+            <div className="flex justify-between mb-2">
+              <Button
+                variant="outline"
+                className="text-sm"
+                onClick={addAllEmployees}
+              >
+                <PlusCircle className="h-5 w-5" />
+                Add All
+              </Button>
+            </div>
+            <div
+              className="flex-1 border rounded overflow-y-auto p-1"
+              style={{ maxHeight: "calc(100vh - 300px)" }}
+            >
+              {filteredEmployees.length ? (
+                filteredEmployees.map((emp) => (
+                  <div
+                    key={emp.id}
+                    className="flex justify-between items-center border p-2 mb-2 rounded-xl"
+                  >
+                    <div>
+                      <span className="text-xs text-gray-500 font-bold">
+                        Code: {emp.code}
+                      </span>
+                      <div className="font-semibold">{emp.name}</div>
+                      <div className="text-sm text-gray-600">{emp.title}</div>
                     </div>
-                  ))
-                )}
-              </div>
+                    <Button variant="default" onClick={() => addEmployee(emp)}>
+                      <UserPlus className="h-5 w-5 mr-1" />
+                      Add
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500">
+                  No employees available
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Selected Employees Column */}
+          <div className="border rounded p-4 flex flex-col h-full">
+            <h2 className="text-2xl font-semibold mb-2">Selected Employees</h2>
+            <Input
+              placeholder="Search Selected Employees..."
+              className="mb-2"
+            />
+            <div className="flex justify-between mb-2">
+              <Button
+                variant="destructive"
+                className="text-sm"
+                onClick={() => setSelectedEmployees([])}
+              >
+                <MinusCircle className="h-5 w-5" />
+                Remove All
+              </Button>
+            </div>
+            <div
+              className="flex-1 border rounded overflow-y-auto p-1"
+              style={{ maxHeight: "calc(100vh - 300px)" }}
+            >
+              {selectedEmployees.length ? (
+                selectedEmployees.map((emp) => (
+                  <div
+                    key={emp.id}
+                    className="flex justify-between items-center border p-2 mb-2 rounded-xl"
+                  >
+                    <div>
+                      <span className="text-xs text-gray-500 font-bold">
+                        Code: {emp.code}
+                      </span>
+                      <div className="font-semibold">{emp.name}</div>
+                      <div className="text-sm text-gray-600">{emp.title}</div>
+                    </div>
+                    <Button variant="default" onClick={() => removeEmployee(emp)}>
+                      Remove
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500">
+                  No employees selected
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
-
-      {/* Submit Button at the Bottom */}
-      <div className="p-4 gap">
-        <Button>Submit</Button>
-      </div>
+      {/* Bottom Row: occupies ~20% of screen height */}
+      <NewRequestFormFooter meals={formData.meals || []} />
     </div>
   );
 }
+
+export default NewRequestForm;
