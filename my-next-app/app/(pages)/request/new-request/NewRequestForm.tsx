@@ -195,7 +195,7 @@ export default function NewRequestForm({
       </div>
 
       {/* Submit Button at the Bottom */}
-      <div className="p-4">
+      <div className="p-4 gap">
         <Button>Submit</Button>
       </div>
     </div>
