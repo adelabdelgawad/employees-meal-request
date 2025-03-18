@@ -14,13 +14,7 @@ import { logout } from '@/lib/session';
 import { User, LogOut, BookOpen } from 'lucide-react';
 
 interface UserAvatarClientProps {
-  session: {
-    user: {
-      fullname: string;
-      username: string;
-      title: string;
-    };
-  } | null;
+  user: User
 }
 
 
@@ -36,8 +30,7 @@ function getInitials(name: string): string {
 }
 
 
-export default function UserAvatarClient({ session }: UserAvatarClientProps) {
-  const user = session?.user;
+export default function UserAvatarClient({ user }: UserAvatarClientProps) {
 
   return (
     <DropdownMenu>

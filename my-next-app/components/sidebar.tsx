@@ -1,101 +1,67 @@
+"use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronLeft, Menu } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { getSession } from "@/lib/session";
-import { routesConfig, RouteConfig, AppRole } from "@/config/accessConfig";
-import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { LayoutGrid } from "lucide-react";
+import { routesConfig, AppRole } from "@/config/accessConfig";
+import UserAvatarClient from "./UserAvatarClient";
 
-export function Sidebar() {
+interface SidebarProps {
+  user: User
+  userRoles: AppRole[];
+}
+
+export default function Sidebar({ user, userRoles }: SidebarProps) {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [navSections, setNavSections] = useState<RouteConfig[]>([]);
 
-  useEffect(() => {
-    const fetchSession = async () => {
-      const session = await getSession();
-      const userRoles = (session?.user?.roles || []) as AppRole[];
-
-      // Filter routes based on user roles
-      const filteredRoutes = routesConfig.filter(route =>
-        route.roles.some(role => userRoles.includes(role))
-      );
-
-      setNavSections(filteredRoutes);
-    };
-
-    fetchSession();
-  }, []);
+  // Compute navigation items directly using props (no useEffect needed)
+  const navItems = routesConfig
+    .filter((route) => route.roles.some((role) => userRoles.includes(role)))
+    .map((route) => ({
+      title: route.navTitle || "Untitled",
+      path: route.path,
+      icon: route.icon || LayoutGrid, // Default icon if not provided
+    }));
 
   return (
-    <TooltipProvider>
-      <>
-        <button
-          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-background rounded-md shadow-md"
-          onClick={() => setIsMobileOpen(!isMobileOpen)}
-          aria-label="Toggle sidebar"
-        >
-          <Menu className="h-6 w-6" />
-        </button>
-        <div
-          className={cn(
-            "fixed inset-y-0 z-20 flex flex-col bg-background transition-all duration-300 ease-in-out lg:static",
-            isCollapsed ? "w-[72px]" : "w-72",
-            isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-          )}
-        >
-          <div className="border-b border-border">
-            <div className={cn("flex h-16 items-center gap-2 px-4", isCollapsed && "justify-center px-2")}>
-              {!isCollapsed && (
-                <Link href="/" className="flex items-center font-semibold">
-                  <span className="text-lg">MyApp</span>
-                </Link>
-              )}
-              <div
-                className="cursor-pointer"
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                aria-label="Toggle sidebar"
-              >
-                <ChevronLeft className={cn("h-5 w-5 transition-transform", isCollapsed && "rotate-180")} />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-auto">
-            <nav className="space-y-1 px-2 py-4">
-              {navSections.map(item => {
-                const IconComponent = item.icon;
-                return (
-                  <Tooltip key={item.path} delayDuration={0}>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={item.path}
-                        className={cn(
-                          "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                          pathname === item.path
-                            ? "bg-secondary text-secondary-foreground"
-                            : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground",
-                          isCollapsed && "justify-center px-2"
-                        )}
-                      >
-                        {IconComponent && <IconComponent className={cn("h-4 w-4", !isCollapsed && "mr-3")} />}
-                        {!isCollapsed && <span>{item.navTitle}</span>}
-                      </Link>
-                    </TooltipTrigger>
-                    {isCollapsed && (
-                      <TooltipContent side="right" className="flex items-center gap-4">
-                        {item.navTitle}
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                );
-              })}
-            </nav>
+    
+    <div className="flex h-screen bg-background">
+      {/* Sidebar Container */}
+      <div className="flex w-64 flex-col border-r bg-muted/10">
+        {/* Sidebar Header */}
+        <div className="p-4 border-b">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-full bg-primary" />
+            <span className="font-semibold">Employees Meal Request</span>
           </div>
         </div>
-      </>
-    </TooltipProvider>
+        {/* Scrollable Navigation */}
+        <ScrollArea className="flex-1 p-4">
+          <nav className="flex flex-col space-y-4">
+            {navItems.map((item) => (
+              <Link key={item.path} href={item.path}>
+                <Button
+                  variant={pathname === item.path ? 'default' : 'ghost'}
+                  className="w-full justify-start"
+                >
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {item.title}
+                </Button>
+              </Link>
+            ))}
+          </nav>
+        </ScrollArea>
+        {/* User Avatar at the Bottom */}
+        <div className="p-4 border-t">
+          <UserAvatarClient user={user} />
+        </div>
+      </div>
+      {/* Main Content Area */}
+      <div className="flex-1">
+        {/* Your main content goes here */}
+      </div>
+    </div>
   );
 }

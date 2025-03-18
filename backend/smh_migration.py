@@ -78,7 +78,7 @@ async def update_account():
 
                 # Fetch user details from LDAP
                 # ad_user: DomainUser = await search_ldap(SEARCH_BASES, acc.username)
-                # Create updated account
+                # Create updated accountve
                 account = Account(
                     id=acc.id,
                     username=acc.username,
