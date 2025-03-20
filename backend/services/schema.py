@@ -232,9 +232,10 @@ class DomainUser(BaseModel):
 
 class UserWithRoles(BaseModel):
     id: int
-    fullname: str | None
     username: str
-    title: str | None
-    roles: List[Role] | None
+    fullName: str
+    title: str
+    roles: List[Role]
+    active: bool
 
     model_config = ConfigDict(from_attributes=True)

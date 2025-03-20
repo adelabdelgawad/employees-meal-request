@@ -2,7 +2,7 @@ import { getSession } from "@/lib/session";
 import { ReactNode } from "react";
 import { Toaster } from "react-hot-toast";
 import { AppRole } from "@/config/accessConfig";
-import Sidebar from "@/components/sidebar";
+import Sidebar from "@/components/Sidebar";
 
 interface RootLayoutProps {
   children: ReactNode;

@@ -150,6 +150,7 @@ class Account(SQLModel, table=True):
     fullname: str | None = None
     password: str | None = None
     title: str | None = None
+    is_active: bool | None = True
     is_domain_user: bool | None = False
     is_super_admin: bool | None = False
 

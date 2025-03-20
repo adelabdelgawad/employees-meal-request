@@ -160,7 +160,7 @@ async def create_and_schedule_meal_group(
     )
 
 
-@router.post("/request")
+@router.post("/request/submit-request")
 async def create_request_endpoint(
     payload: RequestPayload,
     session: SessionDep,

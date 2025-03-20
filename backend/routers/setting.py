@@ -2,15 +2,12 @@ import traceback
 import logging
 from fastapi import APIRouter, HTTPException, status
 from typing import List, Optional
+import icecream
 from sqlmodel import select
 from db.crud import read_domain_users
 from db.models import Account, DomainUser, Role, RolePermission
 from routers.utils.auth import read_roles
-from services.http_schema import (
-    DomainUserResponse,
-    RoleResponse,
-    SettingUserInfoResponse,
-)
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from routers.cruds import security as crud
 from services.http_schema import (
@@ -19,6 +16,7 @@ from services.http_schema import (
     UserCreateResponse,
     UpdateRolesRequest,
 )
+from services.schema import UserWithRoles
 from src.dependencies import SessionDep, CurrentUserDep
 from icecream import ic
 
@@ -110,14 +108,46 @@ async def get_roles(session: SessionDep):
 )
 async def get_users(session: SessionDep):
     try:
-        users = await crud.read_user(session)
-        roles = await read_roles(session)
         domain_users = await read_domain_users(session)
-        logger.info("Setting Users records Read successfully")
+        roles = await session.execute(select(Account))
+        # Use eager loading to fetch role_permissions and roles
+        stmt = select(Account).options(
+            selectinload(Account.role_permissions).selectinload(
+                RolePermission.role
+            )
+        )
+        result = await session.execute(stmt)
+        # Using scalars() to extract Account objects from the result
+        accounts: List[Account] = result.scalars().all()
+
+        users = []
+        # Iterate over all accounts (or a specific subset if desired)
+        for account in [accounts[1]]:
+            # Log the account for debugging
+            # icecream.ic(account)  # Uncomment if you are using icecream for debugging
+            try:
+                # Extract roles from the account's role_permissions relationship
+                roles_list = [
+                    rp.role for rp in account.role_permissions if rp.role
+                ]
+
+                user = UserWithRoles(
+                    id=account.id,
+                    username=account.username,
+                    fullName=account.fullname or "",
+                    title=account.title or "",
+                    roles=roles_list,
+                    active=account.is_active,  # Based on your business logic
+                )
+                users.append(user)
+            except Exception as e:
+                logger.error(f"Error processing account {account.id}: {e}")
+                continue
         response = SettingUserResponse(
             roles=roles, users=users, domain_users=domain_users
         )
-        # Serialize the model to a dict before returning it.
+        logger.info("Setting Users records Read successfully")
+
         return response.model_dump()
     except Exception as e:
         logger.error(f"Unexpected error in Setting Users endpoint: {e}")
@@ -188,7 +218,7 @@ async def update_user_roles(
 async def delete_user(
     user_id: int, session: SessionDep, current_user: CurrentUserDep
 ):
-    """        icecream.ic(new_schedule)
+    """icecream.ic(new_schedule)
 
     Delete an existing user by their ID.
 

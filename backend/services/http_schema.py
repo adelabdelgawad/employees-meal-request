@@ -104,7 +104,7 @@ class RoleResponse(BaseModel):
 
 
 class SettingUserResponse(BaseModel):
-    roles: List[RoleRead]
+    roles: List[Role]
     users: List[UserWithRoles]
     domain_users: List[DomainUserResponse]
 

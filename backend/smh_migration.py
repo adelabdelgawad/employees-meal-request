@@ -1,6 +1,5 @@
 from old_db.database import get_old_session
 from sqlalchemy.orm import joinedload
-from sqlalchemy.ext.asyncio import AsyncSession
 from old_db.models import Department as Department_old
 from old_db.models import Account as Account_old
 from old_db.models import Employee as Employee_old
@@ -65,6 +64,7 @@ async def get_old_accounts() -> Optional[List[Account_old]]:
 async def update_account():
     """Update accounts by fetching old records, searching LDAP, and saving new accounts."""
     old_accounts: Optional[List[Account_old]] = await get_old_accounts()
+    old_accounts = old_accounts[1:]
 
     if not old_accounts:
         print("No old accounts to update.")
@@ -302,12 +302,15 @@ async def update_request_lines():
 
 
 async def main():
-    # await update_departments()
-    # await update_account()
-    # await update_employees()
-    # await main_async()
-    await update_requests()
-    await update_request_lines()
+    try:
+        await main_async()
+    finally:
+        # await update_departments()
+        # await update_account()
+        # await update_employees()
+        # await main_async()
+        # await update_requests()
+        await update_request_lines()
 
 
 if __name__ == "__main__":

@@ -1,12 +1,11 @@
-import React from 'react'
-import NewRequestForm from './NewRequestForm'
-import { getRequests } from '@/app/actions/request-requests';
-import { getNewRequestData } from '@/app/actions/new-request';
+import { MealRequestContainer } from "@/components/meal-request/meal-request-container"
 
-export default async function Page() {
-  const formData: NewRequestDataResponse | null = await getNewRequestData();
-  console.log(formData)
+export default function Home() {
   return (
-    <div><NewRequestForm formData={formData}/></div>
+    
+    <div className="container mx-auto pt-1 px-4">
+      <MealRequestContainer />
+    </div>
   )
 }
+
