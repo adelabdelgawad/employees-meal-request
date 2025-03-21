@@ -76,13 +76,6 @@ export function MealRequestForm({ data }: MealRequestFormProps) {
     setSelectedEmployees(newSelectedEmployees)
   }
 
-  // Remove all filtered employees
-  const removeAllFilteredEmployees = () => {
-    const departmentEmployees = getEmployeesByDepartment(data, selectedDepartmentIds.map(Number))
-
-    const departmentEmployeeIds = departmentEmployees.map((emp) => emp.id)
-    setSelectedEmployees(selectedEmployees.filter((emp) => !departmentEmployeeIds.includes(emp.id)))
-  }
 
   // Clear all selected employees
   const clearSelectedEmployees = () => {
@@ -183,7 +176,6 @@ const handleSubmit = async () => {
               selectedEmployees={selectedEmployees}
               onAddEmployee={addEmployee}
               onAddAllEmployees={addAllEmployees}
-              onRemoveAllFilteredEmployees={removeAllFilteredEmployees}
             />
 
             {/* Selected Employees Column */}

@@ -5,6 +5,7 @@ import React from 'react';
 import ApproveButton from './ApproveButton';
 import RejectButton from './RejectButton';
 import { KeyedMutator } from 'swr';
+import ViewAction from './ViewAction';
 
 interface ActionsProps {
   record: RequestRecord;
@@ -19,7 +20,7 @@ const Actions: React.FC<ActionsProps> = ({ record, mutate }) => {
     <div className="flex gap-2 items-center justify-center text-center">
       <RejectButton  disabled={isDisabled} mutate={mutate} record={record} />
       <ApproveButton disabled={isDisabled} mutate={mutate} record={record} />
-      {/* <ViewAction disabled={isDisabled} mutate={mutate} record={record} /> */}
+      <ViewAction disabled={isDisabled} mutate={mutate} record={record} />
     </div>
   );
 };

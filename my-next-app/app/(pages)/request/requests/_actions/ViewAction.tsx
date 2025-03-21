@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
 import RequestLinesTable from "./RequestLinesTable";
 import ConfirmationModal from "@/components/confirmation-dialog";
+import useRequestLineState from "@/hooks/useRequestLineState";
 import { updateRequestLine } from "@/lib/actions/request-requests";
 
 
@@ -27,6 +28,15 @@ const ViewAction: React.FC<ViewActionProps> = ({
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [disableButton, isDisableButton] = useState<boolean>(true);
 
+
+  const {
+    data,
+    changedStatus,
+    loading,
+    fetchData,
+    updateChangedStatus,
+    resetChangedStatus,
+  } = useRequestLineState(record.id);
 
   const openDrawer = () => {
     setIsDrawerOpen(true);

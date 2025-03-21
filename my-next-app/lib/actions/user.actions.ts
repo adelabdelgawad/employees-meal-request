@@ -1,7 +1,5 @@
-import toast from "react-hot-toast";
 import clientAxiosInstance from "@/lib/clientAxiosInstance";
 import axiosInstance from "@/lib/axiosInstance";
-import { revalidatePath } from "next/cache";
 
 const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
 
@@ -9,7 +7,7 @@ const NEXT_PUBLIC_FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
 export async function getUsers(): Promise<SettingUserResponse> {
   try {
     const response = await axiosInstance.get("/setting/users");
-    console.log("Fetched Users Response:", response.data);
+    console.log("Users fetched Succefully");
 
     if (!response.data || !Array.isArray(response.data.users)) {
       console.error("Invalid API response for users:", response.data);
@@ -49,7 +47,8 @@ export async function createUser(userData: CreateUserParams) {
 export async function updateUserRoles(
   userId: number,
   addedRoles: number[],
-  removedRoles: number[]
+  removedRoles: number[],
+  isActive: boolean
 ): Promise<void> {
   try {
     const response = await fetch(
@@ -62,6 +61,7 @@ export async function updateUserRoles(
         body: JSON.stringify({
           added_roles: addedRoles,
           removed_roles: removedRoles,
+          is_active:isActive
         }),
       }
     );

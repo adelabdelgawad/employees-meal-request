@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Check, ChevronRight, Trash2 } from "lucide-react";
+import { Check, Trash2 } from "lucide-react";
 import SelectionColumn from "@/components/SelectionColumn";
 
 // Sample user data (replace with API call in a real app)
@@ -40,7 +40,9 @@ interface PageProps {
   searchParams: { [key: string]: string | string[] | undefined };
 }
 
-export default async function DepartmentsEmployeesPage({ searchParams }: PageProps) {
+export default async function DepartmentsEmployeesPage({
+  searchParams,
+}: PageProps) {
   const deptSearch = (searchParams.deptSearch as string) || "";
   const empSearch = (searchParams.empSearch as string) || "";
   const selectedDepts = searchParams.selectedDepts
@@ -93,9 +95,11 @@ export default async function DepartmentsEmployeesPage({ searchParams }: PagePro
           <CardContent>
             <Suspense fallback={<div>Loading selected employees...</div>}>
               <SelectedEmployeesColumn
-                selectedEmployees={searchParams.selectedEmployees
-                  ? (searchParams.selectedEmployees as string).split(",")
-                  : []}
+                selectedEmployees={
+                  searchParams.selectedEmployees
+                    ? (searchParams.selectedEmployees as string).split(",")
+                    : []
+                }
               />
             </Suspense>
           </CardContent>
@@ -179,13 +183,19 @@ async function DepartmentColumn({
                   <span>{dept.department}</span>
                 </label>
                 <Button type="submit" variant="ghost" size="sm">
-                  <Check className={`w-4 h-4 ${isChecked ? "text-green-500" : "text-gray-400"}`} />
+                  <Check
+                    className={`w-4 h-4 ${
+                      isChecked ? "text-green-500" : "text-gray-400"
+                    }`}
+                  />
                 </Button>
               </form>
             );
           })
         ) : (
-          <p className="text-muted-foreground text-center">No departments found</p>
+          <p className="text-muted-foreground text-center">
+            No departments found
+          </p>
         )}
       </ScrollArea>
     </div>
@@ -227,9 +237,15 @@ async function EmployeeColumn({
 }
 
 // Selected Employees Column
-async function SelectedEmployeesColumn({ selectedEmployees }: { selectedEmployees: string[] }) {
+async function SelectedEmployeesColumn({
+  selectedEmployees,
+}: {
+  selectedEmployees: string[];
+}) {
   const allEmployees = userData.flatMap((d) => d.employees);
-  const selected = allEmployees.filter((e) => selectedEmployees.includes(e.code));
+  const selected = allEmployees.filter((e) =>
+    selectedEmployees.includes(e.code)
+  );
 
   return (
     <div className="space-y-4">
@@ -253,11 +269,17 @@ async function SelectedEmployeesColumn({ selectedEmployees }: { selectedEmployee
             >
               <span>{`${emp.name} (${emp.title})`}</span>
               <form action="/departments-employees" method="GET">
-                <input type="hidden" name="selectedDepts" value={selectedEmployees.join(",")} />
+                <input
+                  type="hidden"
+                  name="selectedDepts"
+                  value={selectedEmployees.join(",")}
+                />
                 <input
                   type="hidden"
                   name="selectedEmployees"
-                  value={selectedEmployees.filter((code) => code !== emp.code).join(",")}
+                  value={selectedEmployees
+                    .filter((code) => code !== emp.code)
+                    .join(",")}
                 />
                 <Button type="submit" variant="ghost" size="sm">
                   <Trash2 className="w-4 h-4" />
@@ -266,7 +288,9 @@ async function SelectedEmployeesColumn({ selectedEmployees }: { selectedEmployee
             </div>
           ))
         ) : (
-          <p className="text-muted-foreground text-center">No employees selected</p>
+          <p className="text-muted-foreground text-center">
+            No employees selected
+          </p>
         )}
       </ScrollArea>
     </div>

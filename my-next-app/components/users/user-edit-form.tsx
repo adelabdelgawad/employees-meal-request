@@ -24,7 +24,6 @@ export function UserEditForm({
   onSave,
   onCancel,
 }: UserEditFormProps) {
-  console.log(user)
   const [active, setActive] = useState(user.active);
   const [userRoles, setUserRoles] = useState<{ [key: number]: boolean }>(() => {
     const mappedRoles: { [key: number]: boolean } = {};

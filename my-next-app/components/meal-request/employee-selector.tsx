@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Users, UserPlus, UserMinus, ChevronRight } from "lucide-react";
+import { Search, Users, UserPlus,  ChevronRight } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,6 @@ interface EmployeeSelectorProps {
   selectedEmployees: Employee[];
   onAddEmployee: (employee: Employee) => void;
   onAddAllEmployees: () => void;
-  onRemoveAllFilteredEmployees: () => void;
 }
 
 export function EmployeeSelector({
@@ -25,7 +24,6 @@ export function EmployeeSelector({
   selectedEmployees,
   onAddEmployee,
   onAddAllEmployees,
-  onRemoveAllFilteredEmployees,
 }: EmployeeSelectorProps) {
   const [employeeFilter, setEmployeeFilter] = useState("");
 

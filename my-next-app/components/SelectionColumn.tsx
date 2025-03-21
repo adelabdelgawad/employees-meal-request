@@ -17,7 +17,6 @@ interface SelectionColumnProps {
 }
 
 export default async function SelectionColumn({
-  type,
   items,
   searchQuery,
   searchParamKey,

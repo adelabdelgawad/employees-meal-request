@@ -19,14 +19,14 @@ async function UsersTableServer() {
   const response: SettingUserResponse | null = await getUsers();
   const initialUsers = response?.users ?? []
   const roles = response?.roles ?? []
+  const domainUsers = response?.domain_users ?? []
   
-  return <UsersTable initialUsers={initialUsers} roles={roles}/>
+  return <UsersTable initialUsers={initialUsers} domainUsers={domainUsers} roles={roles}/>
 }
 
 export default function UsersPage() {
   return (
-    <div className="container mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold mb-8">User Management</h1>
+    <div>
       <Suspense fallback={<UsersTableSkeleton />}>
         <UsersTableServer />
       </Suspense>
