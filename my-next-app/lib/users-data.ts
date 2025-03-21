@@ -77,7 +77,7 @@ export function generateUsers(count: number): User[] {
     return {
       id: i + 1,
       username,
-      fullName: `${firstName} ${lastName}`,
+      fullname: `${firstName} ${lastName}`,
       title: titles[Math.floor(Math.random() * titles.length)],
       roles: userRoles,
       active: Math.random() > 0.1, // Most users are active by default

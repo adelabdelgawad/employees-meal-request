@@ -5,7 +5,7 @@ import React from "react";
 import { Suspense } from "react";
 import TableSkelton from "@/components/Table/table-skelton";
 import TableWithSWR from "./TableWithSWR";
-import { getMeals } from "@/app/actions/meal";
+import { getMeals } from "@/lib/actions/meal";
 
 async function page() {
   // Extract query parameters

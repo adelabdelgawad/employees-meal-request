@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Edit3 } from "lucide-react";
 import ScheduleChange, { Schedule } from "./ScheduleChange";
 import ActivationSwitch from "./ActivationSwitch";
-import { updateMealActivation, updateMealSchedules } from "@/app/actions/meal";
+import { updateMealActivation, updateMealSchedules } from "@/lib/actions/meal";
 import toast from "react-hot-toast";
 
 interface EditMealSheetProps {

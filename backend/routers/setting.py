@@ -4,9 +4,14 @@ from fastapi import APIRouter, HTTPException, status
 from typing import List, Optional
 import icecream
 from sqlmodel import select
-from db.crud import read_domain_users
+from db.crud import (
+    get_users_with_roles,
+    read_account,
+    read_domain_users,
+    read_roles,
+)
 from db.models import Account, DomainUser, Role, RolePermission
-from routers.utils.auth import read_roles
+from routers.utils.auth import read_role
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from routers.cruds import security as crud
@@ -56,52 +61,6 @@ async def get_domain_users(
 
 
 @router.get(
-    "/roles",
-    response_model=List[Role],
-    status_code=status.HTTP_200_OK,
-)
-async def get_roles(session: SessionDep):
-    """
-    Retrieve all roles from the database.
-
-    Args:
-        session (AsyncSession): The database session dependency.
-
-    Returns:
-        List[Role]: A list of roles from the database.
-
-    Raises:
-        HTTPException: 404 if no roles are found; 500 for unexpected errors.
-    """
-    try:
-        statement = select(Role)
-        result = await session.execute(statement)
-        roles = result.all()
-
-        if not roles:
-            logger.info("No roles found in the database")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No roles found.",
-            )
-
-        logger.info(f"Fetched {len(roles)} roles successfully")
-        return roles
-
-    except HTTPException as http_exc:
-        logger.error(f"HTTP error occurred: {http_exc.detail}")
-        logger.exception("Traceback for HTTP error in get_roles")
-        raise http_exc
-
-    except Exception as err:
-        logger.exception("Unexpected error while retrieving roles")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error while retrieving roles.",
-        )
-
-
-@router.get(
     "/setting/users",
     response_model=SettingUserResponse,  # you can keep the response_model here
     status_code=status.HTTP_200_OK,
@@ -109,40 +68,10 @@ async def get_roles(session: SessionDep):
 async def get_users(session: SessionDep):
     try:
         domain_users = await read_domain_users(session)
-        roles = await session.execute(select(Account))
-        # Use eager loading to fetch role_permissions and roles
-        stmt = select(Account).options(
-            selectinload(Account.role_permissions).selectinload(
-                RolePermission.role
-            )
-        )
-        result = await session.execute(stmt)
-        # Using scalars() to extract Account objects from the result
-        accounts: List[Account] = result.scalars().all()
+        roles = await read_roles(session)
 
-        users = []
-        # Iterate over all accounts (or a specific subset if desired)
-        for account in [accounts[1]]:
-            # Log the account for debugging
-            # icecream.ic(account)  # Uncomment if you are using icecream for debugging
-            try:
-                # Extract roles from the account's role_permissions relationship
-                roles_list = [
-                    rp.role for rp in account.role_permissions if rp.role
-                ]
+        users = await get_users_with_roles(session)
 
-                user = UserWithRoles(
-                    id=account.id,
-                    username=account.username,
-                    fullName=account.fullname or "",
-                    title=account.title or "",
-                    roles=roles_list,
-                    active=account.is_active,  # Based on your business logic
-                )
-                users.append(user)
-            except Exception as e:
-                logger.error(f"Error processing account {account.id}: {e}")
-                continue
         response = SettingUserResponse(
             roles=roles, users=users, domain_users=domain_users
         )
@@ -267,7 +196,7 @@ async def delete_user(
         )
 
 
-@router.post("/user", response_model=UserCreateResponse)
+@router.post("/setting/user", response_model=UserWithRoles)
 async def create_user(
     session: SessionDep,
     user: CurrentUserDep,
@@ -291,11 +220,11 @@ async def create_user(
             session=session, request=request, admin_id=user.id
         )
         logger.info(f"User created successfully with ID {user.id}")
-        return {
-            "success": True,
-            "message": "User added successfully",
-            "data": {"userId": user.id},
-        }
+
+        users = await get_users_with_roles(session, account_id=user.id)
+        user = users[0]
+
+        return user
     except IntegrityError as e:
         logger.exception("IntegrityError in create_user endpoint")
         raise HTTPException(
@@ -319,9 +248,9 @@ async def get_user_info(session: SessionDep, user_id: int):
             raise HTTPException(status_code=404, detail="User not found")
 
         # Fetch all roles
-        user_roles = await read_roles(session, user.id)
+        user_roles = await read_role(session, user.id)
         user_roles_ids = [r.id for r in user_roles]
-        all_roles = await read_roles(session)
+        all_roles = await read_role(session)
 
         # Extract role IDs from all roles or adjust according to your logic.
         return {

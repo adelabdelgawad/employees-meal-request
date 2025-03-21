@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import TableSkelton from "@/components/Table/table-skelton";
 import TableSearch from "@/components/Table/table-search";
 import DateRangePicker from "@/components/Table/date-range-picker";
-import { getRequests } from "@/app/actions/request-requests";
+import { getRequests } from "@/lib/actions/request-requests";
 import Counter from "./Counter";
 import TableWithSWR from "./TableWithSWR";
 

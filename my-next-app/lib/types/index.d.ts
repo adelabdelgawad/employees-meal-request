@@ -26,6 +26,25 @@ declare global {
     email: string;
     roles: str[];
   };
+
+  type UserCreate = {
+    id: number;
+    username: string;
+    fullname: string;
+    title: string;
+    roles: number[]; 
+    active: boolean;
+  }
+
+  type UserWithRoles  = {
+    id: number;
+    username: string;
+    fullname: string;
+    title: string;
+    roles: Record<string, boolean>; 
+    active: boolean;
+  }
+  
   interface SessionPayload {
     user: User;
     expiresAt: Date;
@@ -229,6 +248,11 @@ declare global {
     departments: DepartmentWithEmployees[];
     meals?: Meal[];
   };
+  type SettingUserResponse ={
+    roles?: Role[];
+    users?: UserWithRoles[];
+    domain_users?: DomainUser[];
+  }
 }
 
 export {};

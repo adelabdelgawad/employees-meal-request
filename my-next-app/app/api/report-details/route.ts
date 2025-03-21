@@ -1,5 +1,5 @@
 // app/api/report-details/route.ts
-import { fetchReportDetails } from "@/app/actions/report-details";
+import { fetchReportDetails } from "@/lib/actions/report-details";
 
 export async function GET(request: Request) {
   // Parse URL search parameters if needed

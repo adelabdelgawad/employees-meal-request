@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Download as DownloadIcon } from "lucide-react";
-import { fetchReportDetails } from "@/app/actions/report-details";
+import { fetchReportDetails } from "@/lib/actions/report-details";
 import { tableDownload } from "@/components/Table/table-download";
 
 interface DownloadButtonProps {

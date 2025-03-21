@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import type { User, Role } from "@/types";
+import { useState, useMemo, useEffect } from "react";
 import {
   Search,
-  Check,
   Filter,
   ChevronDown,
   Pencil,
   UserPlus,
+  CircleCheckIcon,
+  CircleXIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -38,39 +38,63 @@ import {
 } from "@/components/ui/sheet";
 import { UserEditForm } from "./user-edit-form";
 import { NewUserForm } from "./new-user-form";
+import useSWR, { mutate } from "swr"
+import { createUser } from "@/lib/actions/user.actions";
 import toast from "react-hot-toast";
 
-interface UsersTableProps {
-  initialUsers: User[];
-  roles: Role[];
+
+// Define the API endpoint for fetching users
+const USERS_API_ENDPOINT = "/api/users"
+
+// Fetcher function for useSWR
+const fetcher = async (url: string) => {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error("Failed to fetch users")
+  }
+  return response.json()
 }
 
-export function UsersTable({ initialUsers, roles }: UsersTableProps) {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+interface UsersTableProps {
+  initialUsers: UserWithRoles[]
+  roles: Role[]
+}
+
+/**
+ * TableWithSWR component fetches meals data using SWR and renders it in a table.
+ */
+export default function UsersTable({ initialUsers, roles  }: UsersTableProps) {
+  // Use SWR for data fetching with initial data
+  // Use SWR for data fetching with initial data
+  const {
+    data: users = initialUsers,
+    error,
+    isValidating,
+  } = useSWR<UserWithRoles[]>(USERS_API_ENDPOINT, fetcher, {
+    fallbackData: initialUsers,
+    revalidateOnFocus: false,
+    dedupingInterval: 5000, // 5 seconds
+  })
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
+  const [editingUser, setEditingUser] = useState<UserWithRoles | null>(null);
   const [isAddingUser, setIsAddingUser] = useState(false);
 
-  // Filter users based on search query and selected roles
   const filteredUsers = useMemo(() => {
+    if (!Array.isArray(users)) return [];
     return users.filter((user) => {
-      // Filter by search query
       const matchesSearch =
         user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.fullName.toLowerCase().includes(searchQuery.toLowerCase());
-
-      // Filter by selected roles
+        user.fullname.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesRoles =
         selectedRoles.length === 0 ||
-        selectedRoles.some((roleId) => user.roles[roleId]);
-
+        selectedRoles.some((roleId) => Object.keys(user.roles || {}).includes(roleId.toString()));
       return matchesSearch && matchesRoles;
     });
   }, [users, searchQuery, selectedRoles]);
 
-  // Toggle role selection for filtering
-  const toggleRole = (roleId: string) => {
+  const toggleRole = (roleId: number) => {
     setSelectedRoles((prev) =>
       prev.includes(roleId)
         ? prev.filter((id) => id !== roleId)
@@ -78,69 +102,53 @@ export function UsersTable({ initialUsers, roles }: UsersTableProps) {
     );
   };
 
-  // Update the handleSaveUser function to use toast properly
-  const handleSaveUser = (
-    updatedUser: User,
-    addedRoles: string[],
-    removedRoles: string[]
-  ) => {
-    setUsers((prev) =>
-      prev.map((user) => (user.id === updatedUser.id ? updatedUser : user))
-    );
-    setEditingUser(null);
+    // Update the handleCreateUser function to use useSWR
+    const handleCreateUser = async (newUserData: UserCreate) => {
+      try {
+        // Call the server action
+        const result = await createUser(newUserData)
+  
+        if (result.success && result.user) {
+          // Close the add user form
+          setIsAddingUser(false)
+  
+          // Optimistically update the UI
+          const updatedUsers = [...users, result.user]
+          mutate(USERS_API_ENDPOINT, updatedUsers, false)
+  
+          // Get the names of the assigned roles
+          const assignedRoleNames = Object.entries(result.user.roles)
+            .filter(([_, isAssigned]) => isAssigned)
+            .map(([roleId]) => roles.find((r) => r.id === Number(roleId))?.name)
+            .filter(Boolean)
+  
+          const rolesMessage =
+            assignedRoleNames.length > 0 ? `Assigned roles: ${assignedRoleNames.join(", ")}.` : "No roles assigned."
+  
+          // Show success toast
+          toast.success("User created")
 
-    // Create a message about role changes
-    let roleChangeMessage = "";
-    if (addedRoles.length > 0) {
-      const addedRoleNames = addedRoles
-        .map((id) => roles.find((r) => r.id === id)?.name)
-        .filter(Boolean);
-      roleChangeMessage += `Added roles: ${addedRoleNames.join(", ")}. `;
+          // Revalidate the data
+          mutate(USERS_API_ENDPOINT)
+        } else {
+          throw new Error("Failed to create user")
+        }
+      } catch (error) {
+        console.error("Error creating user:", error)
+  
+        // Show error toast
+        toast.error("There was a problem creating the user. Please try again")
+        // Revalidate to get the correct data
+        mutate(USERS_API_ENDPOINT)
+      }
     }
-    if (removedRoles.length > 0) {
-      const removedRoleNames = removedRoles
-        .map((id) => roles.find((r) => r.id === id)?.name)
-        .filter(Boolean);
-      roleChangeMessage += `Removed roles: ${removedRoleNames.join(", ")}. `;
-    }
-
-    // Create a message about status change
-    const statusMessage =
-      updatedUser.active !== editingUser?.active
-        ? `User ${updatedUser.active ? "activated" : "deactivated"}.`
-        : "";
-
-    toast.success("User Updated");
-  };
-
-  // Update the handleCreateUser function to use toast properly
-  const handleCreateUser = (newUserData: Omit<User, "id">) => {
-    const newUser = {
-      ...newUserData,
-      id: Math.max(...users.map((u) => u.id), 0) + 1,
-    };
-
-    setUsers((prev) => [...prev, newUser]);
-    setIsAddingUser(false);
-
-    // Get the names of the assigned roles
-    const assignedRoleNames = Object.entries(newUser.roles)
-      .filter(([_, isAssigned]) => isAssigned)
-      .map(([roleId]) => roles.find((r) => r.id === roleId)?.name)
-      .filter(Boolean);
-
-    const rolesMessage =
-      assignedRoleNames.length > 0
-        ? `Assigned roles: ${assignedRoleNames.join(", ")}.`
-        : "No roles assigned.";
-    toast.success("User created");
-  };
-
+  
+  
   return (
     <Card>
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <CardTitle>Users</CardTitle>
+          <CardTitle className="text-center">Users</CardTitle>
           <Sheet open={isAddingUser} onOpenChange={setIsAddingUser}>
             <SheetTrigger asChild>
               <Button>
@@ -150,16 +158,12 @@ export function UsersTable({ initialUsers, roles }: UsersTableProps) {
             </SheetTrigger>
             <SheetContent>
               <SheetHeader>
-                <SheetTitle>Add New User</SheetTitle>
-                <SheetDescription>
+                <SheetTitle className="text-center">Add New User</SheetTitle>
+                <SheetDescription className="text-center">
                   Create a new user and assign roles.
                 </SheetDescription>
               </SheetHeader>
-              <NewUserForm
-                roles={roles}
-                onSave={handleCreateUser}
-                onCancel={() => setIsAddingUser(false)}
-              />
+              <NewUserForm roles={roles} onSave={handleCreateUser} onCancel={() => setIsAddingUser(false)} />
             </SheetContent>
           </Sheet>
         </div>
@@ -170,7 +174,7 @@ export function UsersTable({ initialUsers, roles }: UsersTableProps) {
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by username or full name..."
-              className="pl-8"
+              className="pl-8 text-center"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -189,6 +193,7 @@ export function UsersTable({ initialUsers, roles }: UsersTableProps) {
                   key={role.id}
                   checked={selectedRoles.includes(role.id)}
                   onCheckedChange={() => toggleRole(role.id)}
+                  className="text-center"
                 >
                   {role.name}
                 </DropdownMenuCheckboxItem>
@@ -196,20 +201,27 @@ export function UsersTable({ initialUsers, roles }: UsersTableProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-
         <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[180px]">Username</TableHead>
-                <TableHead className="w-[220px]">Full Name</TableHead>
-                <TableHead className="w-[220px]">Title</TableHead>
+                <TableHead className="text-center align-middle">
+                  Username
+                </TableHead>
+                <TableHead className="text-center align-middle">
+                  Full Name
+                </TableHead>
+                <TableHead className="text-center align-middle">
+                  Title
+                </TableHead>
                 {roles.map((role) => (
-                  <TableHead key={role.id} className="text-center">
+                  <TableHead key={role.id} className="text-center align-middle">
                     {role.name}
                   </TableHead>
                 ))}
-                <TableHead className="w-[80px]">Actions</TableHead>
+                <TableHead className="text-center align-middle">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -217,42 +229,45 @@ export function UsersTable({ initialUsers, roles }: UsersTableProps) {
                 filteredUsers.map((user) => (
                   <TableRow
                     key={user.id}
-                    className={!user.active ? "opacity-60" : undefined}
+                    className={!user.active ? "opacity-60" : ""}
                   >
-                    <TableCell className="font-medium">
-                      {user.username}
-                      {!user.active && (
-                        <Badge
-                          variant="outline"
-                          className="ml-2 text-red-500 border-red-200"
-                        >
-                          Disabled
-                        </Badge>
-                      )}
+                    <TableCell className="text-center align-middle">
+                      <div className="flex items-center justify-center">
+                        <span>{user.username}</span>
+                        {!user.active && (
+                          <Badge
+                            variant="outline"
+                            className="ml-2 text-red-500 border-red-200"
+                          >
+                            Disabled
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell>{user.fullName}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-center align-middle">
+                      {user.fullname}
+                    </TableCell>
+                    <TableCell className="text-center align-middle">
                       <Badge variant="outline">{user.title}</Badge>
                     </TableCell>
                     {roles.map((role) => (
-                      <TableCell key={role.id} className="text-center">
-                        <div className="flex justify-center">
-                          <Check
-                            className={`h-5 w-5 ${
-                              user.roles[role.id]
-                                ? "text-green-500"
-                                : "text-gray-200 dark:text-gray-700"
-                            }`}
-                          />
+                      <TableCell
+                        key={role.id}
+                        className="text-center align-middle"
+                      >
+                        <div className="flex items-center justify-center h-full">
+                          {user.roles?.[role.name] ? (
+                            <CircleCheckIcon className="text-green-600" />
+                          ) : (
+                            <CircleXIcon className="opacity-25" />
+                          )}
                         </div>
                       </TableCell>
                     ))}
-                    <TableCell>
+                    <TableCell className="text-center align-middle">
                       <Sheet
                         open={editingUser?.id === user.id}
-                        onOpenChange={(open) => {
-                          if (!open) setEditingUser(null);
-                        }}
+                        onOpenChange={(open) => !open && setEditingUser(null)}
                       >
                         <SheetTrigger asChild>
                           <Button
@@ -265,20 +280,21 @@ export function UsersTable({ initialUsers, roles }: UsersTableProps) {
                         </SheetTrigger>
                         <SheetContent>
                           <SheetHeader>
-                            <SheetTitle>Edit User</SheetTitle>
-                            <SheetDescription>
-                              Make changes to user information and role
-                              assignments.
+                            <SheetTitle className="text-center">
+                              Edit User
+                            </SheetTitle>
+                            <SheetDescription className="text-center">
+                              Modify user details and roles.
                             </SheetDescription>
                           </SheetHeader>
-                          {editingUser && (
+                          {/* {editingUser && (
                             <UserEditForm
                               user={editingUser}
                               roles={roles}
                               onSave={handleSaveUser}
                               onCancel={() => setEditingUser(null)}
                             />
-                          )}
+                          )} */}
                         </SheetContent>
                       </Sheet>
                     </TableCell>
@@ -288,7 +304,7 @@ export function UsersTable({ initialUsers, roles }: UsersTableProps) {
                 <TableRow>
                   <TableCell
                     colSpan={4 + roles.length}
-                    className="h-24 text-center"
+                    className="text-center align-middle"
                   >
                     No users found.
                   </TableCell>
@@ -296,10 +312,6 @@ export function UsersTable({ initialUsers, roles }: UsersTableProps) {
               )}
             </TableBody>
           </Table>
-        </div>
-
-        <div className="mt-4 text-sm text-muted-foreground">
-          Showing {filteredUsers.length} of {users.length} users
         </div>
       </CardContent>
     </Card>

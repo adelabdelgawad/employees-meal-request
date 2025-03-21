@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Column, TableBody } from "@/components/Table/table-body";
 import dayjs from "dayjs";
-import { fetchReportDetails } from "@/app/actions/report-details";
+import { fetchReportDetails } from "@/lib/actions/report-details";
 import TableSkelton from "@/components/Table/table-skelton";
 import { TablePagination } from "@/components/Table/table-pagination";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { getRequests } from "@/app/actions/request-requests";
+import { getRequests } from "@/lib/actions/request-requests";
 
 interface RequestContextProps {
   requests: RequestRecord[];

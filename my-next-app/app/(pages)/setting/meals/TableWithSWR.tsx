@@ -4,7 +4,7 @@ import React from "react";
 import useSWR from "swr";
 import { TableBody, Column } from "@/components/Table/table-body";
 import { CircleCheckIcon, CircleXIcon } from "lucide-react";
-import { getMeals } from "@/app/actions/meal";
+import { getMeals } from "@/lib/actions/meal";
 import MealScheduleTimeline from "./MealScheduleTimeline";
 import EditMealSheet from "./EditMeal";
 

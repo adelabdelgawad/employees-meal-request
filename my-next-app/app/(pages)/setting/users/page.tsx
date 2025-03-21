@@ -1,6 +1,6 @@
 import { Suspense } from "react"
-import { UsersTable } from "@/components/users/users-table"
-import { getUsers, roles } from "./data"
+import { getUsers } from "@/lib/actions/user.actions"
+import UsersTable from "@/components/users/users-table";
 
 // Loading component for Suspense
 function UsersTableSkeleton() {
@@ -16,9 +16,11 @@ function UsersTableSkeleton() {
 // Server component that fetches data
 async function UsersTableServer() {
   // In a real app, this would fetch from a database
-  const users = await getUsers()
-
-  return <UsersTable initialUsers={users} roles={roles} />
+  const response: SettingUserResponse | null = await getUsers();
+  const initialUsers = response?.users ?? []
+  const roles = response?.roles ?? []
+  
+  return <UsersTable initialUsers={initialUsers} roles={roles}/>
 }
 
 export default function UsersPage() {

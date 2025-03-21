@@ -8,7 +8,7 @@ from routers.utils.auth import (
     read_account_by_username,
     read_hirs_account_by_username,
     create_or_update_user,
-    read_roles_name,
+    read_role_name,
 )
 from services.active_directory import authenticate_and_get_user
 from src.exceptions import InvalidCredentialsException, InternalServerException
@@ -117,9 +117,9 @@ async def login_for_access_token(
         # Retrieve user roles
         logger.debug(f"Retrieving roles for user {user.id}")
         roles = (
-            await read_roles_name(session)
+            await read_role_name(session)
             if user.is_super_admin
-            else await read_roles_name(session, user.id)
+            else await read_role_name(session, user.id)
         )
         logger.info(f"Retrieved {len(roles)} roles for user {user.id}")
 

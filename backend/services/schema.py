@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Dict, Optional, List
 from pydantic import BaseModel, ConfigDict, field_serializer
 from datetime import datetime
 from sqlmodel import SQLModel, Field
@@ -17,7 +17,7 @@ class UserAttributes(BaseModel):
 class Role(BaseModel):
     id: int
     name: str
-    descreption: str | None
+    description: str | None  # Changed from 'descreption'
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -233,9 +233,9 @@ class DomainUser(BaseModel):
 class UserWithRoles(BaseModel):
     id: int
     username: str
-    fullName: str
+    fullname: str
     title: str
-    roles: List[Role]
+    roles: Dict[str, bool]  # ✅ Works in Python 3.8 and below
     active: bool
 
     model_config = ConfigDict(from_attributes=True)

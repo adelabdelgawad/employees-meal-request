@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import { TableBody, Column } from "@/components/Table/table-body";
 import { TablePagination } from "@/components/Table/table-pagination";
-import { getHistoryRequests } from "@/app/actions/request-history";
+import { getHistoryRequests } from "@/lib/actions/request-history";
 import Actions from "./Actions";
 
 interface TableWithSWRProps {

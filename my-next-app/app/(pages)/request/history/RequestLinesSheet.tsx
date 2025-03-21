@@ -13,7 +13,7 @@ import {
 import RequestLinesTable from "./RequestLinesTable";
 import toast from "react-hot-toast";
 import ConfirmationDialog from "@/components/confirmation-dialog";
-import { getRequestLines } from "@/app/actions/request-lines";
+import { getRequestLines } from "@/lib/actions/request-lines";
 
 interface RequestLinesSheetProps {
   record: RequestRecord;

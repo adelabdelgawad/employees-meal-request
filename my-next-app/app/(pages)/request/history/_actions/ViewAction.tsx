@@ -6,7 +6,7 @@ import { toast } from "react-hot-toast";
 import { Eye } from "lucide-react";
 import RequestLinesSheet from "../RequestLinesSheet";
 import { KeyedMutator } from "swr";
-import { deleteHistoryRequestLines } from "@/app/actions/request-history";
+import { deleteHistoryRequestLines } from "@/lib/actions/request-history";
 
 interface ViewActionProps {
   record: RequestRecord;

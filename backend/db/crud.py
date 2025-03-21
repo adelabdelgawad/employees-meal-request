@@ -12,9 +12,13 @@ from db.models import (
     Meal,
     Employee,
     Department,
+    Role,
+    RolePermission,
 )
 from services.schema import RequestSummary, RequestLineResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +156,7 @@ async def read_account(session: AsyncSession, account_id: int = None):
 
         # Execute the statment asynchronously
         result = await session.execute(stmt)
-        accounts = result.scalars().all()
+        accounts = result.all()
 
         if account_id:
             if accounts:
@@ -193,3 +197,79 @@ async def read_domain_users(
             exc_info=True,
         )
         return None
+
+
+async def read_roles(session: AsyncSession) -> List[Role]:
+    try:
+        statement = select(Role)
+        result = await session.execute(statement)
+        users = result.scalars().all()
+        logger.info("Successfully fetched Roles")
+        return users
+    except Exception as e:
+        logger.error(
+            "An error occurred while retrieving account(s): %s",
+            str(e),
+            exc_info=True,
+        )
+        return None
+
+
+async def get_users_with_roles(
+    session: AsyncSession, account_id: Optional[int] = None
+) -> List[dict]:
+    """
+    Returns a list of dictionaries, one per user, containing:
+        - "id": The user's account ID.
+        - "username": The user's username.
+        - "fullname": The user's full name.
+        - "title": The user's title.
+        - "active": The user's active status.
+        - "roles": A dictionary where the keys are role names (fetched dynamically)
+                   and the values are booleans indicating whether the user is a member of that role.
+
+    If an account_id is provided, only the corresponding account is returned.
+
+    :param session: AsyncSession to perform database operations.
+    :param account_id: Optional account ID to filter the results.
+    :return: A list of dictionaries representing users with their roles.
+    """
+    # Fetch all roles dynamically
+    role_stmt = select(Role)
+    role_result = await session.execute(role_stmt)
+    roles = role_result.scalars().all()
+
+    # Build the accounts query with eager loading for role_permissions and their Role
+    account_stmt = select(Account).options(
+        selectinload(Account.role_permissions).selectinload(
+            RolePermission.role
+        )
+    )
+
+    if account_id is not None:
+        account_stmt = account_stmt.where(Account.id == account_id)
+
+    account_result = await session.execute(account_stmt)
+    accounts = account_result.scalars().all()
+
+    users_with_roles = []
+    for account in accounts:
+        # Determine the role IDs assigned to the account
+        account_role_ids = {rp.role_id for rp in account.role_permissions}
+        # Build a dynamic roles dictionary: key is role name, value is True if assigned to the account
+        roles_dict = {
+            role.name: (role.id in account_role_ids) for role in roles
+        }
+
+        users_with_roles.append(
+            {
+                "id": account.id,
+                "username": account.username,
+                "fullname": account.fullname,
+                "title": account.title,
+                "active": account.is_active,
+                "roles": roles_dict,
+            }
+        )
+
+    return users_with_roles

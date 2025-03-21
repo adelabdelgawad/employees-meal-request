@@ -1,6 +1,6 @@
 // lib/services/request-history.ts
 "use server";
-import { getMeals } from "@/app/actions/meal";
+import { getMeals } from "@/lib/actions/meal";
 
 export async function GET() {
   try {

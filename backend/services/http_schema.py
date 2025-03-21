@@ -1,3 +1,4 @@
+from ast import Dict
 from datetime import time
 from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
@@ -104,9 +105,9 @@ class RoleResponse(BaseModel):
 
 
 class SettingUserResponse(BaseModel):
-    roles: List[Role]
-    users: List[UserWithRoles]
-    domain_users: List[DomainUserResponse]
+    roles: List[Role] | None = None
+    users: List[UserWithRoles] | None = None
+    domain_users: List[DomainUserResponse] | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

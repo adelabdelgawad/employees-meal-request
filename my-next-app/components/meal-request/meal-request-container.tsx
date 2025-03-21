@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { MealRequestForm } from "./meal-request-form"
-import { getNewRequestData } from "@/app/actions/request.actions"
+import { getNewRequestData } from "@/lib/actions/request.actions"
 
 // Loading component for Suspense
 function MealRequestSkeleton() {

@@ -22,6 +22,13 @@ class Role(SQLModel, table=True):
         back_populates="role"
     )
 
+    @property
+    def accounts(self) -> List["Account"]:
+        """
+        Returns a list of User objects associated with this role.
+        """
+        return [rp.account for rp in self.role_permissions if rp.account]
+
 
 class HRISSecurityUser(SQLModel, table=True):
     """
@@ -171,6 +178,13 @@ class Account(SQLModel, table=True):
         back_populates="auditor",
         sa_relationship_kwargs={"foreign_keys": "[Request.auditor_id]"},
     )
+
+    @property
+    def roles(self) -> List["Role"]:
+        """
+        Returns a list of Role objects associated with the user.
+        """
+        return [rp.role for rp in self.role_permissions if rp.role]
 
 
 class RolePermission(SQLModel, table=True):

@@ -4,7 +4,7 @@ from typing import List
 from src.dependencies import SessionDep
 
 
-async def read_roles(session: SessionDep, user_id: int) -> list[str]:
+async def read_role(session: SessionDep, user_id: int) -> list[str]:
     """Fetches a list of role names assigned to a specific user.
 
     Args:

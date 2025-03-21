@@ -1,3 +1,4 @@
+import axiosInstance from "@/lib/axiosInstance"
 import type { User, Role } from "@/types"
 
 // Define roles
@@ -77,7 +78,7 @@ export function generateUsers(count: number): User[] {
     return {
       id: i + 1,
       username,
-      fullName: `${firstName} ${lastName}`,
+      fullname: `${firstName} ${lastName}`,
       title: titles[Math.floor(Math.random() * titles.length)],
       roles: userRoles,
       active: Math.random() > 0.1, // Most users are active by default
@@ -85,12 +86,21 @@ export function generateUsers(count: number): User[] {
   })
 }
 
-// Simulate fetching users from a database
 export async function getUsers(): Promise<User[]> {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  const users =  generateUsers(1)
-  console.log(users)
-  return users
-}
+  try {
+    const response = await axiosInstance.get("/setting/users");
+    console.log("Fetched Users Response:", response.data);
 
+    if (!response.data || !Array.isArray(response.data.users)) {
+      console.error("Invalid API response for users:", response.data);
+      return [];
+    }
+
+
+    // Ensure roles are correctly parsed
+    return response.data
+  } catch (error) {
+    console.error("Failed to fetch users:", error);
+    return [];
+  }
+}

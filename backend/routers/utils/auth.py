@@ -196,7 +196,7 @@ async def read_hirs_account_by_username(
     return account
 
 
-async def read_roles_name(
+async def read_role_name(
     session: AsyncSession, account_id: Optional[int] = None
 ) -> List[str]:
     """
@@ -229,7 +229,7 @@ async def read_roles_name(
     return roles
 
 
-async def read_roles(
+async def read_role(
     session: AsyncSession, account_id: Optional[int] = None
 ) -> List[RoleRead]:
     """

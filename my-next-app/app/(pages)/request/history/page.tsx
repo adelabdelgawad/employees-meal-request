@@ -5,7 +5,7 @@ import React from 'react'
 import { Suspense } from "react";
 import TableSkelton from "@/components/Table/table-skelton";
 import TableWithSWR from './TableWithSWR';
-import { getHistoryRequests } from '@/app/actions/request-history';
+import { getHistoryRequests } from '@/lib/actions/request-history';
 
 interface PageProps {
   searchParams: {
